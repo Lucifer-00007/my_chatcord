@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>ChatCord - Login</title>
+</head>
+<body>
+    <div class="join-container">
+        <header class="join-header">
+            <h1><i class="fas fa-smile"></i> ChatCord</h1>
+        </header>
+        <main class="join-main">
+            <form id="login-form">
+                <div class="form-control">
+                    <input 
+                        type="email" 
+                        name="email" 
+                        id="email" 
+                        placeholder="Enter email..." 
+                        required
+                    />
+                </div>
+                <div class="form-control">
+                    <div class="password-field">
+                        <input 
+                            type="password" 
+                            name="password" 
+                            id="password" 
+                            placeholder="Enter password..." 
+                            required
+                        />
+                        <button type="button" class="password-toggle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <p class="form-switch">Don't have an account? <a href="/register">Register</a></p>
+            </form>
+        </main>
+    </div>
+    <script src="js/auth.js"></script>
+</body>
+</html>
