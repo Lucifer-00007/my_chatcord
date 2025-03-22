@@ -67,15 +67,44 @@ chatcord/
 1. Create a `.env` file in the project root:
 
 ```env
-# Redis connection URL
-# Format: redis://[username]:[password]@[host]:[port]
-REDIS_URL=redis://localhost:6379
+# Redis connection URL (required)
+REDIS_URL=redis://[username]:[password]@[host]:[port]
 
-# Server port number
+# Server configuration
 PORT=3000
+HOST=0.0.0.0
+
+# MongoDB connection
+MONGODB_URI=mongodb://localhost:27017/chatcord
+
+# Security configuration
+JWT_SECRET=your-secure-jwt-secret-key
+NODE_ENV=development
+
+# Domain configuration (for production)
+PROD_DOMAIN=your-production-domain.com
 ```
 
-2. Make sure Redis server is running on your machine or update REDIS_URL with your remote Redis instance.
+2. Environment Variables:
+- `REDIS_URL`: Your Redis connection string
+- `PORT`: Server port (default: 3000)
+- `HOST`: Server host (0.0.0.0 for local network access)
+- `MONGODB_URI`: MongoDB connection string
+- `JWT_SECRET`: Secret key for JWT tokens (min 64 chars)
+- `NODE_ENV`: 'development' or 'production'
+- `PROD_DOMAIN`: Production domain for cookies
+
+3. Development Setup:
+- Start MongoDB locally or use remote instance
+- Start Redis server or use Redis Cloud
+- Set NODE_ENV to 'development'
+- Use default PORT 3000
+
+4. Production Setup:
+- Set secure PROD_DOMAIN
+- Use production MongoDB URI
+- Set NODE_ENV to 'production'
+- Configure secure Redis instance
 
 ## Installation
 
