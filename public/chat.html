@@ -14,6 +14,17 @@
     <title>ChatCord App - Chat Page</title>
   </head>
   <body>
+    <nav class="navbar">
+        <div class="nav-menu">
+            <a href="/chat" class="nav-item">Normal Chat</a>
+            <a href="/ai-chat" class="nav-item">AI Chat</a>
+            <a href="/text-to-image" class="nav-item">Text To Image</a>
+            <a href="/text-to-voice" class="nav-item">Text To Voice</a>
+            <a href="/admin-settings" class="nav-item admin">Admin Settings</a>
+        </div>
+        <button id="logout-btn" class="btn">Logout</button>
+    </nav>
+
     <div class="chat-container">
       <header class="chat-header">
         <h1><i class="fas fa-smile"></i> ChatCord</h1>
@@ -45,6 +56,7 @@
     <!-- Load scripts in correct order -->
     <script src="js/auth-guard.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/nav.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

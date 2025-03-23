@@ -1,46 +1,66 @@
 document.addEventListener('DOMContentLoaded', () => {
     const user = AuthGuard.getUser();
-    if (user?.username) {
-        const usernameInput = document.getElementById('username');
+    const usernameInput = document.getElementById('username');
+    
+    console.log('SelectRoom init:', { user, usernameInput: !!usernameInput });
+
+    if (!user) {
+        window.location.href = '/login';
+        return;
+    }
+
+    if (usernameInput) {
         usernameInput.value = user.username;
         usernameInput.setAttribute('readonly', true);
-    } else {
-        window.location.href = '/login';
+    }
+
+    // Remove section handling since it's now handled by separate pages
+    const adminLink = document.querySelector('a[href="/admin-settings"]');
+    if (adminLink && !user?.isAdmin) {
+        adminLink.classList.add('disabled');
     }
 
     // Handle form submission
     const joinForm = document.getElementById('join-form');
-    joinForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const room = document.getElementById('room').value;
-        
-        try {
-            const res = await fetch('/api/channels/join', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${document.cookie.split('=')[1]}`
-                },
-                body: JSON.stringify({ room })
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                // Store room token in sessionStorage
-                sessionStorage.setItem('roomToken', data.roomToken);
-                window.location.href = '/chat';
-            } else {
-                alert(data.message);
+    if (joinForm) {
+        joinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const room = document.getElementById('room')?.value;
+            if (!room) {
+                console.error('Room not selected');
+                return;
             }
-        } catch (err) {
-            console.error('Error joining room:', err);
-            alert('Failed to join room');
-        }
-    });
+            
+            try {
+                const res = await fetch('/api/channels/join', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${document.cookie.split('=')[1]}`
+                    },
+                    body: JSON.stringify({ room })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    sessionStorage.setItem('roomToken', data.roomToken);
+                    window.location.href = '/chat';
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                console.error('Error joining room:', err);
+                alert('Failed to join room');
+            }
+        });
+    }
 
     // Handle logout
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        AuthGuard.logout();
-    });
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            AuthGuard.logout();
+        });
+    }
 });

@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server",
-    "dev": "nodemon server"
+    "dev": "nodemon server",
+    "db:flush": "node scripts/flushDb.js",
+    "db:seed": "node scripts/seedData.js"
   },
   "author": "Brad Traversy",
   "license": "MIT",

@@ -74,5 +74,30 @@ module.exports = {
         userJoined: username => `${username} has joined the chat`,
         userLeft: username => `${username} has left the chat`,
         sendError: "Failed to send message"
+    },
+
+    // Demo Data Configuration
+    DEMO_CONFIG: {
+        users: [
+            { username: 'admin', email: 'admin@demo.com', password: 'admin@123', isAdmin: true },
+            { username: 'user1', email: 'user1@demo.com', password: 'user123' },
+            { username: 'user2', email: 'user2@demo.com', password: 'user123' },
+            { username: 'user3', email: 'user3@demo.com', password: 'user123' },
+            { username: 'user4', email: 'user4@demo.com', password: 'user123' },
+            { username: 'user5', email: 'user5@demo.com', password: 'user123' }
+        ],
+        messages: [
+            "Hello everyone! 👋",
+            "How's everyone doing today?",
+            "Anyone working on an interesting project?",
+            "JavaScript is awesome!",
+            "I love coding in this community",
+            "Has anyone tried the new features?",
+            "This chat app is pretty cool",
+            "Hope everyone's having a great day!",
+            "Who else is coding late night? 😄",
+            "Don't forget to take breaks while coding!"
+        ],
+        messageInterval: 5 * 60 * 1000 // 5 minutes between messages
     }
 };

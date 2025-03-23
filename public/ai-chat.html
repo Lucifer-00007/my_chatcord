@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>ChatCord - AI Chat</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-menu">
+            <a href="/selectRoom" class="nav-item">Normal Chat</a>
+            <a href="/ai-chat" class="nav-item active">AI Chat</a>
+            <a href="/text-to-image" class="nav-item">Text To Image</a>
+            <a href="/text-to-voice" class="nav-item">Text To Voice</a>
+            <a href="/admin-settings" class="nav-item admin">Admin Settings</a>
+        </div>
+        <button id="logout-btn" class="btn">Logout</button>
+    </nav>
+
+    <div class="chat-container">
+        <header class="chat-header">
+            <h1><i class="fas fa-robot"></i> AI Chat</h1>
+        </header>
+        <main class="chat-main">
+            <div class="chat-sidebar">
+                <h3><i class="fas fa-microchip"></i> AI Model:</h3>
+                <h2 id="model-name">GPT-3.5</h2>
+                <h3><i class="fa fa-history"></i> Chat History</h3>
+                <ul id="ai-settings">
+                    <li>Temperature: 0.7</li>
+                    <li>Max Tokens: 500</li>
+                    <li>Context: Previous 5 messages</li>
+                </ul>
+            </div>
+            <div class="chat-messages"></div>
+        </main>
+        <div class="chat-form-container">
+            <form id="chat-form">
+                <input
+                    id="msg"
+                    type="text"
+                    placeholder="Ask anything..."
+                    required
+                    autocomplete="off"
+                />
+                <button class="btn"><i class="fas fa-paper-plane"></i> Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth-guard.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/ai-chat.js"></script>
+</body>
+</html>

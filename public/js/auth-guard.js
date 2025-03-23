@@ -45,6 +45,27 @@ const AuthGuard = {
         return true;
     },
 
+    checkAdminElements() {
+        const user = this.getUser();
+        const adminElements = document.querySelectorAll('.nav-item.admin');
+        
+        console.log('Checking admin status:', { 
+            user, 
+            isAdmin: user?.isAdmin,
+            elements: adminElements.length 
+        });
+        
+        adminElements.forEach(element => {
+            if (user?.isAdmin) {
+                element.style.display = 'inline-block';
+                console.log('Admin element shown');
+            } else {
+                element.style.display = 'none';
+                console.log('Admin element hidden');
+            }
+        });
+    },
+
     logout() {
         localStorage.removeItem('user');
         sessionStorage.removeItem('roomToken');
@@ -52,7 +73,10 @@ const AuthGuard = {
     }
 };
 
-// Check authentication on page load
-document.addEventListener('DOMContentLoaded', () => AuthGuard.checkAuth());
+// Check authentication and admin status on page load
+document.addEventListener('DOMContentLoaded', () => {
+    AuthGuard.checkAuth();
+    AuthGuard.checkAdminElements();
+});
 
 window.AuthGuard = AuthGuard; // Make it globally available

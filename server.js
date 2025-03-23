@@ -101,6 +101,22 @@ app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
+app.get('/ai-chat', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'ai-chat.html'));
+});
+
+app.get('/text-to-image', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'text-to-image.html'));
+});
+
+app.get('/text-to-voice', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'text-to-voice.html'));
+});
+
+app.get('/admin-settings', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-settings.html'));
+});
+
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/channels', require('./routes/channels'));

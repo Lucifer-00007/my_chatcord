@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>ChatCord - Text to Voice</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-menu">
+            <a href="/selectRoom" class="nav-item">Normal Chat</a>
+            <a href="/ai-chat" class="nav-item">AI Chat</a>
+            <a href="/text-to-image" class="nav-item">Text To Image</a>
+            <a href="/text-to-voice" class="nav-item active">Text To Voice</a>
+            <a href="/admin-settings" class="nav-item admin">Admin Settings</a>
+        </div>
+        <button id="logout-btn" class="btn">Logout</button>
+    </nav>
+
+    <div class="chat-container">
+        <header class="chat-header">
+            <h1><i class="fas fa-volume-up"></i> Text to Voice</h1>
+        </header>
+        <main class="chat-main">
+            <div class="chat-sidebar">
+                <h3><i class="fas fa-microphone-alt"></i> Active Voice:</h3>
+                <h2 id="voice-name">Neural Voice 1</h2>
+                <h3><i class="fas fa-history"></i> Recent Conversions</h3>
+                <ul id="voice-history" class="history-list"></ul>
+            </div>
+            <div class="voice-area">
+                <div class="text-input-section">
+                    <div class="input-header">
+                        <h2><i class="fas fa-keyboard"></i> Input Text</h2>
+                        <div class="character-count">
+                            <span id="char-count">0</span> / 1000
+                        </div>
+                    </div>
+                    <textarea 
+                        id="voice-text" 
+                        placeholder="Enter your text here to convert to speech..."
+                        maxlength="1000"
+                        rows="6"
+                    ></textarea>
+                    <div class="voice-controls-panel">
+                        <div class="control-group">
+                            <label>Voice Selection</label>
+                            <select id="voice-selection" class="voice-select">
+                                <option value="neural1">Neural Voice 1 (Female)</option>
+                                <option value="neural2">Neural Voice 2 (Male)</option>
+                                <option value="neural3">Neural Voice 3 (Child)</option>
+                                <option value="standard">Standard Voice</option>
+                            </select>
+                        </div>
+                        <div class="control-group sliders">
+                            <div class="slider-control">
+                                <label for="voice-speed">
+                                    Speed <span class="value">1.0x</span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="voice-speed" 
+                                    min="0.5" 
+                                    max="2" 
+                                    step="0.1" 
+                                    value="1"
+                                >
+                            </div>
+                            <div class="slider-control">
+                                <label for="voice-pitch">
+                                    Pitch <span class="value">1.0</span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="voice-pitch" 
+                                    min="0.5" 
+                                    max="2" 
+                                    step="0.1" 
+                                    value="1"
+                                >
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Language</label>
+                            <select id="voice-language" class="language-select">
+                                <option value="en-US">English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="es-ES">Spanish</option>
+                                <option value="fr-FR">French</option>
+                                <option value="de-DE">German</option>
+                                <option value="it-IT">Italian</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="preview-btn" class="btn btn-secondary">
+                            <i class="fas fa-headphones"></i> Preview
+                        </button>
+                        <button id="generate-voice-btn" class="btn">
+                            <i class="fas fa-file-audio"></i> Generate Audio File
+                        </button>
+                    </div>
+                </div>
+                <div class="audio-section">
+                    <div id="voice-loading" class="loading-indicator">
+                        <div class="spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <p>Generating audio...</p>
+                    </div>
+                    <div id="audio-result" class="result-container">
+                        <div id="audio-player" class="audio-player">
+                            <!-- Audio player will be inserted here -->
+                        </div>
+                        <div id="download-section" class="download-options">
+                            <button class="btn btn-download">
+                                <i class="fas fa-download"></i> Download MP3
+                            </button>
+                            <button class="btn btn-download">
+                                <i class="fas fa-download"></i> Download WAV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/auth-guard.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/text-to-voice.js"></script>
+</body>
+</html>

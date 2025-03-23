@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>ChatCord - Admin Settings</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-menu">
+            <a href="/chat" class="nav-item">Normal Chat</a>
+            <a href="/ai-chat" class="nav-item">AI Chat</a>
+            <a href="/text-to-image" class="nav-item">Text To Image</a>
+            <a href="/text-to-voice" class="nav-item">Text To Voice</a>
+            <a href="/admin-settings" class="nav-item admin active">Admin Settings</a>
+        </div>
+        <button id="logout-btn" class="btn">Logout</button>
+    </nav>
+
+    <div class="join-container">
+        <header class="join-header">
+            <h1><i class="fas fa-cog"></i> Admin Settings</h1>
+        </header>
+        <main class="join-main">
+            <form id="ai-settings-form">
+                <div class="form-control">
+                    <label for="ai-model">AI Model</label>
+                    <select name="ai-model" id="ai-model">
+                        <option value="gpt-3.5">GPT-3.5</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="claude">Claude</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label for="temperature">Temperature</label>
+                    <input type="range" id="temperature" name="temperature" 
+                           min="0" max="1" step="0.1" value="0.7">
+                    <span id="temp-value">0.7</span>
+                </div>
+                <div class="form-control">
+                    <label for="max-tokens">Max Tokens</label>
+                    <input type="number" id="max-tokens" name="max-tokens" 
+                           min="100" max="2000" value="500">
+                </div>
+                <div class="form-control">
+                    <label for="context-messages">Context Messages</label>
+                    <input type="number" id="context-messages" name="context-messages" 
+                           min="1" max="10" value="5">
+                </div>
+                <button type="submit" class="btn">Save Settings</button>
+            </form>
+        </main>
+    </div>
+
+    <script src="js/auth-guard.js"></script>
+    <script src="js/nav.js"></script>
+</body>
+</html>

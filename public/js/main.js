@@ -7,6 +7,44 @@ if (!user || !roomToken || !authToken) {
     AuthGuard.logout();
 }
 
+// Add token refresh logic
+const REFRESH_THRESHOLD = 50 * 60 * 1000; // 50 minutes
+
+function checkTokenExpiration() {
+    const roomToken = AuthGuard.getRoomToken();
+    if (roomToken) {
+        const payload = JSON.parse(atob(roomToken.split('.')[1]));
+        const exp = payload.exp * 1000; // Convert to milliseconds
+        const timeUntilExp = exp - Date.now();
+
+        if (timeUntilExp < REFRESH_THRESHOLD) {
+            // Refresh room token
+            fetch('/api/channels/join', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                },
+                body: JSON.stringify({ room: payload.room })
+            })
+            .then(res => res.json())
+            .then(data => {
+                sessionStorage.setItem('roomToken', data.roomToken);
+            })
+            .catch(err => {
+                console.error('Failed to refresh token:', err);
+                alert('Your session will expire soon. Please rejoin the room.');
+            });
+        }
+    }
+}
+
+// Check token every 5 minutes
+setInterval(checkTokenExpiration, 5 * 60 * 1000);
+
+// Start first token check
+checkTokenExpiration();
+
 const chatForm = document.getElementById('chat-form');
 const chatMessages = document.querySelector('.chat-messages');
 const roomName = document.getElementById('room-name');
