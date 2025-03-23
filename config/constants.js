@@ -1,6 +1,10 @@
 require('dotenv').config();
 
+// Remove CSP_CONFIG from constants since it's now handled directly in server.js
+const { CSP_CONFIG, ...otherConstants } = module.exports;
+
 module.exports = {
+    ...otherConstants,
     // Server config
     PORT: process.env.PORT || 3000,
     HOST: process.env.HOST,
@@ -56,16 +60,6 @@ module.exports = {
         origin: process.env.CORS_ORIGIN || "http://localhost:3000",
         methods: ["GET", "POST"],
         credentials: true
-    },
-
-    // Content Security Policy
-    CSP_CONFIG: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
-        fontSrc: ["'self'", "cdnjs.cloudflare.com", "fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:", "*"],
-        connectSrc: ["'self'", "ws:", "wss:"]
     },
 
     // Chat Messages

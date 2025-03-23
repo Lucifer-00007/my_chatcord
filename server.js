@@ -62,11 +62,22 @@ const io = socketio(server, {
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// Apply security middleware
+// Update CSP configuration
+const cspConfig = {
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
+        scriptSrcAttr: ["'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
+        fontSrc: ["'self'", "cdnjs.cloudflare.com", "fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:", "*"],
+        connectSrc: ["'self'", "ws:", "wss:"]
+    }
+};
+
+// Apply security middleware with updated CSP
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: CSP_CONFIG
-  }
+    contentSecurityPolicy: cspConfig
 }));
 
 // Apply rate limiting
@@ -120,6 +131,9 @@ app.get('/admin-settings', (req, res) => {
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/channels', require('./routes/channels'));
+
+// API Routes - update the admin route registration
+app.use('/api/admin', authMiddleware, require('./routes/admin'));
 
 const botName = BOT_NAME;
 
