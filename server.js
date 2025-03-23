@@ -12,6 +12,19 @@ const cookieParser = require('cookie-parser');
 const authMiddleware = require('./middleware/auth');
 const { verifyToken } = require('./utils/jwt'); // Add this import
 const User = require('./models/User'); // Add this import
+const Message = require('./models/Message'); // Import Message model
+const Channel = require('./models/Channel'); // Add Channel model import
+const { initializeChannels } = require('./config/init'); // Add this import
+const {
+    PORT,
+    HOST,
+    RATE_LIMIT_WINDOW,
+    RATE_LIMIT_MAX,
+    BOT_NAME,
+    CORS_CONFIG,
+    CSP_CONFIG,
+    MESSAGES
+} = require('./config/constants');
 
 // Import additional libraries and set up Redis for Socket.io adapter
 const { createAdapter } = require("@socket.io/redis-adapter");
@@ -36,15 +49,14 @@ if (!process.env.REDIS_URL || !process.env.PORT) {
 // Connect to MongoDB
 connectDB();
 
+// Initialize database
+initializeChannels();
+
 // Create an Express application
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+  cors: CORS_CONFIG
 });
 
 // Serve static files from the 'public' directory
@@ -53,21 +65,14 @@ app.use(express.static(path.join(__dirname, "public")));
 // Apply security middleware
 app.use(helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
-      fontSrc: ["'self'", "cdnjs.cloudflare.com", "fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "/assets/favicon.ico"],
-      connectSrc: ["'self'", "ws:", "wss:"]
-    }
+    directives: CSP_CONFIG
   }
 }));
 
 // Apply rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: RATE_LIMIT_WINDOW,
+  max: RATE_LIMIT_MAX
 });
 app.use(limiter);
 
@@ -100,7 +105,7 @@ app.get('/chat', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/channels', require('./routes/channels'));
 
-const botName = "ChatCord Bot";
+const botName = BOT_NAME;
 
 // Modified Redis connection setup with try-catch
 (async () => {
@@ -172,12 +177,12 @@ io.on("connection", (socket) => {
     const roomUsers = getRoomUsers(socket.room);
     
     // Welcome current user
-    socket.emit("message", formatMessage(botName, "Welcome to ChatCord!"));
+    socket.emit("message", formatMessage(botName, MESSAGES.welcome));
     
     // Broadcast user joined
     socket.broadcast
       .to(socket.room)
-      .emit("message", formatMessage(botName, `${socket.username} has joined the chat`));
+      .emit("message", formatMessage(botName, MESSAGES.userJoined(socket.username)));
     
     // Send users and room info to all clients in the room
     io.to(socket.room).emit("roomUsers", {
@@ -190,10 +195,31 @@ io.on("connection", (socket) => {
       try {
         const user = getCurrentUser(socket.id);
         if (user) {
+          // Find or create channel
+          let channel = await Channel.findOne({ name: socket.room });
+          if (!channel) {
+            channel = new Channel({
+              name: socket.room,
+              topic: socket.room,
+              createdBy: socket.userId
+            });
+            await channel.save();
+          }
+
+          // Create and save message with channel reference
+          const message = new Message({
+            content: msg,
+            user: socket.userId,
+            channel: channel._id  // Use channel ObjectId
+          });
+          await message.save();
+
+          // Send message to room
           io.to(user.room).emit("message", formatMessage(user.username, msg));
         }
       } catch (err) {
-        socket.emit("error", "Failed to send message");
+        console.error('Message error:', err);
+        socket.emit("error", MESSAGES.sendError);
       }
     });
 
@@ -203,7 +229,7 @@ io.on("connection", (socket) => {
       if (user) {
         io.to(user.room).emit(
           "message",
-          formatMessage(botName, `${user.username} has left the chat`)
+          formatMessage(botName, MESSAGES.userLeft(user.username))
         );
 
         io.to(user.room).emit("roomUsers", {
@@ -216,8 +242,6 @@ io.on("connection", (socket) => {
     console.error("Error in connection handler:", err);
   }
 });
-
-const PORT = process.env.PORT;
 
 // Start the server and listen on the specified port
 server.listen(PORT, process.env.HOST, () => console.log(`Server running on port ${PORT}`));

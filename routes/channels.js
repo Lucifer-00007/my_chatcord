@@ -3,6 +3,8 @@ const router = express.Router();
 const Channel = require('../models/Channel');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
+const Message = require('../models/Message');
+const { JWT_SECRET, ROOM_TOKEN_EXPIRE, MAX_MESSAGES } = require('../config/constants');
 
 // Get all channels
 router.get('/', auth, async (req, res) => {
@@ -54,6 +56,28 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+// Get channel messages
+router.get('/:name/messages', auth, async (req, res) => {
+  try {
+    // First find the channel by name
+    const channel = await Channel.findOne({ name: req.params.name });
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    // Then fetch messages using channel's ObjectId
+    const messages = await Message.find({ channel: channel._id })
+      .populate('user', 'username')
+      .sort({ createdAt: -1 })
+      .limit(MAX_MESSAGES);
+
+    res.json(messages);
+  } catch (err) {
+    console.error('Error fetching messages:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Join channel
 router.post('/join', auth, async (req, res) => {
   try {
@@ -67,8 +91,8 @@ router.post('/join', auth, async (req, res) => {
         username: user.username,
         room 
       },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      JWT_SECRET,
+      { expiresIn: ROOM_TOKEN_EXPIRE }
     );
 
     res.json({ roomToken });

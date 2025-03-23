@@ -19,6 +19,7 @@ try {
     console.log('Decoded Token Data:', tokenData);
     const { username, room } = tokenData;
 
+    // Initialize socket first
     const socket = io({
         auth: {
             token: authToken,
@@ -26,6 +27,35 @@ try {
         },
         transports: ['websocket']
     });
+
+    // Load message history using async IIFE
+    (async () => {
+        try {
+            const res = await fetch(`/api/channels/${room}/messages`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (res.ok) {
+                const messages = await res.json();
+                messages.reverse().forEach(msg => {
+                    outputMessage({
+                        username: msg.user.username,
+                        text: msg.content,
+                        time: new Date(msg.createdAt).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: 'numeric', 
+                            hour12: true 
+                        })
+                    });
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        } catch (err) {
+            console.error('Error loading messages:', err);
+        }
+    })();
 
     // Enhanced connection logging
     socket.on('connect', () => {
@@ -105,7 +135,7 @@ function outputMessage(message) {
   const p = document.createElement('p');
   p.classList.add('meta');
   p.innerText = message.username;
-  p.innerHTML += `<span>${message.time}</span>`;
+  p.innerHTML += `<span> ${message.time}</span>`;
   div.appendChild(p);
   const para = document.createElement('p');
   para.classList.add('text');
