@@ -347,6 +347,22 @@ chat-messages .message .meta span {
 	color: #777;
 }
 
+/* Thinking Message Styles */
+.message.thinking {
+    opacity: 0.7;
+}
+
+.message.thinking .text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.message.thinking i {
+    color: var(--dark-color-a);
+    font-size: 0.9em;
+}
+
 .chat-form-container {
     padding: 20px 30px;
     background-color: var(--dark-color-a);
@@ -1703,4 +1719,130 @@ input:checked + .toggle-slider:before {
     background: #f8f9fa;
     padding: 2px 4px;
     border-radius: 3px;
+}
+
+/* AI Chat Model Select Styles */
+.model-select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0 20px 0;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s ease;
+    appearance: none;  /* Add this to fix dropdown behavior */
+    -webkit-appearance: none;  /* For Safari */
+    -moz-appearance: none;  /* For Firefox */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+    padding-right: 30px;  /* Make room for the custom dropdown arrow */
+}
+
+.model-select:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.model-select:focus {
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.model-select option {
+    background: var(--dark-color-b);
+    color: #fff;
+    padding: 10px;
+    direction: ltr;  /* Force left-to-right text direction */
+    text-align: left;  /* Force left alignment */
+}
+
+.model-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* AI Chat Model Select Styles - Improved */
+.model-select-container {
+    position: relative;
+    margin: 10px 0 20px 0;
+}
+
+.model-select {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.model-select:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.model-select:focus {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.model-select-container::after {
+    content: '\f0d7';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+
+.model-select-container:hover::after {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.model-select:focus + .model-select-container::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.model-select option {
+    background: var(--dark-color-b);
+    color: #fff;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.model-select option:hover {
+    background: var(--dark-color-a);
+}
+
+.model-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.form-input.error {
+    border-color: var(--error-color);
+    box-shadow: 0 0 0 1px var(--error-color);
+}
+
+.form-input.error:focus {
+    border-color: var(--error-color);
+    box-shadow: 0 0 0 2px rgba(217, 83, 79, 0.2);
 }

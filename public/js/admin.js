@@ -138,11 +138,17 @@ function initAiApiSection() {
     document.getElementById('test-api').addEventListener('click', async () => {
         const testBtn = document.getElementById('test-api');
         const curlCommand = document.getElementById('curl-command').value;
-        const responsePath = document.getElementById('response-path').value;  // Get response path
+        const responsePath = document.getElementById('response-path').value;  
+        const requestPath = document.getElementById('request-path').value; // Add this line
         const previewStatus = document.querySelector('.preview-status');
 
         if (!curlCommand) {
             showNotification('Please enter a cURL command first', 'error');
+            return;
+        }
+
+        if (!requestPath || !responsePath) { // Add validation
+            showNotification('Request path and response path are required', 'error');
             return;
         }
 
@@ -160,6 +166,7 @@ function initAiApiSection() {
                 },
                 body: JSON.stringify({ 
                     curlCommand,
+                    requestPath,  // Add request path
                     responsePath  // Add response path to request
                 })
             });
@@ -425,20 +432,27 @@ document.getElementById('api-form').addEventListener('submit', async (e) => {
     const submitBtn = form.querySelector('button[type="submit"]');
     const isEdit = form.dataset.mode === 'edit';
     const apiId = form.dataset.apiId;
+    const apiNameInput = document.getElementById('api-name');
     
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     
-    const formData = {
-        name: document.getElementById('api-name').value,
-        curlCommand: document.getElementById('curl-command').value,
-        requestPath: document.getElementById('request-path').value,
-        responsePath: document.getElementById('response-path').value
-    };
-
     try {
+        // Trim the API name to prevent whitespace issues
+        const formData = {
+            name: apiNameInput.value.trim(),
+            curlCommand: document.getElementById('curl-command').value,
+            requestPath: document.getElementById('request-path').value,
+            responsePath: document.getElementById('response-path').value
+        };
+
+        // Validate name before submitting
+        if (!formData.name) {
+            throw new Error('API name is required');
+        }
+
         const res = await fetch(
-            isEdit ? `/api/admin/ai-apis/${apiId}` : '/api/admin/ai-apis', 
+            isEdit ? `/api/admin/ai-apis/${apiId}` : '/api/admin/ai-apis',
             {
                 method: isEdit ? 'PUT' : 'POST',
                 headers: {
@@ -449,10 +463,19 @@ document.getElementById('api-form').addEventListener('submit', async (e) => {
             }
         );
 
+        const data = await res.json();
         if (!res.ok) {
-            throw new Error(await res.text() || 'Failed to save API');
+            if (data.code === 'DUPLICATE_NAME') {
+                apiNameInput.classList.add('error');
+                apiNameInput.focus();
+                throw new Error(`An API named "${formData.name}" already exists. Please choose a different name.`);
+            }
+            throw new Error(data.message || 'Failed to save API');
         }
 
+        // Clear error state if successful
+        apiNameInput.classList.remove('error');
+        
         showNotification(`API ${isEdit ? 'updated' : 'saved'} successfully`, 'success');
         form.reset();
         form.style.display = 'none';
@@ -462,11 +485,17 @@ document.getElementById('api-form').addEventListener('submit', async (e) => {
         await loadApiList();
     } catch (err) {
         console.error('Error saving API:', err);
-        showNotification(err.message || `Failed to ${isEdit ? 'update' : 'save'} API`, 'error');
+        showNotification(err.message, 'error');
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fas fa-save"></i> ${isEdit ? 'Update' : 'Save'} API`;
     }
+});
+
+// Add input validation
+document.getElementById('api-name').addEventListener('input', function() {
+    this.value = this.value.trim();
+    this.classList.remove('error');
 });
 
 async function deleteApi(apiName) {

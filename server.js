@@ -131,9 +131,8 @@ app.get('/admin-settings', (req, res) => {
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/channels', require('./routes/channels'));
-
-// API Routes - update the admin route registration
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
+app.use('/api/ai', authMiddleware, require('./routes/ai')); // Add this line
 
 const botName = BOT_NAME;
 
