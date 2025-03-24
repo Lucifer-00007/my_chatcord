@@ -131,8 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle chat form submission
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const startTime = Date.now();
         
         const selectedApi = modelSelect.value;
+        console.log('Form submitted:', {
+            apiId: selectedApi,
+            modelName: modelSelect.options[modelSelect.selectedIndex]?.text,
+            sessionId: currentSession?._id
+        });
+
         if (!selectedApi) {
             showNotification('Please select an AI model first', 'error');
             return;
@@ -144,18 +151,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add user message to chat
         addMessageToChat('You', msg);
-        
-        // Clear input immediately after sending
         msgInput.value = '';
         msgInput.disabled = true;
         
-        // Add thinking message
         const thinkingMessage = addThinkingMessage();
-
+        
         try {
-            // Disable input while processing
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            console.log('Preparing request:', {
+                message: msg,
+                apiId: selectedApi,
+                sessionId: currentSession?._id,
+                timestamp: new Date().toISOString()
+            });
 
             const res = await fetch('/api/ai/chat', {
                 method: 'POST',
@@ -170,8 +180,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
+            console.log('Response received:', {
+                status: res.status,
+                ok: res.ok,
+                statusText: res.statusText,
+                elapsed: `${Date.now() - startTime}ms`
+            });
+
             const data = await res.json();
-            console.log('AI Response:', data);
+            console.log('Response data:', {
+                hasResponse: !!data.response,
+                responseLength: data.response?.length,
+                model: data.model,
+                sessionId: data.session?._id,
+                elapsed: `${Date.now() - startTime}ms`
+            });
 
             // Remove thinking message
             thinkingMessage.remove();
@@ -190,13 +213,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update session and history
             currentSession = data.session;
             await loadChatHistory();
+
         } catch (err) {
-            console.error('AI chat error:', err);
-            thinkingMessage.remove();
+            console.error('Chat request error:', {
+                error: err.message,
+                stack: err.stack,
+                timings: {
+                    totalElapsed: `${Date.now() - startTime}ms`
+                }
+            });
+            
+            thinkingMessage?.remove();
             showNotification(err.message || 'Failed to get AI response', 'error');
             addMessageToChat('System', 'Error: Failed to get AI response. Please try again.');
         } finally {
-            // Re-enable input and button
             msgInput.disabled = false;
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';

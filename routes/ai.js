@@ -92,12 +92,32 @@ router.patch('/sessions/:id/title', auth, async (req, res) => {
 
 // Modified chat endpoint to save messages to session
 router.post('/chat', auth, async (req, res) => {
+    const startTime = Date.now();
+    console.log('Chat request received:', {
+        body: req.body,
+        user: req.user._id,
+        timestamp: new Date().toISOString()
+    });
+
     try {
         const { message, apiId, sessionId } = req.body;
 
         // Validate inputs
         if (!message || !apiId) {
+            console.log('Invalid request:', { message, apiId });
             return res.status(400).json({ message: 'Message and API ID are required' });
+        }
+
+        // Get API configuration
+        const api = await AiApi.findById(apiId);
+        console.log('Found API:', {
+            name: api?.name,
+            exists: !!api,
+            isActive: api?.isActive
+        });
+
+        if (!api || !api.isActive) {
+            return res.status(404).json({ message: 'API not found or inactive' });
         }
 
         // Get or create chat session
@@ -105,11 +125,11 @@ router.post('/chat', auth, async (req, res) => {
             await AiChat.findOne({ _id: sessionId, user: req.user._id }) :
             null;
 
-        // Get API configuration
-        const api = await AiApi.findById(apiId);
-        if (!api || !api.isActive) {
-            return res.status(404).json({ message: 'API not found or inactive' });
-        }
+        console.log('Session status:', {
+            exists: !!session,
+            isNew: !session,
+            sessionId
+        });
 
         // Add user message to messages array
         const userMessage = { role: 'user', content: message };
@@ -130,7 +150,18 @@ router.post('/chat', auth, async (req, res) => {
         }
 
         // Get AI response using existing code
+        console.log('Getting AI response for:', {
+            apiName: api.name,
+            messageLength: message.length
+        });
+
         const aiResponse = await getAiResponse(api, message);
+        
+        console.log('AI response received:', {
+            hasContent: !!aiResponse?.content,
+            model: aiResponse?.model,
+            elapsed: `${Date.now() - startTime}ms`
+        });
 
         // Add AI response to messages
         session.messages.push({
@@ -178,35 +209,80 @@ router.post('/chat', auth, async (req, res) => {
             session: session
         });
     } catch (err) {
-        console.error('Chat error:', err);
+        console.error('Chat error:', {
+            error: err.message,
+            stack: err.stack,
+            timings: {
+                totalElapsed: `${Date.now() - startTime}ms`
+            }
+        });
         res.status(500).json({ message: err.message || 'Failed to get AI response' });
     }
 }); // Add missing closing parenthesis
 
 async function getAiResponse(api, message) {
+    const startTime = Date.now();
+    console.log('Starting AI request:', {
+        apiName: api.name,
+        apiType: api.apiType,
+        requestPath: api.requestPath,
+        responsePath: api.responsePath,
+        messageLength: message.length
+    });
+
     try {
         const { endpoint, headers, method, body: curlBody } = parseCurlCommand(api.curlCommand);
         
-        // Use exact model ID from curl command without modification
-        const exactModelId = curlBody?.model || api.modelId || api.name;
-        
-        let requestBody = {
-            model: exactModelId,  // Use exact model ID in request
-            messages: [{
-                role: 'user',
-                content: message
-            }]
-        };
+        // Create request body based on API type
+        let requestBody;
+        if (api.requestPath === 'messages[0].content') {
+            requestBody = {
+                model: curlBody?.model || api.modelId || api.name,
+                messages: [{
+                    role: 'user',
+                    content: message
+                }]
+            };
+        } else {
+            // Handle non-OpenAI format requests
+            requestBody = {};
+            const pathParts = api.requestPath.split('.');
+            let current = requestBody;
 
-        console.log('Making API request:', {
-            endpoint,
+            for (let i = 0; i < pathParts.length - 1; i++) {
+                const part = pathParts[i];
+                const match = part.match(/(\w+)\[(\d+)\]/);
+                if (match) {
+                    const [_, prop, index] = match;
+                    if (!current[prop]) current[prop] = [];
+                    if (!current[prop][index]) current[prop][index] = {};
+                    current = current[prop][index];
+                } else {
+                    current[part] = {};
+                    current = current[part];
+                }
+            }
+
+            const lastPart = pathParts[pathParts.length - 1];
+            const match = lastPart.match(/(\w+)\[(\d+)\]/);
+            if (match) {
+                const [_, prop, index] = match;
+                if (!current[prop]) current[prop] = [];
+                current[prop][index] = message;
+            } else {
+                current[lastPart] = message;
+            }
+        }
+
+        // Add model if specified in curl body
+        if (curlBody?.model) {
+            requestBody.model = curlBody.model;
+        }
+
+        console.log('Making request:', {
+            url: endpoint,
             method,
-            apiName: api.name,
-            apiType: api.apiType,
-            modelId: exactModelId,
-            requestPath: api.requestPath,
-            headers,
-            requestBody
+            requestBody: JSON.stringify(requestBody)
         });
 
         const response = await fetch(endpoint, {
@@ -215,89 +291,21 @@ async function getAiResponse(api, message) {
             body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || `API responded with status ${response.status}`);
-        }
-
         const data = await response.json();
-        console.log('AI response data:', data);
-
-        const result = extractResponse(data, api.responsePath);
-        if (!result) {
-            throw new Error(`No response found at path: ${api.responsePath}`);
-        }
-
-        return {
-            content: result,
-            model: data.model || api.name  // Use model from response if available, fallback to API name
-        };
-    } catch (err) {
-        console.error('AI response error:', {
-            error: err.message,
-            stack: err.stack,
-            requestDetails: { api, message }
+        console.log('Raw API response:', {
+            status: response.status,
+            data: JSON.stringify(data).slice(0, 200)
         });
-        throw new Error(`${AI_CONFIG.aiResponseError}: ${err.message}`);
-    }
-}
 
-function createRequestBody(path, message) {
-    try {
-        // Special case for OpenRouter's messages array
-        if (path === 'messages[0].content') {
-            return {
-                messages: [{
-                    role: 'user',
-                    content: message
-                }]
-            };
+        if (!response.ok) {
+            throw new Error(data.error?.message || `API responded with status ${response.status}`);
         }
 
-        const parts = path.split('.');
-        let current = {};
-        let result = current;
-
-        for (let i = 0; i < parts.length - 1; i++) {
-            const part = parts[i];
-            const match = part.match(/(\w+)\[(\d+)\]/);
-            
-            if (match) {
-                const [_, prop, index] = match;
-                if (!current[prop]) current[prop] = [];
-                if (!current[prop][index]) current[prop][index] = {};
-                current = current[prop][index];
-            } else {
-                current[part] = {};
-                current = current[part];
-            }
-        }
-
-        // Handle the last part of the path
-        const lastPart = parts[parts.length - 1];
-        const match = lastPart.match(/(\w+)\[(\d+)\]/);
-        
-        if (match) {
-            const [_, prop, index] = match;
-            if (!current[prop]) current[prop] = [];
-            current[prop][index] = message;
-        } else {
-            current[lastPart] = message;
-        }
-
-        return result;
-    } catch (err) {
-        console.error('Error creating request body:', err);
-        throw new Error('Failed to create request body');
-    }
-}
-
-function extractResponse(data, path) {
-    try {
-        const parts = path.split('.');
+        // Extract response using path
         let result = data;
-
-        for (const part of parts) {
+        const responseParts = api.responsePath.split('.');
+        
+        for (const part of responseParts) {
             const match = part.match(/(\w+)\[(\d+)\]/);
             if (match) {
                 const [_, prop, index] = match;
@@ -305,16 +313,65 @@ function extractResponse(data, path) {
             } else {
                 result = result[part];
             }
-
-            if (result === undefined) {
-                throw new Error(`Response path '${path}' not found in data`);
-            }
         }
 
+        console.log('Extracted response:', {
+            hasResult: !!result,
+            resultPreview: result ? result.slice(0, 100) : null
+        });
+
+        if (!result) {
+            throw new Error('No response content found at specified path');
+        }
+
+        // Return both content and model info
+        return {
+            content: result,
+            model: curlBody?.model || api.name
+        };
+
+    } catch (err) {
+        console.error('AI response error:', {
+            error: err.message,
+            stack: err.stack
+        });
+        throw err;
+    }
+}
+
+// Enhance extractResponse function
+function extractResponse(data, path) {
+    try {
+        console.log('Extracting response using path:', path);
+        let result = data;
+        const parts = path.split('.');
+        
+        for (const part of parts) {
+            const match = part.match(/(\w+)\[(\d+)\]/);
+            if (match) {
+                const [_, prop, index] = match;
+                if (!result[prop]?.[index]) {
+                    console.error('Missing data at path:', { prop, index, available: result[prop] });
+                    throw new Error(`Data not found at ${prop}[${index}]`);
+                }
+                result = result[prop][index];
+            } else {
+                if (!result[part]) {
+                    console.error('Missing data at path:', { part, available: Object.keys(result) });
+                    throw new Error(`Data not found at ${part}`);
+                }
+                result = result[part];
+            }
+        }
+        
         return result;
     } catch (err) {
-        console.error('Error extracting response:', err);
-        throw new Error(`Failed to extract response: ${err.message}`);
+        console.error('Error extracting response:', {
+            error: err.message,
+            path,
+            data: JSON.stringify(data).slice(0, 200) // Log first 200 chars
+        });
+        throw err;
     }
 }
 
