@@ -62,6 +62,15 @@ module.exports = {
         credentials: true
     },
 
+    // AI Chat Configuration
+    AI_CONFIG: {
+        defaultModel: 'google/gemini-pro',
+        initialMessage: 'This is the start of your conversation.',
+        defaultTitle: 'New Chat',
+        aiResponseError: 'Failed to get AI response',
+        titlePromptTemplate: 'Suggest an extremely short 2-3 word title for this message: "{message}"'
+    },
+
     // Chat Messages
     MESSAGES: {
         welcome: "Welcome to ChatCord!",

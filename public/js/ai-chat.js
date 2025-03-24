@@ -48,6 +48,85 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let currentSession = null;
+
+    // Add function to load chat history
+    async function loadChatHistory() {
+        try {
+            const res = await fetch('/api/ai/sessions', {
+                headers: {
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                }
+            });
+            const sessions = await res.json();
+            
+            const historyList = document.getElementById('chat-history');
+            historyList.innerHTML = sessions.map(session => `
+                <li class="chat-session ${currentSession?._id === session._id ? 'active' : ''}" 
+                    data-id="${session._id}">
+                    <i class="fas fa-comments"></i>
+                    <span>${session.title}</span>
+                </li>
+            `).join('');
+
+            // Add click handlers
+            document.querySelectorAll('.chat-session').forEach(el => {
+                el.addEventListener('click', () => loadSession(el.dataset.id));
+            });
+        } catch (err) {
+            console.error('Error loading chat history:', err);
+        }
+    }
+
+    // Add function to load specific session
+    async function loadSession(sessionId) {
+        try {
+            const res = await fetch(`/api/ai/sessions/${sessionId}`, {
+                headers: {
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                }
+            });
+            const session = await res.json();
+            
+            currentSession = session;
+            chatMessages.innerHTML = '';
+            
+            // Load messages
+            session.messages.forEach(msg => {
+                if (msg.role !== 'system') {
+                    addMessageToChat(
+                        msg.role === 'user' ? 'You' : 'AI',
+                        msg.content
+                    );
+                }
+            });
+
+            // Update UI
+            document.querySelectorAll('.chat-session').forEach(el => {
+                el.classList.toggle('active', el.dataset.id === sessionId);
+            });
+        } catch (err) {
+            console.error('Error loading session:', err);
+        }
+    }
+
+    // Add new chat button
+    const newChatBtn = document.createElement('button');
+    newChatBtn.className = 'btn btn-new-chat';
+    newChatBtn.innerHTML = '<i class="fas fa-plus"></i> New Chat';
+    document.querySelector('.chat-sidebar').insertBefore(
+        newChatBtn,
+        document.querySelector('.chat-sidebar h3')
+    );
+
+    newChatBtn.addEventListener('click', () => {
+        currentSession = null;
+        chatMessages.innerHTML = '';
+        document.querySelectorAll('.chat-session').forEach(el => {
+            el.classList.remove('active');
+        });
+    });
+
     // Handle chat form submission
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -67,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Clear input immediately after sending
         msgInput.value = '';
+        msgInput.disabled = true;
         
         // Add thinking message
         const thinkingMessage = addThinkingMessage();
@@ -84,7 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({ 
                     message: msg,
-                    apiId: selectedApi
+                    apiId: selectedApi,
+                    sessionId: currentSession?._id
                 })
             });
 
@@ -94,23 +175,31 @@ document.addEventListener('DOMContentLoaded', () => {
             // Remove thinking message
             thinkingMessage.remove();
 
-            if (res.ok) {
-                addMessageToChat('AI', data.response);
-            } else {
+            if (!res.ok) {
                 throw new Error(data.message || 'Failed to get AI response');
             }
+
+            // Add AI response message
+            if (data.response) {
+                addMessageToChat('AI', data.response);
+            } else {
+                throw new Error('No response received from AI');
+            }
+
+            // Update session and history
+            currentSession = data.session;
+            await loadChatHistory();
         } catch (err) {
             console.error('AI chat error:', err);
-            // Remove thinking message
             thinkingMessage.remove();
-            addMessageToChat('System', 'Failed to get AI response. Please try again.');
+            showNotification(err.message || 'Failed to get AI response', 'error');
+            addMessageToChat('System', 'Error: Failed to get AI response. Please try again.');
         } finally {
-            // Re-enable input
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
-            }
-            // Keep only the scroll
+            // Re-enable input and button
+            msgInput.disabled = false;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+            msgInput.focus();
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     });
@@ -167,4 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modelSelect.parentElement.classList.toggle('has-value', !!modelSelect.value);
         }
     });
+
+    // Initial load
+    loadChatHistory();
 });
