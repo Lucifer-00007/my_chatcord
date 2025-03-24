@@ -57,9 +57,18 @@ const aiApiSchema = new mongoose.Schema({
     }
 });
 
-// Update pre-save hook with better error handling
+// Add status change logging
 aiApiSchema.pre('save', async function(next) {
     try {
+        if (this.isModified('isActive')) {
+            console.log('API status changed:', {
+                name: this.name,
+                isActive: this.isActive,
+                timestamp: new Date()
+            });
+        }
+        
+        // Check name uniqueness
         if (this.isModified('name')) {
             const exists = await this.constructor.findOne({ 
                 _id: { $ne: this._id },
@@ -71,6 +80,7 @@ aiApiSchema.pre('save', async function(next) {
                 throw error;
             }
         }
+
         if (!this.displayName) {
             this.displayName = this.name;
         }

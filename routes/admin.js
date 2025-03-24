@@ -130,11 +130,39 @@ router.patch('/ai-apis/:id/toggle', auth, async (req, res) => {
     }
 
     try {
-        const { isActive } = req.body;
-        await AiApi.findByIdAndUpdate(req.params.id, { isActive });
-        res.json({ message: 'API updated successfully' });
+        if (typeof req.body.isActive !== 'boolean') {
+            return res.status(400).json({ message: 'isActive must be a boolean' });
+        }
+
+        console.log('Toggling API:', {
+            id: req.params.id,
+            isActive: req.body.isActive
+        });
+
+        const api = await AiApi.findByIdAndUpdate(
+            req.params.id,
+            { isActive: req.body.isActive },
+            { new: true }
+        );
+        
+        if (!api) {
+            return res.status(404).json({ message: 'API not found' });
+        }
+
+        console.log('API status updated:', {
+            id: api._id,
+            name: api.name,
+            isActive: api.isActive
+        });
+
+        res.json({
+            success: true,
+            message: `API ${api.isActive ? 'activated' : 'deactivated'} successfully`,
+            api
+        });
     } catch (err) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error toggling API:', err);
+        res.status(500).json({ message: 'Failed to update API status' });
     }
 });
 

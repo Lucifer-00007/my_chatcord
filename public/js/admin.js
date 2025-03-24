@@ -225,19 +225,8 @@ async function loadApiList() {
 
         apiCount.textContent = `${apis.length} API${apis.length !== 1 ? 's' : ''}`;
         
-        apiList.innerHTML = apis.map(api => {
-            const apiNameSlug = api.name.toLowerCase()
-                .replace(/\s+/g, '-')      // Replace spaces with hyphens
-                .replace(/\./g, '-')       // Replace dots with hyphens
-                .replace(/[^a-z0-9-]/g, '') // Remove any other special characters
-                .trim();
-
-            const apiItem = document.createElement('div');
-            apiItem.className = 'api-item';
-            apiItem.dataset.id = api._id;
-            apiItem.dataset.name = api.name; // Add name to dataset
-            
-            apiItem.innerHTML = `
+        apiList.innerHTML = apis.map(api => `
+            <div class="api-item" data-id="${api._id}" data-name="${api.name}">
                 <div class="api-details">
                     <div class="api-name">
                         <span class="api-status ${api.isActive ? 'active' : 'inactive'}"></span>
@@ -251,24 +240,32 @@ async function loadApiList() {
                 </div>
                 <div class="api-controls">
                     <label class="toggle-switch" title="${api.isActive ? 'Deactivate' : 'Activate'} API">
-                        <input type="checkbox" ${api.isActive ? 'checked' : ''} class="api-toggle">
+                        <input type="checkbox" 
+                               class="api-toggle"
+                               data-id="${api._id}"
+                               ${api.isActive ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <button class="btn btn-icon edit-api" onclick="editData('${api._id}', '${api.name}')" title="Edit ${api.name}">
+                    <button class="btn btn-icon edit-api" 
+                            data-id="${api._id}"
+                            data-action="edit"
+                            title="Edit ${api.name}">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-icon btn-danger delete-api" onclick="deleteData('${api._id}', '${api.name}')" title="Delete ${api.name}">
+                    <button class="btn btn-icon btn-danger delete-api" 
+                            data-id="${api._id}"
+                            data-action="delete"
+                            title="Delete ${api.name}">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
-            `;  
+            </div>
+        `).join('');
 
-            // Only keep toggle event listener, remove others since we're using onclick
-            const toggleBtn = apiItem.querySelector('.api-toggle');
-            toggleBtn.addEventListener('change', () => toggleApi(api._id, toggleBtn.checked));
-            
-            return apiItem.outerHTML;
-        }).join('');
+        // Add event delegation
+        apiList.addEventListener('click', handleApiAction);
+        apiList.addEventListener('change', handleApiToggle);
+
     } catch (err) {
         console.error('Error loading APIs:', err);
         apiList.innerHTML = `
@@ -392,13 +389,21 @@ async function deleteData(id, name) {
 }
 
 async function toggleApi(id, isActive) {
-    const toggleBtn = document.querySelector(`[data-id="${id}"] .api-toggle`);
-    const toggleLabel = toggleBtn.closest('.toggle-switch');
-    const originalState = toggleBtn.checked;
+    const apiItem = document.querySelector(`[data-id="${id}"]`);
+    const toggleBtn = apiItem?.querySelector('.api-toggle');
+    const toggleLabel = toggleBtn?.closest('.toggle-switch');
 
+    if (!toggleBtn || !toggleLabel) {
+        console.error('Toggle elements not found');
+        return;
+    }
+
+    const originalState = toggleBtn.checked;
+    
     try {
         toggleLabel.classList.add('loading');
-        
+        console.log('Toggling API:', { id, isActive });
+
         const res = await fetch(`/api/admin/ai-apis/${id}/toggle`, {
             method: 'PATCH',
             headers: {
@@ -408,21 +413,58 @@ async function toggleApi(id, isActive) {
             body: JSON.stringify({ isActive })
         });
 
+        const data = await res.json();
+        console.log('Toggle response:', data);
+
         if (!res.ok) {
-            throw new Error('Failed to toggle API');
+            throw new Error(data.message || 'Failed to toggle API');
         }
 
+        // Update status indicator
+        const statusIndicator = apiItem.querySelector('.api-status');
+        if (statusIndicator) {
+            statusIndicator.className = `api-status ${isActive ? 'active' : 'inactive'}`;
+        }
+
+        // Keep the checkbox state consistent with the server response
+        toggleBtn.checked = data.api.isActive;
+
         showNotification(
-            `API ${isActive ? 'activated' : 'deactivated'} successfully`, 
+            `API ${isActive ? 'activated' : 'deactivated'} successfully`,
             'success'
         );
     } catch (err) {
         console.error('Error toggling API:', err);
-        toggleBtn.checked = originalState; // Revert the toggle
-        showNotification('Failed to update API status', 'error');
+        // Revert toggle state on error
+        toggleBtn.checked = originalState;
+        showNotification(err.message || 'Failed to update API status', 'error');
     } finally {
         toggleLabel.classList.remove('loading');
     }
+}
+
+function handleApiAction(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    const apiItem = btn.closest('.api-item');
+    const name = apiItem.dataset.name;
+
+    if (action === 'edit') {
+        editData(id, name);
+    } else if (action === 'delete') {
+        deleteData(id, name);
+    }
+}
+
+function handleApiToggle(e) {
+    const toggle = e.target;
+    if (!toggle.classList.contains('api-toggle')) return;
+
+    const id = toggle.dataset.id;
+    toggleApi(id, toggle.checked);
 }
 
 document.getElementById('api-form').addEventListener('submit', async (e) => {

@@ -149,65 +149,62 @@ router.post('/chat', auth, async (req, res) => {
             session.messages.push(userMessage);
         }
 
-        // Get AI response using existing code
+        // Get AI response first
         console.log('Getting AI response for:', {
             apiName: api.name,
             messageLength: message.length
         });
 
         const aiResponse = await getAiResponse(api, message);
-        
-        console.log('AI response received:', {
-            hasContent: !!aiResponse?.content,
-            model: aiResponse?.model,
-            elapsed: `${Date.now() - startTime}ms`
-        });
+
+        // Generate title for new sessions using the actual chat message
+        if (!sessionId) { // Only for new sessions
+            console.log('Generating title for new session');
+            try {
+                const titlePrompt = `Generate a very short 2-3 word title for this conversation. User said: "${message}" and AI responded: "${aiResponse.content}"`;
+                let titleResponse = await getAiResponse(api, titlePrompt);
+                
+                // Clean up title
+                if (titleResponse?.content) {
+                    let cleanTitle = titleResponse.content
+                        .replace(/["']/g, '')
+                        .replace(/[^a-zA-Z0-9\s]/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .split(' ')
+                        .slice(0, 3)
+                        .join(' ');
+
+                    if (cleanTitle) {
+                        session.title = cleanTitle
+                            .split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                            .join(' ');
+                        
+                        console.log('Generated title:', session.title);
+                    }
+                }
+            } catch (titleErr) {
+                console.error('Error generating title:', titleErr);
+                session.title = 'New Chat';
+            }
+        }
 
         // Add AI response to messages
         session.messages.push({
             role: 'assistant',
             content: aiResponse.content,
-            model: aiResponse.model  // Save model info in message
+            model: aiResponse.model
         });
-
-        // Generate title for new sessions
-        if (session.messages.length === 2) { // First interaction
-            const titlePrompt = AI_CONFIG.titlePromptTemplate.replace('{message}', message);
-            let titleResponse = await getAiResponse(api, titlePrompt);
-            
-            // Ensure titleResponse.content is a string and handle cleaning
-            if (titleResponse && typeof titleResponse.content === 'string') {
-                let cleanTitle = titleResponse.content
-                    .replace(/["']/g, '') // Remove quotes
-                    .replace(/[^a-zA-Z0-9\s]/g, ' ') // Replace special chars with space
-                    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-                    .trim() // Remove leading/trailing spaces
-                    .split(' ') // Split into words
-                    .slice(0, 3) // Take first 3 words
-                    .join(' '); // Join back with spaces
-
-                // Ensure title is not empty and has proper casing
-                if (cleanTitle) {
-                    cleanTitle = cleanTitle.toLowerCase()
-                        .split(' ')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ');
-                    session.title = cleanTitle;
-                } else {
-                    session.title = 'New Chat'; // Fallback title
-                }
-            } else {
-                session.title = 'New Chat'; // Fallback title
-            }
-        }
 
         await session.save();
 
         res.json({
             response: aiResponse.content,
-            model: aiResponse.model,  // Send model info to client
+            model: aiResponse.model,
             session: session
         });
+
     } catch (err) {
         console.error('Chat error:', {
             error: err.message,
