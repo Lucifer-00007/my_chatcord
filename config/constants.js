@@ -64,7 +64,12 @@ module.exports = {
 
     // AI Chat Configuration
     AI_CONFIG: {
-        defaultModel: 'google/gemini-pro',
+        apiTypes: {
+            OPENROUTER: 'openrouter',
+            OPENAI: 'openai',
+            CUSTOM: 'custom'
+        },
+        defaultModel: 'google/gemini-2.0-pro-exp-02-05:free',
         initialMessage: 'This is the start of your conversation.',
         defaultTitle: 'New Chat',
         aiResponseError: 'Failed to get AI response',

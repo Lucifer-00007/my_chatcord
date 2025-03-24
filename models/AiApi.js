@@ -40,6 +40,20 @@ const aiApiSchema = new mongoose.Schema({
         type: String,
         default: 'choices[0].message.content',  // Default path for API response
         required: true
+    },
+    modelId: {
+        type: String,
+        required: false // Optional, will use name if not specified
+    },
+    displayName: {  // Add this field for user-friendly display
+        type: String,
+        required: false
+    },
+    apiType: {
+        type: String,
+        required: true,
+        default: 'custom',
+        enum: ['openrouter', 'openai', 'anthropic', 'custom']
     }
 });
 
@@ -56,6 +70,9 @@ aiApiSchema.pre('save', async function(next) {
                 error.code = 'DUPLICATE_NAME';
                 throw error;
             }
+        }
+        if (!this.displayName) {
+            this.displayName = this.name;
         }
         next();
     } catch (err) {

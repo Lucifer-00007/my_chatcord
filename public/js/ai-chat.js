@@ -96,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (msg.role !== 'system') {
                     addMessageToChat(
                         msg.role === 'user' ? 'You' : 'AI',
-                        msg.content
+                        msg.content,
+                        msg.role === 'assistant' ? msg.model : null
                     );
                 }
             });
@@ -181,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Add AI response message
             if (data.response) {
-                addMessageToChat('AI', data.response);
+                addMessageToChat('AI', data.response, data.model);
             } else {
                 throw new Error('No response received from AI');
             }
@@ -204,13 +205,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function addMessageToChat(sender, text) {
+    function addMessageToChat(sender, text, model = null) {
         const div = document.createElement('div');
         div.classList.add('message');
         if (sender === 'AI') div.classList.add('ai-message');
         
+        // Format the model name to be more user-friendly
+        const modelDisplay = model ? ` (${model})` : '';
+        
         div.innerHTML = `
-            <p class="meta">${sender} <span>${new Date().toLocaleTimeString()}</span></p>
+            <p class="meta">${sender}${modelDisplay} <span>${new Date().toLocaleTimeString()}</span></p>
             <p class="text">${text}</p>
         `;
         chatMessages.appendChild(div);
@@ -226,8 +230,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function addThinkingMessage() {
         const div = document.createElement('div');
         div.className = 'message thinking';
+        const selectedApi = document.querySelector('#model-select option:checked');
+        const modelName = selectedApi ? selectedApi.textContent : 'AI';
+        
         div.innerHTML = `
-            <p class="meta">AI <span>${new Date().toLocaleTimeString()}</span></p>
+            <p class="meta">AI (${modelName}) <span>${new Date().toLocaleTimeString()}</span></p>
             <p class="text">
                 <i class="fas fa-circle-notch fa-spin"></i> Thinking...
             </p>

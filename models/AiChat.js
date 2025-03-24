@@ -10,6 +10,10 @@ const aiMessageSchema = new mongoose.Schema({
         enum: ['user', 'assistant', 'system'],
         required: true
     },
+    model: {  // Add model field
+        type: String,
+        required: false  // Optional because user messages don't have a model
+    },
     createdAt: {
         type: Date,
         default: Date.now

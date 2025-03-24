@@ -135,7 +135,8 @@ router.post('/chat', auth, async (req, res) => {
         // Add AI response to messages
         session.messages.push({
             role: 'assistant',
-            content: aiResponse
+            content: aiResponse.content,
+            model: aiResponse.model  // Save model info in message
         });
 
         // Generate title for new sessions
@@ -143,58 +144,69 @@ router.post('/chat', auth, async (req, res) => {
             const titlePrompt = AI_CONFIG.titlePromptTemplate.replace('{message}', message);
             let titleResponse = await getAiResponse(api, titlePrompt);
             
-            // Clean and format the title
-            titleResponse = titleResponse
-                .split(/[^a-zA-Z0-9\s]/) // Split on any non-alphanumeric characters
-                .join(' ')               // Join parts with spaces
-                .replace(/\s+/g, ' ')    // Replace multiple spaces with single space
-                .trim()                  // Remove leading/trailing spaces
-                .split(' ')              // Split into words
-                .slice(0, 3)             // Take only first 3 words
-                .join(' ')               // Join back with spaces
-                .toLowerCase()           // Convert to lowercase
-                .replace(/^\w/, c => c.toUpperCase()); // Capitalize first letter
-            
-            session.title = titleResponse;
+            // Ensure titleResponse.content is a string and handle cleaning
+            if (titleResponse && typeof titleResponse.content === 'string') {
+                let cleanTitle = titleResponse.content
+                    .replace(/["']/g, '') // Remove quotes
+                    .replace(/[^a-zA-Z0-9\s]/g, ' ') // Replace special chars with space
+                    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+                    .trim() // Remove leading/trailing spaces
+                    .split(' ') // Split into words
+                    .slice(0, 3) // Take first 3 words
+                    .join(' '); // Join back with spaces
+
+                // Ensure title is not empty and has proper casing
+                if (cleanTitle) {
+                    cleanTitle = cleanTitle.toLowerCase()
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    session.title = cleanTitle;
+                } else {
+                    session.title = 'New Chat'; // Fallback title
+                }
+            } else {
+                session.title = 'New Chat'; // Fallback title
+            }
         }
 
         await session.save();
 
         res.json({
-            response: aiResponse,
+            response: aiResponse.content,
+            model: aiResponse.model,  // Send model info to client
             session: session
         });
     } catch (err) {
         console.error('Chat error:', err);
         res.status(500).json({ message: err.message || 'Failed to get AI response' });
     }
-});
+}); // Add missing closing parenthesis
 
 async function getAiResponse(api, message) {
     try {
-        const { endpoint, headers, method } = parseCurlCommand(api.curlCommand);
+        const { endpoint, headers, method, body: curlBody } = parseCurlCommand(api.curlCommand);
         
-        // Create request body with message and extract model from headers
-        let requestBody = createRequestBody(api.requestPath, message);
+        // Use exact model ID from curl command without modification
+        const exactModelId = curlBody?.model || api.modelId || api.name;
         
-        // Extract model from headers or use default
-        const modelHeader = headers['HTTP_OR_MODEL'] || headers['or-model'] || headers['model'];
-        if (modelHeader) {
-            requestBody.model = modelHeader;
-        }
+        let requestBody = {
+            model: exactModelId,  // Use exact model ID in request
+            messages: [{
+                role: 'user',
+                content: message
+            }]
+        };
 
-        // Add model to body if not present (OpenRouter requirement)
-        if (!requestBody.model) {
-            requestBody.model = AI_CONFIG.defaultModel; // Default model
-        }
-
-        console.log('Making AI request:', {
+        console.log('Making API request:', {
             endpoint,
             method,
+            apiName: api.name,
+            apiType: api.apiType,
+            modelId: exactModelId,
             requestPath: api.requestPath,
-            responsePath: api.responsePath,
-            requestBody,
-            headers
+            headers,
+            requestBody
         });
 
         const response = await fetch(endpoint, {
@@ -216,7 +228,10 @@ async function getAiResponse(api, message) {
             throw new Error(`No response found at path: ${api.responsePath}`);
         }
 
-        return result;
+        return {
+            content: result,
+            model: data.model || api.name  // Use model from response if available, fallback to API name
+        };
     } catch (err) {
         console.error('AI response error:', {
             error: err.message,
@@ -229,11 +244,7 @@ async function getAiResponse(api, message) {
 
 function createRequestBody(path, message) {
     try {
-        const parts = path.split('.');
-        let current = {};
-        let result = current;
-
-        // Handle special case for OpenRouter's messages array
+        // Special case for OpenRouter's messages array
         if (path === 'messages[0].content') {
             return {
                 messages: [{
@@ -242,6 +253,10 @@ function createRequestBody(path, message) {
                 }]
             };
         }
+
+        const parts = path.split('.');
+        let current = {};
+        let result = current;
 
         for (let i = 0; i < parts.length - 1; i++) {
             const part = parts[i];
