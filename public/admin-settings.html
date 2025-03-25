@@ -160,8 +160,171 @@
 
                 <!-- Text to Image Setup Section -->
                 <div id="text2img" class="admin-section">
-                    <h2>Text to Image Configuration</h2>
-                    <!-- Image generation setup form will go here -->
+                    <div class="section-header">
+                        <div class="section-title">
+                            <h2><i class="fas fa-image"></i> Text to Image Configuration</h2>
+                            <p class="section-description">Configure and manage Text-to-Image settings</p>
+                        </div>
+                        <button id="add-image-api-btn" class="btn btn-primary btn-wide">
+                            <i class="fas fa-plus"></i> Add New API
+                        </button>
+                    </div>
+
+                    <!-- Add Global Settings Section -->
+                    <div class="global-settings-section">
+                        <h3><i class="fas fa-cog"></i> Global Settings</h3>
+                        
+                        <!-- Image Sizes Section -->
+                        <div class="settings-group">
+                            <div class="settings-header">
+                                <h4>Supported Image Sizes</h4>
+                                <button type="button" id="add-size-btn" class="btn btn-secondary">
+                                    <i class="fas fa-plus"></i> Add Size
+                                </button>
+                            </div>
+                            <div id="global-size-options" class="options-grid">
+                                <!-- Sizes will be populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Image Styles Section -->
+                        <div class="settings-group">
+                            <div class="settings-header">
+                                <h4>Available Image Styles</h4>
+                                <button type="button" id="add-style-btn" class="btn btn-secondary">
+                                    <i class="fas fa-plus"></i> Add Style
+                                </button>
+                            </div>
+                            <div id="global-style-options" class="options-grid">
+                                <!-- Styles will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="api-config-section">
+                        <form id="image-api-form" class="admin-form" style="display: none;">
+                            <div class="form-header">
+                                <h3><i class="fas fa-image"></i> New Image API Configuration</h3>
+                                <button type="button" class="btn-close" id="close-image-form">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="image-api-name">API Name</label>
+                                <input type="text" id="image-api-name" class="form-input" required 
+                                    placeholder="e.g. Stable Diffusion">
+                                <small class="form-hint">A unique name to identify this image API</small>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="image-request-path">Request Path</label>
+                                    <input type="text" id="image-request-path" class="form-input" required
+                                        placeholder="e.g., prompt"
+                                        value="prompt">
+                                    <small class="form-hint">Path to insert prompt in request body</small>
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="image-response-path">Response Path</label>
+                                    <input type="text" id="image-response-path" class="form-input" required
+                                        placeholder="e.g., data[0].url"
+                                        value="data[0].url">
+                                    <small class="form-hint">Path to extract image URL from API result</small>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="image-curl-command">
+                                    cURL Command
+                                    <button type="button" class="btn-format" id="format-image-curl">
+                                        <i class="fas fa-code"></i> Format
+                                    </button>
+                                </label>
+                                <div class="code-input-container">
+                                    <textarea id="image-curl-command" class="code-input" rows="6" required 
+                                        placeholder="Paste your cURL command here..."></textarea>
+                                </div>
+                                <small class="form-hint">Paste the complete cURL command from your image API provider</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Supported Sizes</label>
+                                <div id="size-options" class="options-grid">
+                                    <div class="size-option">
+                                        <input type="checkbox" id="size-512" value="512" checked>
+                                        <label for="size-512">512x512</label>
+                                    </div>
+                                    <div class="size-option">
+                                        <input type="checkbox" id="size-768" value="768">
+                                        <label for="size-768">768x768</label>
+                                    </div>
+                                    <div class="size-option">
+                                        <input type="checkbox" id="size-1024" value="1024">
+                                        <label for="size-1024">1024x1024</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Image Styles</label>
+                                <div id="style-options" class="options-grid">
+                                    <div class="style-option">
+                                        <input type="checkbox" id="style-realistic" value="realistic" checked>
+                                        <label for="style-realistic">Realistic</label>
+                                    </div>
+                                    <div class="style-option">
+                                        <input type="checkbox" id="style-artistic" value="artistic">
+                                        <label for="style-artistic">Artistic</label>
+                                    </div>
+                                    <div class="style-option">
+                                        <input type="checkbox" id="style-anime" value="anime">
+                                        <label for="style-anime">Anime</label>
+                                    </div>
+                                    <div class="style-option">
+                                        <input type="checkbox" id="style-3d" value="3d">
+                                        <label for="style-3d">3D Render</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="api-preview">
+                                <div class="preview-header">
+                                    <h4><i class="fas fa-eye"></i> Parsed API Status : </h4>
+                                    <span class="preview-status"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="test-image-api">
+                                    <i class="fas fa-vial"></i> Test API
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save API
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- API List -->
+                        <div class="api-list-section">
+                            <div class="list-header">
+                                <div class="list-title">
+                                    <h3><i class="fas fa-list"></i> Configured Image APIs</h3>
+                                    <span class="image-api-count">0 APIs</span>
+                                </div>
+                                <div class="list-actions">
+                                    <select id="filter-image-apis" class="form-select">
+                                        <option value="all">All APIs</option>
+                                        <option value="active">Active Only</option>
+                                        <option value="inactive">Inactive Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="api-list" id="image-api-list">
+                                <!-- Image APIs will be listed here dynamically -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Text to Voice Setup Section -->

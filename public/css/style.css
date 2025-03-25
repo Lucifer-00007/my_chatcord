@@ -1899,3 +1899,181 @@ input:checked + .toggle-slider:before {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.3);
 }
+
+/* Image API Configuration Styles */
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.size-option,
+.style-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
+}
+
+.size-option:hover,
+.style-option:hover {
+    background: #e9ecef;
+}
+
+.size-option input[type="checkbox"],
+.style-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.size-option label,
+.style-option label {
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+}
+
+/* Preview Image Styles */
+.image-preview {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+/* ...existing code... */
+
+.size-option,
+.style-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 8px;
+}
+
+.size-option .btn-icon,
+.style-option .btn-icon {
+    margin-left: auto;
+    padding: 4px;
+    font-size: 12px;
+    color: var(--error-color);
+}
+
+.options-grid {
+    margin-bottom: 15px;
+}
+
+.options-grid .btn-secondary {
+    margin-top: 10px;
+    padding: 8px;
+    font-size: 14px;
+}
+
+/* ...existing code... */
+
+/* Global Settings Styles */
+.global-settings-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.settings-group {
+    margin-bottom: 25px;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.settings-header h4 {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #333;
+}
+
+#global-size-options,
+#global-style-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.size-item,
+.style-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    gap: 10px;
+}
+
+.size-item label,
+.style-item label {
+    flex: 1;
+    margin: 0;
+}
+
+.item-controls {
+    display: flex;
+    gap: 8px;
+}
+
+/* ...existing code... */
+
+/* Add button styles in global settings */
+.settings-header button {
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ...existing code... */
+
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.option-group label {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.image-options {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.image-options select {
+    min-width: 200px;
+}

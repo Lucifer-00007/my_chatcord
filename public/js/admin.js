@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load dashboard data
     loadDashboardStats();
     initAiApiSection();
+    initImageApiSection();
+    loadGlobalSettings();
 });
 
 async function loadDashboardStats() {
@@ -619,4 +621,622 @@ function showNotification(message, type = 'info') {
             setTimeout(() => notification.remove(), 300);
         }, 3000);
     }, 100);
+}
+
+function initImageApiSection() {
+    // Check for required elements first
+    const imageApiForm = document.getElementById('image-api-form');
+    const imageApiList = document.getElementById('image-api-list');
+    const addImageApiBtn = document.getElementById('add-image-api-btn');
+    const closeImageFormBtn = document.getElementById('close-image-form');
+
+    // Log what elements were found/missing
+    console.log('Image API section initialization:', {
+        form: !!imageApiForm,
+        list: !!imageApiList,
+        addBtn: !!addImageApiBtn,
+        closeBtn: !!closeImageFormBtn
+    });
+
+    if (!imageApiForm || !imageApiList || !addImageApiBtn) {
+        console.error('Required elements for Image API section not found');
+        return;
+    }
+
+    // Show/Hide form handlers
+    addImageApiBtn.addEventListener('click', () => {
+        imageApiForm.style.display = 'block';
+        addImageApiBtn.style.display = 'none';
+    });
+
+    if (closeImageFormBtn) {
+        closeImageFormBtn.addEventListener('click', () => {
+            imageApiForm.style.display = 'none';
+            addImageApiBtn.style.display = 'block';
+            imageApiForm.reset();
+        });
+    }
+
+    // Test Image API button handler
+    document.getElementById('test-image-api').addEventListener('click', async () => {
+        const testBtn = document.getElementById('test-image-api');
+        const curlCommand = document.getElementById('image-curl-command').value;
+        const requestPath = document.getElementById('image-request-path').value;
+        const responsePath = document.getElementById('image-response-path').value;
+        const previewStatus = imageApiForm.querySelector('.preview-status');
+
+        if (!curlCommand || !requestPath || !responsePath) {
+            showNotification('All fields are required', 'error');
+            return;
+        }
+
+        try {
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+            previewStatus.textContent = 'Testing API...';
+
+            const response = await fetch('/api/admin/image-apis/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                },
+                body: JSON.stringify({ 
+                    curlCommand,
+                    requestPath,
+                    responsePath
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                previewStatus.textContent = 'API Test Successful';
+                previewStatus.style.color = 'var(--success-color)';
+                showNotification('Image API test successful', 'success');
+            } else {
+                throw new Error(data.message || 'API test failed');
+            }
+        } catch (err) {
+            previewStatus.textContent = 'API Test Failed';
+            previewStatus.style.color = 'var(--error-color)';
+            showNotification(err.message, 'error');
+        } finally {
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
+            setTimeout(() => {
+                previewStatus.textContent = '';
+            }, 3000);
+        }
+    });
+
+    // Form submission handler
+    imageApiForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        // Get selected sizes and styles
+        const selectedSizes = Array.from(document.querySelectorAll('#size-options input:checked'))
+            .map(input => ({
+                width: parseInt(input.value),
+                height: parseInt(input.value),
+                label: `${input.value}x${input.value}`
+            }));
+
+        const selectedStyles = Array.from(document.querySelectorAll('#style-options input:checked'))
+            .map(input => ({
+                id: input.value,
+                name: input.nextElementSibling.textContent,
+                description: `${input.nextElementSibling.textContent} style`
+            }));
+
+        const formData = {
+            name: document.getElementById('image-api-name').value,
+            curlCommand: document.getElementById('image-curl-command').value,
+            requestPath: document.getElementById('image-request-path').value,
+            responsePath: document.getElementById('image-response-path').value,
+            supportedSizes: selectedSizes,
+            supportedStyles: selectedStyles
+        };
+
+        try {
+            const res = await fetch('/api/admin/image-apis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                imageApiForm.reset();
+                imageApiForm.style.display = 'none';
+                addImageApiBtn.style.display = 'block';
+                showNotification('Image API saved successfully', 'success');
+                await loadImageApiList();
+            } else {
+                showNotification(data.message || 'Failed to save Image API', 'error');
+            }
+        } catch (err) {
+            console.error('Error saving Image API:', err);
+            showNotification('Failed to save Image API', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+        }
+    });
+
+    // Initial load of image APIs
+    loadImageApiList();
+
+    // Add initial loading of global settings when section is initialized
+    loadGlobalSettings();
+}
+
+async function loadImageApiList() {
+    const imageApiList = document.getElementById('image-api-list');
+    const apiCount = document.querySelector('.image-api-count');
+    
+    try {
+        imageApiList.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading Image APIs...</div>';
+        
+        const res = await fetch('/api/admin/image-apis', {
+            headers: {
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            }
+        });
+
+        const apis = await res.json();
+        
+        apiCount.textContent = `${apis.length} API${apis.length !== 1 ? 's' : ''}`;
+        
+        if (!apis.length) {
+            imageApiList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-image"></i>
+                    <p>No Image APIs configured yet</p>
+                    <p class="hint">Click "Add New API" to get started</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render API list
+        imageApiList.innerHTML = apis.map(api => `
+            <div class="api-item" data-id="${api._id}" data-name="${api.name}">
+                <div class="api-details">
+                    <div class="api-name">
+                        <span class="api-status ${api.isActive ? 'active' : 'inactive'}"></span>
+                        ${api.name}
+                    </div>
+                    <div class="api-endpoint">${api.endpoint || 'No endpoint specified'}</div>
+                    <div class="api-paths">
+                        <small>Sizes: ${api.supportedSizes.map(s => s.label).join(', ')}</small> |
+                        <small>Styles: ${api.supportedStyles.map(s => s.name).join(', ')}</small>
+                    </div>
+                </div>
+                <div class="api-controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="api-toggle" data-id="${api._id}" ${api.isActive ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <button class="btn btn-icon edit-api" data-id="${api._id}" data-action="edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-icon btn-danger delete-api" data-id="${api._id}" data-action="delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error loading Image APIs:', err);
+        imageApiList.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Failed to load Image APIs</p>
+                <button onclick="loadImageApiList()" class="btn btn-retry">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+function handleStyleEdit(apiId) {
+    const styleOptions = document.getElementById('style-options');
+    const existingStyles = Array.from(styleOptions.querySelectorAll('.style-option'));
+    const styles = existingStyles.map(styleOpt => ({
+        id: styleOpt.querySelector('input').value,
+        name: styleOpt.querySelector('label').textContent,
+        description: `${styleOpt.querySelector('label').textContent} style`
+    }));
+
+    updateStyles(apiId, styles);
+}
+
+function handleSizeEdit(apiId) {
+    const sizeOptions = document.getElementById('size-options');
+    const existingSizes = Array.from(sizeOptions.querySelectorAll('.size-option'));
+    const sizes = existingSizes.map(sizeOpt => {
+        const value = parseInt(sizeOpt.querySelector('input').value);
+        return {
+            width: value,
+            height: value,
+            label: `${value}x${value}`
+        };
+    });
+
+    updateSizes(apiId, sizes);
+}
+
+async function updateStyles(apiId, styles) {
+    try {
+        const res = await fetch(`/api/admin/image-apis/${apiId}/styles`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            },
+            body: JSON.stringify({ styles })
+        });
+
+        if (!res.ok) throw new Error('Failed to update styles');
+        
+        showNotification('Styles updated successfully', 'success');
+        await loadImageApiList(); // Reload the list to show updates
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+}
+
+async function updateSizes(apiId, sizes) {
+    try {
+        const res = await fetch(`/api/admin/image-apis/${apiId}/sizes`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            },
+            body: JSON.stringify({ sizes })
+        });
+
+        if (!res.ok) throw new Error('Failed to update sizes');
+        
+        showNotification('Sizes updated successfully', 'success');
+        await loadImageApiList(); // Reload the list to show updates
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+}
+
+// Update the image API form
+document.getElementById('image-api-form').addEventListener('submit', async (e) => {
+    // ...existing form submission code...
+
+    // Add buttons for managing sizes and styles
+    const sizeOptions = document.getElementById('size-options');
+    const styleOptions = document.getElementById('style-options');
+    
+    sizeOptions.insertAdjacentHTML('beforeend', `
+        <button type="button" class="btn btn-secondary">
+            <i class="fas fa-plus"></i> Add Size
+        </button>
+    `);
+    
+    styleOptions.insertAdjacentHTML('beforeend', `
+        <button type="button" class="btn btn-secondary">
+            <i class="fas fa-plus"></i> Add Style
+        </button>
+    `);
+});
+
+// Size options management
+document.getElementById('add-size-btn').addEventListener('click', async () => {
+    const sizeInput = prompt('Enter the size (in pixels) e.g., 1280x720:');
+    if (sizeInput) {
+        // Parse width and height from input
+        const [width, height] = sizeInput.split('x').map(num => parseInt(num.trim()));
+        
+        if (width && height) {
+            const sizeName = prompt('Enter the name of the size (e.g., Youtube Thumbnail):');
+            if (sizeName) {
+                const displayName = `${sizeName} (${width}x${height})`;  // Combine name and dimensions
+                const sizeItem = {
+                    id: `${width}x${height}`,
+                    name: displayName,  // Use combined name
+                    value: { width, height },
+                    isActive: true
+                };
+                addGlobalSizeOption(sizeItem);
+                await saveGlobalSettings('sizes');
+            }
+        } else {
+            showNotification('Invalid size format. Use format: width x height', 'error');
+        }
+    }
+});
+
+// Style options management
+document.getElementById('add-style-btn').addEventListener('click', async () => {
+    const styleName = prompt('Enter the style name:');
+    if (styleName) {
+        const styleItem = {
+            id: styleName.toLowerCase().replace(/\s+/g, '-'),
+            name: styleName,
+            value: styleName.toLowerCase(),
+            isActive: true
+        };
+        addGlobalStyleOption(styleItem);
+        await saveGlobalSettings('styles');
+    }
+});
+
+async function loadGlobalSettings() {
+    try {
+        // Load sizes
+        const sizesRes = await fetch('/api/admin/image-settings/sizes', {
+            headers: { 'Authorization': `Bearer ${AuthGuard.getAuthToken()}` }
+        });
+        const sizesData = await sizesRes.json();
+        
+        // Load styles
+        const stylesRes = await fetch('/api/admin/image-settings/styles', {
+            headers: { 'Authorization': `Bearer ${AuthGuard.getAuthToken()}` }
+        });
+        const stylesData = await stylesRes.json();
+
+        console.log('Loaded settings:', { sizes: sizesData.values, styles: stylesData.values });
+
+        // Clear existing options
+        const sizeContainer = document.getElementById('global-size-options');
+        const styleContainer = document.getElementById('global-style-options');
+        
+        if (sizeContainer) sizeContainer.innerHTML = '';
+        if (styleContainer) styleContainer.innerHTML = '';
+
+        // Add saved size options
+        sizesData.values?.forEach(size => {
+            addGlobalSizeOption(size);
+        });
+
+        // Add saved style options
+        stylesData.values?.forEach(style => {
+            addGlobalStyleOption(style);
+        });
+    } catch (err) {
+        console.error('Error loading settings:', err);
+        showNotification('Failed to load settings', 'error');
+    }
+}
+
+async function saveGlobalSettings(type) {
+    try {
+        const values = type === 'sizes' ? 
+            Array.from(document.querySelectorAll('#global-size-options .size-item'))
+                .map(el => {
+                    const label = el.querySelector('label').textContent;
+                    const [name, dimensions] = label.split(' (');
+                    const [width, height] = dimensions.replace(')', '').split('x').map(Number);
+                    
+                    return {
+                        id: `${width}x${height}`,
+                        name: label,
+                        width: width,  // Add direct width property
+                        height: height, // Add direct height property
+                        value: {
+                            width: width,
+                            height: height
+                        },
+                        isActive: el.querySelector('input[type="checkbox"]').checked
+                    };
+                }) :
+            Array.from(document.querySelectorAll('#global-style-options .style-item'))
+                .map(el => ({
+                    id: el.dataset.id,  // Use the data-id attribute
+                    name: el.querySelector('label').textContent,
+                    value: el.dataset.id,  // Use same ID for value
+                    isActive: el.querySelector('input[type="checkbox"]').checked
+                }));
+
+        console.log('Saving settings:', { type, values });
+
+        const res = await fetch(`/api/admin/image-settings/${type}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            },
+            body: JSON.stringify({ values })
+        });
+
+        if (!res.ok) throw new Error('Failed to save settings');
+        const data = await res.json();
+        
+        // Reload the options to show the updated data
+        if (type === 'sizes') {
+            updateSizeOptions(data.values);
+        }
+        
+        showNotification(`${type} updated successfully`, 'success');
+    } catch (err) {
+        console.error('Error saving settings:', err);
+        showNotification(err.message, 'error');
+    }
+}
+
+function collectSizeValues() {
+    return Array.from(document.querySelectorAll('#size-options .size-option'))
+        .map(el => ({
+            id: el.querySelector('input').value,
+            name: `${el.querySelector('input').value}x${el.querySelector('input').value}`,
+            value: {
+                width: parseInt(el.querySelector('input').value),
+                height: parseInt(el.querySelector('input').value)
+            },
+            isActive: el.querySelector('input').checked
+        }));
+}
+
+function collectStyleValues() {
+    return Array.from(document.querySelectorAll('#style-options .style-option'))
+        .map(el => ({
+            id: el.querySelector('input').value,
+            name: el.querySelector('label').textContent,
+            value: el.querySelector('input').value,
+            isActive: el.querySelector('input').checked
+        }));
+}
+
+function updateSizeOptions(sizes) {
+    const container = document.getElementById('size-options');
+    container.innerHTML = sizes.map(size => `
+        <div class="size-option">
+            <input type="checkbox" id="size-${size.id}" value="${size.id}" 
+                   ${size.isActive ? 'checked' : ''}>
+            <label for="size-${size.id}">${size.name}</label>
+            <button type="button" class="btn-icon btn-danger remove-size" 
+                    onclick="removeOption(this, 'sizes')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function updateStyleOptions(styles) {
+    const container = document.getElementById('style-options');
+    container.innerHTML = styles.map(style => `
+        <div class="style-option">
+            <input type="checkbox" id="style-${style.id}" value="${style.id}"
+                   ${style.isActive ? 'checked' : ''}>
+            <label for="style-${style.id}">${style.name}</label>
+            <button type="button" class="btn-icon btn-danger remove-style" 
+                    onclick="removeOption(this, 'styles')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function removeOption(btn, type) {
+    btn.closest('.size-option, .style-option').remove();
+    saveGlobalSettings(type);
+}
+
+function addGlobalSizeOption(size) {
+    const container = document.getElementById('global-size-options');
+    if (!container) return;
+
+    const div = document.createElement('div');
+    div.className = 'size-item';
+    div.dataset.id = size.id;
+    div.innerHTML = `
+        <input type="checkbox" id="size-${size.id}" ${size.isActive ? 'checked' : ''}>
+        <label for="size-${size.id}">${size.name}</label>
+        <div class="item-controls">
+            <button type="button" class="btn-icon" onclick="editSize('${size.id}')">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn-icon btn-danger" onclick="removeGlobalOption(this, 'sizes')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(div);
+}
+
+function addGlobalStyleOption(style) {
+    const container = document.getElementById('global-style-options');
+    if (!container) return;
+
+    const div = document.createElement('div');
+    div.className = 'style-item';
+    div.dataset.id = style.id;
+    div.innerHTML = `
+        <input type="checkbox" id="style-${style.id}" ${style.isActive ? 'checked' : ''}>
+        <label for="style-${style.id}">${style.name}</label>
+        <div class="item-controls">
+            <button type="button" class="btn-icon" onclick="editStyle('${style.id}')">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn-icon btn-danger" onclick="removeGlobalOption(this, 'styles')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(div);
+}
+
+// Update editSize to handle saved sizes correctly
+function editSize(id) {
+    const item = document.querySelector(`.size-item[data-id="${id}"]`);
+    if (!item) return;
+
+    const currentLabel = item.querySelector('label').textContent;
+    const [name, dimensions] = currentLabel.split(' (');
+    const [width, height] = dimensions.replace(')', '').split('x').map(Number);
+
+    const newSize = prompt('Enter new size (e.g., 512x512):', `${width}x${height}`);
+    if (newSize) {
+        const [newWidth, newHeight] = newSize.split('x').map(Number);
+        if (newWidth && newHeight) {
+            const newName = prompt('Enter name for this size:', name) || `${newWidth}x${newHeight}`;
+            item.querySelector('label').textContent = `${newName} (${newWidth}x${newHeight})`;
+            saveGlobalSettings('sizes');
+        }
+    }
+}
+
+function editStyle(id) {
+    const item = document.querySelector(`.style-item[data-id="${id}"]`);
+    if (!item) return;
+
+    const currentLabel = item.querySelector('label').textContent;
+    const newName = prompt('Enter new style name:', currentLabel);
+    
+    if (newName) {
+        // Create new ID from the name
+        const newId = newName.toLowerCase().replace(/\s+/g, '-');
+        
+        // Update both label and dataset
+        item.querySelector('label').textContent = newName;
+        item.dataset.id = newId;  // Update the data-id attribute
+        
+        saveGlobalSettings('styles');
+    }
+}
+
+function removeGlobalOption(btn, type) {
+    const item = btn.closest('.size-item, .style-item');
+    item.remove();
+    saveGlobalSettings(type);
+}
+
+function collectGlobalSizeValues() {
+    return Array.from(document.querySelectorAll('#global-size-options .size-item'))
+        .map(el => {
+            const [width, height] = el.querySelector('label').textContent.split('x').map(Number);
+            return {
+                id: el.dataset.id,
+                name: `${width}x${height}`,
+                value: { width, height },
+                isActive: el.querySelector('input[type="checkbox"]').checked
+            };
+        });
+}
+
+function collectGlobalStyleValues() {
+    return Array.from(document.querySelectorAll('#global-style-options .style-item'))
+        .map(el => ({
+            id: el.dataset.id,
+            name: el.querySelector('label').textContent,
+            value: el.dataset.id,
+            isActive: el.querySelector('input[type="checkbox"]').checked
+        }));
 }

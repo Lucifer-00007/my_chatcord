@@ -5,8 +5,10 @@ const User = require('../models/User');
 const Channel = require('../models/Channel');
 const Message = require('../models/Message');
 const AiApi = require('../models/AiApi');
+const ImageApi = require('../models/ImageApi');
 const fetch = require('node-fetch');
 const { parseCurlCommand } = require('../utils/apiHelpers');  // Add this line
+const ImageSettings = require('../models/ImageSettings'); // Add this line
 
 // Add stats endpoint at the top of the file
 router.get('/stats', auth, async (req, res) => {
@@ -359,6 +361,261 @@ router.put('/ai-apis/:id', auth, async (req, res) => {
     } catch (err) {
         console.error('Error updating API:', err);
         res.status(500).json({ message: 'Failed to update API' });
+    }
+});
+
+// Get all image APIs
+router.get('/image-apis', auth, async (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    try {
+        const apis = await ImageApi.find();
+        res.json(apis);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Add new image API
+router.post('/image-apis', auth, async (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    try {
+        const { name, curlCommand, requestPath, responsePath, supportedSizes, supportedStyles } = req.body;
+
+        // Validate required fields
+        if (!name || !curlCommand || !requestPath || !responsePath) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        const { endpoint, headers, method } = parseCurlCommand(curlCommand);
+
+        const api = new ImageApi({
+            name: name.trim(),
+            endpoint,
+            curlCommand,
+            headers,
+            method,
+            requestPath,
+            responsePath,
+            supportedSizes,
+            supportedStyles
+        });
+
+        await api.save();
+        res.status(201).json(api);
+    } catch (err) {
+        if (err.code === 'DUPLICATE_NAME') {
+            return res.status(409).json({
+                message: 'An Image API with this name already exists',
+                code: 'DUPLICATE_NAME'
+            });
+        }
+        res.status(500).json({ message: 'Failed to save Image API' });
+    }
+});
+
+// Test image API endpoint
+router.post('/image-apis/test', auth, async (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    try {
+        const { curlCommand, requestPath, responsePath } = req.body;
+        
+        if (!curlCommand || !requestPath || !responsePath) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        const { endpoint, headers, method } = parseCurlCommand(curlCommand);
+
+        // Test with a sample prompt
+        const testPrompt = "A beautiful sunset over mountains";
+        const requestBody = { [requestPath]: testPrompt };
+
+        const testResponse = await fetch(endpoint, {
+            method,
+            headers,
+            body: JSON.stringify(requestBody)
+        });
+
+        const data = await testResponse.json();
+
+        if (!testResponse.ok) {
+            throw new Error(data?.error?.message || `API responded with status ${testResponse.status}`);
+        }
+
+        res.json({
+            success: true,
+            message: 'Image API test successful',
+            details: {
+                statusCode: testResponse.status,
+                responseData: data
+            }
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message || 'Failed to test Image API'
+        });
+    }
+});
+
+// Get image styles and sizes
+router.get('/image-apis/:id/config', auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    try {
+        const api = await ImageApi.findById(req.params.id);
+        if (!api) return res.status(404).json({ message: 'API not found' });
+
+        res.json({
+            supportedSizes: api.supportedSizes,
+            supportedStyles: api.supportedStyles
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Update image styles
+router.put('/image-apis/:id/styles', auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    try {
+        const { styles } = req.body;
+        if (!Array.isArray(styles)) {
+            return res.status(400).json({ message: 'Styles must be an array' });
+        }
+
+        const api = await ImageApi.findByIdAndUpdate(
+            req.params.id,
+            { $set: { supportedStyles: styles } },
+            { new: true }
+        );
+
+        if (!api) return res.status(404).json({ message: 'API not found' });
+        res.json(api.supportedStyles);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to update styles' });
+    }
+});
+
+// Update image sizes
+router.put('/image-apis/:id/sizes', auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    try {
+        const { sizes } = req.body;
+        if (!Array.isArray(sizes)) {
+            return res.status(400).json({ message: 'Sizes must be an array' });
+        }
+
+        const api = await ImageApi.findByIdAndUpdate(
+            req.params.id,
+            { $set: { supportedSizes: sizes } },
+            { new: true }
+        );
+
+        if (!api) return res.status(404).json({ message: 'API not found' });
+        res.json(api.supportedSizes);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to update sizes' });
+    }
+});
+
+// Get global image settings
+router.get('/image-settings/:type', auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    try {
+        let settings = await ImageSettings.findOne({ type: req.params.type });
+        if (!settings) {
+            settings = new ImageSettings({
+                type: req.params.type,
+                values: []
+            });
+            await settings.save();
+        }
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Update global image settings
+router.put('/image-settings/:type', auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    try {
+        console.log('Updating settings:', {
+            type: req.params.type,
+            values: req.body.values
+        });
+
+        const { values } = req.body;
+        if (!Array.isArray(values)) {
+            return res.status(400).json({ message: 'Values must be an array' });
+        }
+
+        // Process the values based on type
+        const processedValues = values.map(value => {
+            if (req.params.type === 'sizes') {
+                // Ensure we have valid width and height values
+                const width = parseInt(value.width || value.value?.width);
+                const height = parseInt(value.height || value.value?.height);
+                
+                if (isNaN(width) || isNaN(height)) {
+                    throw new Error('Invalid width or height values');
+                }
+
+                return {
+                    id: value.id || `${width}x${height}`,
+                    name: value.name,
+                    value: { width, height },
+                    isActive: value.isActive !== false
+                };
+            } else {
+                // Process styles with proper ID and value handling
+                const styleId = value.id || value.name.toLowerCase().replace(/\s+/g, '-');
+                return {
+                    id: styleId,
+                    name: value.name,
+                    value: value.value || styleId, // Use ID as value if not provided
+                    isActive: value.isActive !== false
+                };
+            }
+        });
+
+        const settings = await ImageSettings.findOneAndUpdate(
+            { type: req.params.type },
+            { 
+                $set: { 
+                    values: processedValues,
+                    updatedAt: new Date()
+                }
+            },
+            { 
+                new: true,
+                upsert: true
+            }
+        );
+
+        console.log('Settings saved:', {
+            type: req.params.type,
+            count: settings.values.length,
+            values: settings.values
+        });
+
+        res.json(settings);
+    } catch (err) {
+        console.error('Error saving settings:', err);
+        res.status(500).json({ message: err.message || 'Failed to update settings' });
     }
 });
 

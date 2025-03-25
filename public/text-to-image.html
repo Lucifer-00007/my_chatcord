@@ -35,17 +35,16 @@
                 <div class="prompt-section">
                     <textarea id="image-prompt" placeholder="Describe the image you want to generate..." rows="3"></textarea>
                     <div class="image-options">
-                        <select id="image-style">
-                            <option value="realistic">Realistic</option>
-                            <option value="artistic">Artistic</option>
-                            <option value="anime">Anime</option>
-                            <option value="3d">3D Render</option>
-                        </select>
-                        <select id="image-size">
-                            <option value="512">512x512</option>
-                            <option value="768">768x768</option>
-                            <option value="1024">1024x1024</option>
-                        </select>
+                        <div class="option-group">
+                            <label>Available Image Styles</label>
+                            <select id="image-style">
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label>Supported Image Sizes</label>
+                            <select id="image-size">
+                            </select>
+                        </div>
                     </div>
                     <button id="generate-btn" class="btn"><i class="fas fa-magic"></i> Generate</button>
                 </div>
