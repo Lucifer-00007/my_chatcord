@@ -2194,16 +2194,6 @@ input:checked + .toggle-slider:before {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.prompt-section textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--dark-color-a);
-    border-radius: 4px;
-    resize: vertical;
-    min-height: 100px;
-    font-family: inherit;
-}
-
 .image-options {
     display: flex;
     gap: 20px;
@@ -2224,7 +2214,6 @@ input:checked + .toggle-slider:before {
 .option-group select {
     width: 100%;
     padding: 8px;
-    border: 1px solid var(--dark-color-a);
     border-radius: 4px;
     background-color: #fff;
 }
@@ -2348,7 +2337,6 @@ input:checked + .toggle-slider:before {
 .prompt-section textarea {
     width: 100%;
     padding: 15px;
-    border: 1px solid var(--dark-color-a);
     border-radius: 8px;
     resize: vertical;
     min-height: 120px;
@@ -2396,7 +2384,6 @@ input:checked + .toggle-slider:before {
 }
 
 .option-group select:focus {
-    border-color: var(--primary-color);
     outline: none;
     box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
