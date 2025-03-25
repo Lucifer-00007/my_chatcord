@@ -378,21 +378,49 @@ router.get('/image-apis', auth, async (req, res) => {
     }
 });
 
-// Add new image API
+// Update add new image API route
 router.post('/image-apis', auth, async (req, res) => {
     if (!req.user.isAdmin) {
         return res.status(403).json({ message: 'Admin access required' });
     }
 
-    try {
-        const { name, curlCommand, requestPath, responsePath, supportedSizes, supportedStyles } = req.body;
+    console.log('Image API creation request received:', {
+        body: req.body,
+        user: req.user._id
+    });
 
-        // Validate required fields
-        if (!name || !curlCommand || !requestPath || !responsePath) {
-            return res.status(400).json({ message: 'All fields are required' });
+    try {
+        const { name, curlCommand, requestPath, responsePath } = req.body;
+
+        // First check for duplicates explicitly
+        const existingApi = await ImageApi.findOne({ name: name.trim() });
+        if (existingApi) {
+            console.log('Duplicate API name found:', name);
+            return res.status(409).json({
+                message: 'An Image API with this name already exists',
+                code: 'DUPLICATE_NAME'
+            });
         }
 
-        const { endpoint, headers, method } = parseCurlCommand(curlCommand);
+        // Validation
+        if (!name || !curlCommand || !requestPath) {
+            return res.status(400).json({ message: 'Name, cURL command, and request path are required' });
+        }
+
+        // Parse curl command
+        console.log('Parsing cURL command');
+        let parsedCurl;
+        try {
+            parsedCurl = parseCurlCommand(curlCommand);
+            if (!parsedCurl.endpoint) {
+                throw new Error('No endpoint found in cURL command');
+            }
+        } catch (parseErr) {
+            console.error('cURL parsing error:', parseErr);
+            return res.status(400).json({ message: 'Invalid cURL command: ' + parseErr.message });
+        }
+
+        const { endpoint, headers, method } = parsedCurl;
 
         const api = new ImageApi({
             name: name.trim(),
@@ -401,42 +429,114 @@ router.post('/image-apis', auth, async (req, res) => {
             headers,
             method,
             requestPath,
-            responsePath,
-            supportedSizes,
-            supportedStyles
+            responsePath: responsePath || ''
         });
 
         await api.save();
+        
+        console.log('Image API saved successfully:', {
+            id: api._id,
+            name: api.name
+        });
+        
         res.status(201).json(api);
     } catch (err) {
-        if (err.code === 'DUPLICATE_NAME') {
+        console.error('Error saving Image API:', {
+            error: err.message,
+            stack: err.stack,
+            type: err.name
+        });
+
+        // Enhanced error handling
+        if (err.message === 'DUPLICATE_NAME' || err.code === 11000) {
             return res.status(409).json({
                 message: 'An Image API with this name already exists',
                 code: 'DUPLICATE_NAME'
             });
         }
-        res.status(500).json({ message: 'Failed to save Image API' });
+
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({
+                message: 'Invalid Image API data',
+                details: Object.values(err.errors).map(e => e.message)
+            });
+        }
+
+        res.status(500).json({ 
+            message: 'Failed to save Image API',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
     }
 });
 
-// Test image API endpoint
+// Update test image API endpoint
 router.post('/image-apis/test', auth, async (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ message: 'Admin access required' });
-    }
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    console.log('Image API test request received:', {
+        body: req.body,
+        user: req.user._id
+    });
 
     try {
         const { curlCommand, requestPath, responsePath } = req.body;
         
-        if (!curlCommand || !requestPath || !responsePath) {
-            return res.status(400).json({ message: 'All fields are required' });
+        if (!curlCommand || !requestPath) {
+            return res.status(400).json({ message: 'cURL command and request path are required' });
         }
 
-        const { endpoint, headers, method } = parseCurlCommand(curlCommand);
+        // Parse curl command
+        const { endpoint, headers, method, body: parsedBody } = parseCurlCommand(curlCommand);
 
-        // Test with a sample prompt
-        const testPrompt = "A beautiful sunset over mountains";
-        const requestBody = { [requestPath]: testPrompt };
+        // Create request body using nested path
+        let requestBody = JSON.parse(JSON.stringify(parsedBody || {})); // Clone original body structure
+        const testPrompt = "Test message for API validation";
+
+        // Function to set value at nested path
+        function setValueAtPath(obj, path, value) {
+            const parts = path.split('.');
+            let current = obj;
+            
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
+                
+                if (arrayMatch) {
+                    // Handle array notation (e.g., "contents[0]")
+                    const [_, prop, index] = arrayMatch;
+                    const idx = parseInt(index);
+                    
+                    if (i === parts.length - 1) {
+                        // Last part - set the value
+                        if (!current[prop]) current[prop] = [];
+                        current[prop][idx] = value;
+                    } else {
+                        // Create path if doesn't exist
+                        if (!current[prop]) current[prop] = [];
+                        if (!current[prop][idx]) current[prop][idx] = {};
+                        current = current[prop][idx];
+                    }
+                } else {
+                    // Handle regular property
+                    if (i === parts.length - 1) {
+                        current[part] = value;
+                    } else {
+                        if (!current[part]) current[part] = {};
+                        current = current[part];
+                    }
+                }
+            }
+            return obj;
+        }
+
+        // Set the test prompt at the specified path
+        requestBody = setValueAtPath(requestBody, requestPath, testPrompt);
+
+        console.log('Sending test request:', {
+            endpoint,
+            method,
+            requestBody: JSON.stringify(requestBody, null, 2)
+        });
 
         const testResponse = await fetch(endpoint, {
             method,
@@ -444,21 +544,62 @@ router.post('/image-apis/test', auth, async (req, res) => {
             body: JSON.stringify(requestBody)
         });
 
-        const data = await testResponse.json();
-
-        if (!testResponse.ok) {
-            throw new Error(data?.error?.message || `API responded with status ${testResponse.status}`);
-        }
-
-        res.json({
-            success: true,
-            message: 'Image API test successful',
-            details: {
-                statusCode: testResponse.status,
-                responseData: data
-            }
+        console.log('Test response received:', {
+            status: testResponse.status,
+            contentType: testResponse.headers.get('content-type'),
+            ok: testResponse.ok
         });
+
+        // Handle response based on whether a response path is provided
+        if (!responsePath) {
+            // Binary response expected
+            const buffer = await testResponse.buffer();
+            console.log('Binary response received:', {
+                length: buffer.length,
+                contentType: testResponse.headers.get('content-type')
+            });
+
+            if (!buffer.length) {
+                throw new Error('No binary data received');
+            }
+
+            res.json({
+                success: true,
+                message: 'Image API test successful (Binary response)',
+                details: {
+                    statusCode: testResponse.status,
+                    contentType: testResponse.headers.get('content-type'),
+                    dataLength: buffer.length
+                }
+            });
+        } else {
+            // JSON response expected
+            const data = await testResponse.json();
+            console.log('JSON response received:', {
+                dataKeys: Object.keys(data),
+                status: testResponse.status
+            });
+
+            if (!testResponse.ok) {
+                throw new Error(data?.error?.message || `API responded with status ${testResponse.status}`);
+            }
+
+            res.json({
+                success: true,
+                message: 'Image API test successful (JSON response)',
+                details: {
+                    statusCode: testResponse.status,
+                    responseData: data
+                }
+            });
+        }
     } catch (err) {
+        console.error('Test error:', {
+            error: err.message,
+            stack: err.stack,
+            type: err.name
+        });
+
         res.status(400).json({
             success: false,
             message: err.message || 'Failed to test Image API'

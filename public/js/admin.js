@@ -624,125 +624,71 @@ function showNotification(message, type = 'info') {
 }
 
 function initImageApiSection() {
-    // Check for required elements first
-    const imageApiForm = document.getElementById('image-api-form');
-    const imageApiList = document.getElementById('image-api-list');
-    const addImageApiBtn = document.getElementById('add-image-api-btn');
-    const closeImageFormBtn = document.getElementById('close-image-form');
+    // Store all relevant elements in an object to maintain proper scope
+    const elements = {
+        form: document.getElementById('image-api-form'),
+        list: document.getElementById('image-api-list'),
+        addButton: document.getElementById('add-image-api-btn'),
+        closeButton: document.getElementById('close-image-form'),
+        testButton: document.getElementById('test-image-api')
+    };
 
     // Log what elements were found/missing
     console.log('Image API section initialization:', {
-        form: !!imageApiForm,
-        list: !!imageApiList,
-        addBtn: !!addImageApiBtn,
-        closeBtn: !!closeImageFormBtn
+        form: !!elements.form,
+        list: !!elements.list,
+        addBtn: !!elements.addButton,
+        closeBtn: !!elements.closeButton
     });
 
-    if (!imageApiForm || !imageApiList || !addImageApiBtn) {
+    if (!elements.form || !elements.list || !elements.addButton) {
         console.error('Required elements for Image API section not found');
         return;
     }
 
     // Show/Hide form handlers
-    addImageApiBtn.addEventListener('click', () => {
-        imageApiForm.style.display = 'block';
-        addImageApiBtn.style.display = 'none';
+    elements.addButton.addEventListener('click', () => {
+        elements.form.style.display = 'block';
+        elements.addButton.style.display = 'none';
     });
 
-    if (closeImageFormBtn) {
-        closeImageFormBtn.addEventListener('click', () => {
-            imageApiForm.style.display = 'none';
-            addImageApiBtn.style.display = 'block';
-            imageApiForm.reset();
+    if (elements.closeButton) {
+        elements.closeButton.addEventListener('click', () => {
+            elements.form.style.display = 'none';
+            elements.addButton.style.display = 'block';
+            elements.form.reset();
         });
     }
 
-    // Test Image API button handler
-    document.getElementById('test-image-api').addEventListener('click', async () => {
-        const testBtn = document.getElementById('test-image-api');
-        const curlCommand = document.getElementById('image-curl-command').value;
-        const requestPath = document.getElementById('image-request-path').value;
-        const responsePath = document.getElementById('image-response-path').value;
-        const previewStatus = imageApiForm.querySelector('.preview-status');
-
-        if (!curlCommand || !requestPath || !responsePath) {
-            showNotification('All fields are required', 'error');
-            return;
-        }
-
-        try {
-            testBtn.disabled = true;
-            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
-            previewStatus.textContent = 'Testing API...';
-
-            const response = await fetch('/api/admin/image-apis/test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-                },
-                body: JSON.stringify({ 
-                    curlCommand,
-                    requestPath,
-                    responsePath
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                previewStatus.textContent = 'API Test Successful';
-                previewStatus.style.color = 'var(--success-color)';
-                showNotification('Image API test successful', 'success');
-            } else {
-                throw new Error(data.message || 'API test failed');
-            }
-        } catch (err) {
-            previewStatus.textContent = 'API Test Failed';
-            previewStatus.style.color = 'var(--error-color)';
-            showNotification(err.message, 'error');
-        } finally {
-            testBtn.disabled = false;
-            testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
-            setTimeout(() => {
-                previewStatus.textContent = '';
-            }, 3000);
-        }
-    });
-
-    // Form submission handler
-    imageApiForm.addEventListener('submit', async (e) => {
+    // SINGLE form submission handler with proper scoping
+    elements.form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         
-        // Get selected sizes and styles
-        const selectedSizes = Array.from(document.querySelectorAll('#size-options input:checked'))
-            .map(input => ({
-                width: parseInt(input.value),
-                height: parseInt(input.value),
-                label: `${input.value}x${input.value}`
-            }));
-
-        const selectedStyles = Array.from(document.querySelectorAll('#style-options input:checked'))
-            .map(input => ({
-                id: input.value,
-                name: input.nextElementSibling.textContent,
-                description: `${input.nextElementSibling.textContent} style`
-            }));
-
+        console.log('Image API form submission started');
+        
         const formData = {
-            name: document.getElementById('image-api-name').value,
+            name: document.getElementById('image-api-name').value.trim(),
             curlCommand: document.getElementById('image-curl-command').value,
             requestPath: document.getElementById('image-request-path').value,
-            responsePath: document.getElementById('image-response-path').value,
-            supportedSizes: selectedSizes,
-            supportedStyles: selectedStyles
+            responsePath: document.getElementById('image-response-path').value || ''
         };
 
+        console.log('Form data prepared:', {
+            name: formData.name,
+            requestPath: formData.requestPath,
+            responsePath: formData.responsePath,
+            curlLength: formData.curlCommand?.length || 0
+        });
+
         try {
+            if (!formData.name || !formData.curlCommand || !formData.requestPath) {
+                throw new Error('Name, cURL command, and request path are required');
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
             const res = await fetch('/api/admin/image-apis', {
                 method: 'POST',
                 headers: {
@@ -753,30 +699,89 @@ function initImageApiSection() {
             });
 
             const data = await res.json();
+
             if (res.ok) {
-                imageApiForm.reset();
-                imageApiForm.style.display = 'none';
-                addImageApiBtn.style.display = 'block';
+                elements.form.reset();
+                elements.form.style.display = 'none';
+                elements.addButton.style.display = 'block';
                 showNotification('Image API saved successfully', 'success');
                 await loadImageApiList();
             } else {
-                showNotification(data.message || 'Failed to save Image API', 'error');
+                throw new Error(data.message || 'Failed to save Image API');
             }
         } catch (err) {
             console.error('Error saving Image API:', err);
-            showNotification('Failed to save Image API', 'error');
+            showNotification(err.message, 'error');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
         }
     });
 
+    // Test Image API button handler
+    if (elements.testButton) {
+        elements.testButton.addEventListener('click', async () => {
+            const testBtn = elements.testButton;
+            const curlCommand = document.getElementById('image-curl-command').value;
+            const requestPath = document.getElementById('image-request-path').value;
+            const responsePath = document.getElementById('image-response-path').value;
+            const previewStatus = elements.form.querySelector('.preview-status');
+        
+            // Update validation to make responsePath optional
+            if (!curlCommand || !requestPath) {
+                showNotification('cURL command and request path are required', 'error');
+                return;
+            }
+        
+            try {
+                testBtn.disabled = true;
+                testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+                previewStatus.textContent = 'Testing API...';
+        
+                const response = await fetch('/api/admin/image-apis/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                    },
+                    body: JSON.stringify({ 
+                        curlCommand,
+                        requestPath,
+                        responsePath  // This will be empty string when blank
+                    })
+                });
+        
+                const data = await response.json();
+        
+                if (response.ok) {
+                    previewStatus.textContent = 'API Test Successful';
+                    previewStatus.style.color = 'var(--success-color)';
+                    showNotification('Image API test successful', 'success');
+                } else {
+                    throw new Error(data.message || 'API test failed');
+                }
+            } catch (err) {
+                previewStatus.textContent = 'API Test Failed';
+                previewStatus.style.color = 'var(--error-color)';
+                showNotification(err.message, 'error');
+            } finally {
+                testBtn.disabled = false;
+                testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
+                setTimeout(() => {
+                    previewStatus.textContent = '';
+                }, 3000);
+            }
+        });
+    }
+
     // Initial load of image APIs
     loadImageApiList();
-
-    // Add initial loading of global settings when section is initialized
     loadGlobalSettings();
 }
+
+// IMPORTANT: Remove these duplicate handlers:
+// - document.getElementById('image-api-form').addEventListener('submit', ...)
+// - imageApiForm.addEventListener('submit', ...)
 
 async function loadImageApiList() {
     const imageApiList = document.getElementById('image-api-list');
@@ -816,8 +821,8 @@ async function loadImageApiList() {
                     </div>
                     <div class="api-endpoint">${api.endpoint || 'No endpoint specified'}</div>
                     <div class="api-paths">
-                        <small>Sizes: ${api.supportedSizes.map(s => s.label).join(', ')}</small> |
-                        <small>Styles: ${api.supportedStyles.map(s => s.name).join(', ')}</small>
+                        <small>Sizes: ${(api.supportedSizes || []).map(s => s.label).join(', ') || 'None'}</small> |
+                        <small>Styles: ${(api.supportedStyles || []).map(s => s.name).join(', ') || 'None'}</small>
                     </div>
                 </div>
                 <div class="api-controls">
@@ -915,68 +920,6 @@ async function updateSizes(apiId, sizes) {
         showNotification(err.message, 'error');
     }
 }
-
-// Update the image API form
-document.getElementById('image-api-form').addEventListener('submit', async (e) => {
-    // ...existing form submission code...
-
-    // Add buttons for managing sizes and styles
-    const sizeOptions = document.getElementById('size-options');
-    const styleOptions = document.getElementById('style-options');
-    
-    sizeOptions.insertAdjacentHTML('beforeend', `
-        <button type="button" class="btn btn-secondary">
-            <i class="fas fa-plus"></i> Add Size
-        </button>
-    `);
-    
-    styleOptions.insertAdjacentHTML('beforeend', `
-        <button type="button" class="btn btn-secondary">
-            <i class="fas fa-plus"></i> Add Style
-        </button>
-    `);
-});
-
-// Size options management
-document.getElementById('add-size-btn').addEventListener('click', async () => {
-    const sizeInput = prompt('Enter the size (in pixels) e.g., 1280x720:');
-    if (sizeInput) {
-        // Parse width and height from input
-        const [width, height] = sizeInput.split('x').map(num => parseInt(num.trim()));
-        
-        if (width && height) {
-            const sizeName = prompt('Enter the name of the size (e.g., Youtube Thumbnail):');
-            if (sizeName) {
-                const displayName = `${sizeName} (${width}x${height})`;  // Combine name and dimensions
-                const sizeItem = {
-                    id: `${width}x${height}`,
-                    name: displayName,  // Use combined name
-                    value: { width, height },
-                    isActive: true
-                };
-                addGlobalSizeOption(sizeItem);
-                await saveGlobalSettings('sizes');
-            }
-        } else {
-            showNotification('Invalid size format. Use format: width x height', 'error');
-        }
-    }
-});
-
-// Style options management
-document.getElementById('add-style-btn').addEventListener('click', async () => {
-    const styleName = prompt('Enter the style name:');
-    if (styleName) {
-        const styleItem = {
-            id: styleName.toLowerCase().replace(/\s+/g, '-'),
-            name: styleName,
-            value: styleName.toLowerCase(),
-            isActive: true
-        };
-        addGlobalStyleOption(styleItem);
-        await saveGlobalSettings('styles');
-    }
-});
 
 async function loadGlobalSettings() {
     try {

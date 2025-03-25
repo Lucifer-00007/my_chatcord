@@ -5,7 +5,7 @@ const imageApiSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        unique: true
+        unique: true  // Add unique constraint
     },
     endpoint: {
         type: String,
@@ -33,53 +33,32 @@ const imageApiSchema = new mongoose.Schema({
     },
     requestPath: {
         type: String,
-        default: 'prompt',
         required: true
     },
     responsePath: {
-        type: String,
-        default: 'data[0].url',
-        required: true
-    },
-    modelId: {
         type: String,
         required: false
     },
     displayName: {
         type: String,
         required: false
-    },
-    supportedSizes: [{
-        width: Number,
-        height: Number,
-        label: String
-    }],
-    supportedStyles: [{
-        id: String,
-        name: String,
-        description: String
-    }]
+    }
 });
 
-imageApiSchema.pre('save', async function(next) {
-    try {
-        if (this.isModified('name')) {
-            const exists = await this.constructor.findOne({
-                _id: { $ne: this._id },
-                name: this.name
-            });
-            if (exists) {
-                const error = new Error('Image API with this name already exists');
-                error.code = 'DUPLICATE_NAME';
-                throw error;
-            }
-        }
-        if (!this.displayName) {
-            this.displayName = this.name;
-        }
-        next();
-    } catch (err) {
-        next(err);
+// Just update displayName if not set
+imageApiSchema.pre('save', function(next) {
+    if (!this.displayName) {
+        this.displayName = this.name;
+    }
+    next();
+});
+
+// Add error handling middleware for duplicate key errors
+imageApiSchema.post('save', function(error, doc, next) {
+    if (error.name === 'MongoServerError' && error.code === 11000) {
+        next(new Error('DUPLICATE_NAME'));
+    } else {
+        next(error);
     }
 });
 

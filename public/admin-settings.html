@@ -227,10 +227,11 @@
                                 </div>
                                 <div class="form-group flex-1">
                                     <label for="image-response-path">Response Path</label>
-                                    <input type="text" id="image-response-path" class="form-input" required
+                                    <input type="text" id="image-response-path" class="form-input"
                                         placeholder="e.g., data[0].url"
                                         value="data[0].url">
-                                    <small class="form-hint">Path to extract image URL from API result</small>
+                                    <small class="form-hint">Path to extract image URL from API result.</small>
+                                    <small class="form-hint">Keep this value blank if API give Hex image in response.</small>
                                 </div>
                             </div>
 
@@ -246,46 +247,6 @@
                                         placeholder="Paste your cURL command here..."></textarea>
                                 </div>
                                 <small class="form-hint">Paste the complete cURL command from your image API provider</small>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Supported Sizes</label>
-                                <div id="size-options" class="options-grid">
-                                    <div class="size-option">
-                                        <input type="checkbox" id="size-512" value="512" checked>
-                                        <label for="size-512">512x512</label>
-                                    </div>
-                                    <div class="size-option">
-                                        <input type="checkbox" id="size-768" value="768">
-                                        <label for="size-768">768x768</label>
-                                    </div>
-                                    <div class="size-option">
-                                        <input type="checkbox" id="size-1024" value="1024">
-                                        <label for="size-1024">1024x1024</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Image Styles</label>
-                                <div id="style-options" class="options-grid">
-                                    <div class="style-option">
-                                        <input type="checkbox" id="style-realistic" value="realistic" checked>
-                                        <label for="style-realistic">Realistic</label>
-                                    </div>
-                                    <div class="style-option">
-                                        <input type="checkbox" id="style-artistic" value="artistic">
-                                        <label for="style-artistic">Artistic</label>
-                                    </div>
-                                    <div class="style-option">
-                                        <input type="checkbox" id="style-anime" value="anime">
-                                        <label for="style-anime">Anime</label>
-                                    </div>
-                                    <div class="style-option">
-                                        <input type="checkbox" id="style-3d" value="3d">
-                                        <label for="style-3d">3D Render</label>
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="api-preview">

@@ -70,7 +70,7 @@ const cspConfig = {
         scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
         fontSrc: ["'self'", "cdnjs.cloudflare.com", "fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:", "*"],
+        imgSrc: ["'self'", "data:", "blob:", "https:", "*"],
         connectSrc: ["'self'", "ws:", "wss:"]
     }
 };
@@ -133,6 +133,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/channels', require('./routes/channels'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
 app.use('/api/ai', authMiddleware, require('./routes/ai')); // Add this line
+app.use('/api/images', authMiddleware, require('./routes/images')); // Add this line
 
 const botName = BOT_NAME;
 
