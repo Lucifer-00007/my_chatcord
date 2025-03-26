@@ -1183,3 +1183,55 @@ function collectGlobalStyleValues() {
             isActive: el.querySelector('input[type="checkbox"]').checked
         }));
 }
+
+async function saveVoiceSettings(type) {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        const settings = {
+            type,
+            range: {
+                min: parseFloat(document.getElementById(`${type}-min`).value),
+                max: parseFloat(document.getElementById(`${type}-max`).value),
+                default: parseFloat(document.getElementById(`${type}-default`).value),
+                step: parseFloat(document.getElementById(`${type}-step`).value)
+            }
+        };
+
+        // Validate values
+        if (settings.range.min >= settings.range.max) {
+            throw new Error('Minimum value must be less than maximum value');
+        }
+
+        if (settings.range.default < settings.range.min || 
+            settings.range.default > settings.range.max) {
+            throw new Error('Default value must be between min and max values');
+        }
+
+        const res = await fetch(`/api/admin/voice-settings/${type}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            },
+            body: JSON.stringify(settings)
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.message || 'Failed to save settings');
+        }
+
+        showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} settings saved successfully`, 'success');
+    } catch (err) {
+        console.error(`Error saving ${type} settings:`, err);
+        showNotification(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}

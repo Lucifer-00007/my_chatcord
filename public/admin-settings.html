@@ -290,8 +290,219 @@
 
                 <!-- Text to Voice Setup Section -->
                 <div id="text2voice" class="admin-section">
-                    <h2>Text to Voice Configuration</h2>
-                    <!-- Voice generation setup form will go here -->
+                    <div class="section-header">
+                        <div class="section-title">
+                            <h2><i class="fas fa-microphone-alt"></i> Text to Voice Configuration</h2>
+                            <p class="section-description">Configure voice generation settings and APIs</p>
+                        </div>
+                        <button id="add-voice-api-btn" class="btn btn-primary btn-wide">
+                            <i class="fas fa-plus"></i> Add New API
+                        </button>
+                    </div>
+
+                    <!-- Global Voice Settings Section -->
+                    <div class="global-settings-section">
+                        <h3><i class="fas fa-sliders-h"></i> Global Settings</h3>
+                        
+                        <!-- Speed Settings -->
+                        <div class="settings-group">
+                            <div class="settings-header">
+                                <h4>Voice Speed Range</h4>
+                            </div>
+                            <div class="range-settings">
+                                <div class="range-item">
+                                    <label>Minimum Speed</label>
+                                    <input type="number" id="speed-min" value="0.5" step="0.1" min="0.1" max="0.9">
+                                </div>
+                                <div class="range-item">
+                                    <label>Maximum Speed</label>
+                                    <input type="number" id="speed-max" value="2.0" step="0.1" min="1.1" max="3.0">
+                                </div>
+                                <div class="range-item">
+                                    <label>Default Speed</label>
+                                    <input type="number" id="speed-default" value="1.0" step="0.1" min="0.5" max="2.0">
+                                </div>
+                                <div class="range-item">
+                                    <label>Step Size</label>
+                                    <input type="number" id="speed-step" value="0.1" step="0.1" min="0.1" max="0.5">
+                                </div>
+                            </div>
+                            <div class="settings-actions">
+                                <button onclick="saveVoiceSettings('speed')" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Speed Settings
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Pitch Settings -->
+                        <div class="settings-group">
+                            <div class="settings-header">
+                                <h4>Voice Pitch Range</h4>
+                            </div>
+                            <div class="range-settings">
+                                <div class="range-item">
+                                    <label>Minimum Pitch</label>
+                                    <input type="number" id="pitch-min" value="0.5" step="0.1" min="0.1" max="0.9">
+                                </div>
+                                <div class="range-item">
+                                    <label>Maximum Pitch</label>
+                                    <input type="number" id="pitch-max" value="2.0" step="0.1" min="1.1" max="3.0">
+                                </div>
+                                <div class="range-item">
+                                    <label>Default Pitch</label>
+                                    <input type="number" id="pitch-default" value="1.0" step="0.1" min="0.5" max="2.0">
+                                </div>
+                                <div class="range-item">
+                                    <label>Step Size</label>
+                                    <input type="number" id="pitch-step" value="0.1" step="0.1" min="0.1" max="0.5">
+                                </div>
+                            </div>
+                            <div class="settings-actions">
+                                <button onclick="saveVoiceSettings('pitch')" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Pitch Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice API Configuration -->
+                    <div class="api-config-section">
+                        <form id="voice-api-form" class="admin-form" style="display: none;">
+                            <div class="form-header">
+                                <h3><i class="fas fa-microphone"></i> New Voice API Configuration</h3>
+                                <button type="button" class="btn-close" id="close-voice-form">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="voice-api-name">API Name</label>
+                                <input type="text" id="voice-api-name" class="form-input" required>
+                                <small class="form-hint">A unique name to identify this voice API</small>
+                            </div>
+
+                            <!-- API Type Selection -->
+                            <div class="form-group">
+                                <label for="voice-api-type">API Type</label>
+                                <select id="voice-api-type" class="form-select" required>
+                                    <option value="direct">Direct (Single Request)</option>
+                                    <option value="hearing">Hearing API (Token Required)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="voice-response-type">Response Type</label>
+                                <select id="voice-response-type" class="form-select" required>
+                                    <option value="binary">Binary Audio</option>
+                                    <option value="base64">Base64 Encoded</option>
+                                    <option value="decoded_base64">Base64 (Already Decoded)</option>
+                                    <option value="url">Audio URL</option>
+                                </select>
+                            </div>
+
+                            <!-- Authentication Section (for Hearing API) -->
+                            <div id="auth-section" class="form-section" style="display: none;">
+                                <h4>Authentication Details</h4>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="auth-endpoint">Login Endpoint</label>
+                                        <input type="text" id="auth-endpoint" class="form-input">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="token-path">Token Path in Response</label>
+                                        <input type="text" id="token-path" class="form-input"
+                                               placeholder="e.g., data.access_token">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="auth-username">Username</label>
+                                        <input type="text" id="auth-username" class="form-input">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="auth-password">Password</label>
+                                        <input type="password" id="auth-password" class="form-input">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="voice-request-path">Request Path</label>
+                                    <input type="text" id="voice-request-path" class="form-input" required
+                                           placeholder="e.g., input.text">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="voice-response-path">Response Path</label>
+                                    <input type="text" id="voice-response-path" class="form-input"
+                                           placeholder="e.g., audio.data">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="voice-curl-command">
+                                    cURL Command
+                                    <button type="button" class="btn-format" id="format-voice-curl">
+                                        <i class="fas fa-code"></i> Format
+                                    </button>
+                                </label>
+                                <div class="code-input-container">
+                                    <textarea id="voice-curl-command" class="code-input" rows="6" required></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Voice Configuration -->
+                            <div class="voice-config-section">
+                                <h4>Voice Configuration</h4>
+                                <div id="voice-list" class="voice-list">
+                                    <!-- Voice entries will be added here -->
+                                </div>
+                                <button type="button" id="add-voice-btn" class="btn btn-secondary">
+                                    <i class="fas fa-plus"></i> Add Voice
+                                </button>
+                            </div>
+
+                            <!-- Language Configuration -->
+                            <div class="language-config-section">
+                                <h4>Language Configuration</h4>
+                                <div id="language-list" class="language-list">
+                                    <!-- Language entries will be added here -->
+                                </div>
+                                <button type="button" id="add-language-btn" class="btn btn-secondary">
+                                    <i class="fas fa-plus"></i> Add Language
+                                </button>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="test-voice-api">
+                                    <i class="fas fa-vial"></i> Test API
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save API
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- API List -->
+                        <div class="api-list-section">
+                            <div class="list-header">
+                                <div class="list-title">
+                                    <h3><i class="fas fa-list"></i> Configured Voice APIs</h3>
+                                    <span class="voice-api-count">0 APIs</span>
+                                </div>
+                                <div class="list-actions">
+                                    <select id="filter-voice-apis" class="form-select">
+                                        <option value="all">All APIs</option>
+                                        <option value="active">Active Only</option>
+                                        <option value="inactive">Inactive Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="api-list" id="voice-api-list">
+                                <!-- Voice APIs will be listed here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Other sections will be added similarly -->

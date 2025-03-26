@@ -1612,7 +1612,7 @@ input:checked+.toggle-slider:before {
     font-weight: 900;
     position: absolute;
     right: 12px; /* From later definition */
-    top: 50%;
+    top: 45%;
     transform: translateY(-50%);
     pointer-events: none;
     color: var(--dark-color); /* From later definition */
@@ -1859,6 +1859,89 @@ input:checked+.toggle-slider:before {
     text-overflow: ellipsis;
 }
 
+/* Voice Configuration Styles */
+.range-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 15px;
+    background: var(--light-color);
+    border-radius: 8px;
+}
+
+.range-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.range-item label {
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.range-item input {
+    padding: 8px;
+    border: 1px solid var(--dark-color-a);
+    border-radius: 4px;
+    width: 100%;
+}
+
+.voice-config-section,
+.language-config-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--light-color);
+    border-radius: 8px;
+}
+
+.voice-list,
+.language-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.voice-item,
+.language-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background: white;
+    border: 1px solid var(--dark-color-a);
+    border-radius: 4px;
+}
+
+#auth-section {
+    background: var(--light-color);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+/* Voice API List Styles */
+#voice-api-list .api-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--light-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.voice-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.voice-languages {
+    font-size: 0.9em;
+    color: var(--dark-color-a);
+}
 
 /* Media Queries */
 @media (max-width: 768px) {
