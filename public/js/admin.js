@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAiApiSection();
     initImageApiSection();
     loadGlobalSettings();
+    loadVoiceSettings(); // Add this line
 });
 
 async function loadDashboardStats() {
@@ -1233,5 +1234,208 @@ async function saveVoiceSettings(type) {
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+
+async function loadVoiceSettings() {
+    try {
+        // Load speed settings
+        const speedRes = await fetch('/api/admin/voice-settings/speed', {
+            headers: { 'Authorization': `Bearer ${AuthGuard.getAuthToken()}` }
+        });
+        const speedData = await speedRes.json();
+        
+        // Load pitch settings
+        const pitchRes = await fetch('/api/admin/voice-settings/pitch', {
+            headers: { 'Authorization': `Bearer ${AuthGuard.getAuthToken()}` }
+        });
+        const pitchData = await pitchRes.json();
+
+        // Update speed inputs
+        if (speedData.range) {
+            document.getElementById('speed-min').value = speedData.range.min;
+            document.getElementById('speed-max').value = speedData.range.max;
+            document.getElementById('speed-default').value = speedData.range.default;
+            document.getElementById('speed-step').value = speedData.range.step;
+        }
+
+        // Update pitch inputs
+        if (pitchData.range) {
+            document.getElementById('pitch-min').value = pitchData.range.min;
+            document.getElementById('pitch-max').value = pitchData.range.max;
+            document.getElementById('pitch-default').value = pitchData.range.default;
+            document.getElementById('pitch-step').value = pitchData.range.step;
+        }
+    } catch (err) {
+        console.error('Error loading voice settings:', err);
+        showNotification('Failed to load voice settings', 'error');
+    }
+}
+
+// Voice API Form Handling
+const voiceElements = {
+    form: document.getElementById('voice-api-form'),
+    addButton: document.getElementById('add-voice-api-btn'),
+    closeButton: document.getElementById('close-voice-form'),
+    apiTypeSelect: document.getElementById('voice-api-type'),
+    authSection: document.getElementById('auth-section')
+};
+
+if (voiceElements.addButton && voiceElements.form) {
+    // Show/Hide form handlers
+    voiceElements.addButton.addEventListener('click', () => {
+        voiceElements.form.style.display = 'block';
+        voiceElements.addButton.style.display = 'none';
+    });
+
+    if (voiceElements.closeButton) {
+        voiceElements.closeButton.addEventListener('click', () => {
+            voiceElements.form.style.display = 'none';
+            voiceElements.addButton.style.display = 'block';
+            voiceElements.form.reset();
+            if (voiceElements.authSection) {
+                voiceElements.authSection.style.display = 'none';
+            }
+        });
+    }
+
+    // Toggle authentication section based on API type
+    if (voiceElements.apiTypeSelect) {
+        voiceElements.apiTypeSelect.addEventListener('change', () => {
+            if (voiceElements.authSection) {
+                voiceElements.authSection.style.display = 
+                    voiceElements.apiTypeSelect.value === 'hearing' ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Form submission handler
+    voiceElements.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            const formData = {
+                name: document.getElementById('voice-api-name').value.trim(),
+                apiType: document.getElementById('voice-api-type').value,
+                responseType: document.getElementById('voice-response-type').value,
+                curlCommand: document.getElementById('voice-curl-command').value,
+                requestPath: document.getElementById('voice-request-path').value,
+                responsePath: document.getElementById('voice-response-path').value || '',
+                auth: voiceElements.apiTypeSelect.value === 'hearing' ? {
+                    type: 'hearing',
+                    loginEndpoint: document.getElementById('auth-endpoint').value,
+                    tokenPath: document.getElementById('token-path').value,
+                    credentials: {
+                        username: document.getElementById('auth-username').value,
+                        password: document.getElementById('auth-password').value
+                    }
+                } : { type: 'none' }
+            };
+
+            const res = await fetch('/api/admin/voice-apis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'Failed to save Voice API');
+            }
+
+            showNotification('Voice API saved successfully', 'success');
+            voiceElements.form.reset();
+            voiceElements.form.style.display = 'none';
+            voiceElements.addButton.style.display = 'block';
+            if (voiceElements.authSection) {
+                voiceElements.authSection.style.display = 'none';
+            }
+            await loadVoiceApiList();
+        } catch (err) {
+            console.error('Error saving Voice API:', err);
+            showNotification(err.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+        }
+    });
+}
+
+async function loadVoiceApiList() {
+    const voiceApiList = document.getElementById('voice-api-list');
+    const apiCount = document.querySelector('.voice-api-count');
+    
+    try {
+        voiceApiList.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading Voice APIs...</div>';
+        
+        const res = await fetch('/api/admin/voice-apis', {
+            headers: {
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            }
+        });
+
+        const apis = await res.json();
+        
+        apiCount.textContent = `${apis.length} API${apis.length !== 1 ? 's' : ''}`;
+        
+        if (!apis.length) {
+            voiceApiList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-microphone"></i>
+                    <p>No Voice APIs configured yet</p>
+                    <p class="hint">Click "Add New API" to get started</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render API list
+        voiceApiList.innerHTML = apis.map(api => `
+            <div class="api-item" data-id="${api._id}" data-name="${api.name}">
+                <div class="api-details">
+                    <div class="api-name">
+                        <span class="api-status ${api.isActive ? 'active' : 'inactive'}"></span>
+                        ${api.name}
+                    </div>
+                    <div class="api-type">${api.apiType}</div>
+                    <div class="api-info">
+                        <small>Response: ${api.responseType}</small>
+                        ${api.apiType === 'hearing' ? '<small>| Authentication: Required</small>' : ''}
+                    </div>
+                </div>
+                <div class="api-controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="api-toggle" 
+                               data-id="${api._id}" ${api.isActive ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <button class="btn btn-icon" onclick="editVoiceApi('${api._id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-icon btn-danger" onclick="deleteVoiceApi('${api._id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error loading Voice APIs:', err);
+        voiceApiList.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Failed to load Voice APIs</p>
+                <button onclick="loadVoiceApiList()" class="btn btn-retry">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        `;
     }
 }

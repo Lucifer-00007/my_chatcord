@@ -2025,3 +2025,8 @@ input:checked+.toggle-slider:before {
         display: none;
     }
 }
+
+/* Voice Configuration Styles */
+#text2voice .global-settings-section > h3 {
+    margin-bottom: 20px;
+}

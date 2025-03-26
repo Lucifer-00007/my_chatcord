@@ -1,110 +1,140 @@
-# ChatCord - Real-time Chat Application
+# ChatCord - Real-time Chat Application with AI Features
 
-A secure, real-time chat application built with Node.js, Express, Socket.IO, and Redis, featuring user authentication and room-based messaging.
+A secure, real-time chat application built with Node.js and Express, featuring user authentication, room-based messaging, and integrated AI capabilities (Chat, Text-to-Image, Text-to-Voice).
 
 ## Features
 
-- JWT-based authentication with secure cookies
-- Real-time messaging with Socket.IO
-- Redis-backed message handling
-- MongoDB data persistence
+- JWT-based authentication
+- Real-time messaging (likely using Socket.IO, needs verification)
+- MongoDB data persistence for users, channels, messages, and AI settings
 - Room-based chat system
-- User presence tracking
-- Mobile-responsive design
-- Password visibility toggle
-- Content Security Policy (CSP)
-- Rate limiting protection
-- Environment-based security settings
+- User presence tracking (potential, needs verification)
+- **AI Chat Integration:** Interact with configurable AI models.
+- **Text-to-Image Generation:** Generate images from text prompts using configurable APIs.
+- **Text-to-Voice Synthesis:** Convert text to speech using configurable APIs.
+- **Admin Settings Panel:** Configure AI API keys and potentially other settings.
+- Mobile-responsive design (assumed from modern web practices)
+- Password visibility toggle (likely in frontend JS)
+- Security features (CSP, Rate Limiting - needs verification based on implementation)
+- Environment-based configuration
 
 ## Project Structure
 
 ```
 chatcord/
-├── config/                # Configuration files
-│   └── db.js             # Database configuration
-├── middleware/           # Middleware functions
-│   └── auth.js          # Authentication middleware
-├── models/              # Database models
-│   ├── Channel.js      # Channel model
-│   ├── Message.js      # Message model
-│   └── User.js         # User model
-├── public/             # Static files
-│   ├── assets/         # Static assets (images, icons)
-│   │   └── favicon.ico # Site favicon
-│   ├── css/           # Stylesheets
-│   │   └── style.css  # Main stylesheet
-│   ├── js/            # Client-side JavaScript
-│   │   ├── auth.js    # Authentication logic
-│   │   ├── auth-guard.js # Auth protection
-│   │   ├── main.js    # Chat main logic
-│   │   └── selectRoom.js # Room selection logic
-│   ├── chat.html      # Chat interface
-│   ├── login.html     # Login page
-│   ├── register.html  # Registration page
-│   └── selectRoom.html # Room selection page
-├── routes/             # API routes
-│   ├── auth.js        # Authentication routes
-│   └── channels.js    # Channel management routes
-├── utils/             # Utility functions
-│   ├── jwt.js        # JWT handling
-│   ├── messages.js   # Message formatting
-│   └── users.js      # User management
-├── .env              # Environment variables
-├── .env.template     # Environment template
-├── .gitignore       # Git ignore rules
-├── package.json     # Project dependencies
-└── server.js        # Main application file
+├── config/                 # Configuration files
+│   ├── constants.js        # Application constants
+│   ├── db.js               # Database connection setup (MongoDB)
+│   └── init.js             # Initialization logic
+├── middleware/             # Express middleware
+│   └── auth.js             # Authentication middleware (JWT verification)
+├── models/                 # Mongoose models for MongoDB
+│   ├── AiApi.js            # AI API configuration model
+│   ├── AiChat.js           # AI Chat history model (potential)
+│   ├── Channel.js          # Chat channel model
+│   ├── ImageApi.js         # Image API configuration model
+│   ├── ImageSettings.js    # User image generation settings (potential)
+│   ├── Message.js          # Chat message model
+│   ├── User.js             # User model
+│   ├── VoiceApi.js         # Voice API configuration model
+│   └── VoiceSettings.js    # User voice generation settings (potential)
+├── public/                 # Static frontend assets
+│   ├── assets/             # Images, icons, etc.
+│   │   └── favicon.ico
+│   ├── css/                # CSS stylesheets
+│   │   └── style.css
+│   ├── js/                 # Client-side JavaScript
+│   │   ├── admin.js        # Admin settings page logic
+│   │   ├── ai-chat.js      # AI chat page logic
+│   │   ├── auth-guard.js   # Protects frontend routes
+│   │   ├── auth.js         # Login/Register logic
+│   │   ├── main.js         # Main chat page logic
+│   │   ├── nav.js          # Navigation handling (potential)
+│   │   ├── selectRoom.js   # Room selection logic
+│   │   └── text-to-image.js # Text-to-image page logic
+│   │   └── text-to-voice.js # Text-to-voice page logic (assuming based on html)
+│   ├── admin-settings.html # Admin settings page
+│   ├── ai-chat.html        # AI chat interface page
+│   ├── chat.html           # Main chat interface page
+│   ├── login.html          # Login page
+│   ├── register.html       # Registration page
+│   ├── selectRoom.html     # Room selection page
+│   ├── text-to-image.html  # Text-to-image interface page
+│   └── text-to-voice.html  # Text-to-voice interface page
+├── routes/                 # API endpoint definitions
+│   ├── admin.js            # Admin settings routes
+│   ├── ai.js               # AI chat related routes
+│   ├── auth.js             # Authentication routes (login, register)
+│   ├── channels.js         # Chat channel and message routes
+│   ├── images.js           # Text-to-image routes
+│   └── voice.js            # Text-to-voice routes
+├── scripts/                # Utility/maintenance scripts
+│   ├── fixIndexes.js
+│   ├── flushDb.js
+│   ├── rebuildIndexes.js
+│   ├── restoreUniqueIndex.js
+│   └── seedData.js
+├── services/               # Business logic services
+│   └── tokenManager.js     # JWT creation/management
+├── utils/                  # Utility functions
+│   ├── apiHelpers.js       # Helpers for external API calls
+│   ├── jwt.js              # JWT verification helpers
+│   ├── messages.js         # Message formatting/handling utilities
+│   └── users.js            # User related utilities
+├── .env                    # Environment variables (ignored by Git)
+├── .env.template           # Template for .env file
+├── .gitignore              # Git ignore rules
+├── package-lock.json       # Exact dependency versions
+├── package.json            # Project metadata and dependencies
+├── README.md               # This file
+└── server.js               # Main application entry point (Express server setup)
 ```
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- Redis server
-- npm or yarn
+- Node.js (v14 or higher recommended)
+- MongoDB server (local or cloud instance)
+- npm (comes with Node.js)
+- Potentially API keys for desired AI services (e.g., OpenAI, Stability AI, etc.)
 
 ## Environment Setup
 
-1. Create a `.env` file in the project root:
+1.  Create a `.env` file in the project root by copying `.env.template`.
+2.  Fill in the required environment variables:
 
 ```env
-# Redis connection URL (required)
-REDIS_URL=redis://[username]:[password]@[host]:[port]
-
 # Server configuration
 PORT=3000
-HOST=0.0.0.0
+HOST=0.0.0.0 # Or specific IP
 
-# MongoDB connection
-MONGODB_URI=mongodb://localhost:27017/chatcord
+# MongoDB connection (required)
+MONGODB_URI=mongodb://localhost:27017/chatcord # Replace with your MongoDB connection string
 
-# Security configuration
-JWT_SECRET=your-secure-jwt-secret-key
-NODE_ENV=development
+# Security configuration (required)
+JWT_SECRET=your-very-secure-and-long-jwt-secret-key # Replace with a strong secret (min 64 chars recommended)
+NODE_ENV=development # or 'production'
 
-# Domain configuration (for production)
+# Domain configuration (required for production cookies)
 PROD_DOMAIN=your-production-domain.com
+
+# --- AI API Keys (Add keys for the services you want to use) ---
+# Example: OpenAI
+# OPENAI_API_KEY=sk-...
+
+# Example: Stability AI
+# STABILITY_API_KEY=sk-...
+
+# Add other API keys as needed based on configured models in admin settings
 ```
 
-2. Environment Variables:
-- `REDIS_URL`: Your Redis connection string
-- `PORT`: Server port (default: 3000)
-- `HOST`: Server host (0.0.0.0 for local network access)
-- `MONGODB_URI`: MongoDB connection string
-- `JWT_SECRET`: Secret key for JWT tokens (min 64 chars)
-- `NODE_ENV`: 'development' or 'production'
-- `PROD_DOMAIN`: Production domain for cookies
-
-3. Development Setup:
-- Start MongoDB locally or use remote instance
-- Start Redis server or use Redis Cloud
-- Set NODE_ENV to 'development'
-- Use default PORT 3000
-
-4. Production Setup:
-- Set secure PROD_DOMAIN
-- Use production MongoDB URI
-- Set NODE_ENV to 'production'
-- Configure secure Redis instance
+3.  **Key Environment Variables:**
+    *   `PORT`: Port the server listens on (default: 3000).
+    *   `HOST`: Host address the server binds to.
+    *   `MONGODB_URI`: Your MongoDB connection string. **Required**.
+    *   `JWT_SECRET`: Secret key for signing JWT tokens. **Required and must be kept secret**.
+    *   `NODE_ENV`: Set to `development` or `production`. Affects error handling, logging, and potentially other settings.
+    *   `PROD_DOMAIN`: The domain where the app is hosted in production. Used for setting secure cookie domains. **Required for production**.
+    *   **AI API Keys**: Add environment variables for the API keys of the AI services you intend to use (e.g., `OPENAI_API_KEY`). These keys are typically configured via the Admin Settings panel in the application itself, but the backend needs them in the environment to function. Check `models/AiApi.js`, `models/ImageApi.js`, `models/VoiceApi.js` and the admin settings implementation for specifics.
 
 ## Installation
 
@@ -135,27 +165,35 @@ The application will be available at `http://localhost:3000` (or your configured
 
 ## Feature Details
 
-### Authentication
-- User registration with email and password
-- Secure login system
-- Session management
+### Authentication (`routes/auth.js`, `public/js/auth.js`)
+- User registration and login using email/password.
+- JWT tokens are used for session management, likely stored in HTTP-only cookies for security.
+- Frontend routes are protected using `public/js/auth-guard.js`.
 
-### Channels
-- Create new topic-based channels
-- Join existing channels
-- Real-time channel list updates
-- Channel-specific user lists
+### Chat Channels (`routes/channels.js`, `public/js/main.js`, `public/js/selectRoom.js`)
+- Users can select or potentially create chat rooms/channels.
+- Real-time messaging within channels (implementation likely uses WebSockets, e.g., Socket.IO, but needs verification).
+- Message history is stored in MongoDB (`models/Message.js`).
 
-### Chat Features
-- Real-time message delivery
-- Message history
-- User typing indicators
-- Online/offline status
+### AI Chat (`routes/ai.js`, `public/js/ai-chat.js`)
+- Interface (`ai-chat.html`) to interact with configured AI chat models.
+- Backend (`routes/ai.js`) likely proxies requests to the selected AI API (e.g., OpenAI).
+- Configuration stored in `models/AiApi.js`.
 
-### Real-time Updates
-- Active user lists
-- Channel statistics
-- User status changes
+### Text-to-Image (`routes/images.js`, `public/js/text-to-image.js`)
+- Interface (`text-to-image.html`) to generate images from text prompts.
+- Backend (`routes/images.js`) interacts with configured image generation APIs (e.g., Stability AI, DALL-E).
+- Configuration stored in `models/ImageApi.js`.
+
+### Text-to-Voice (`routes/voice.js`, `public/js/text-to-voice.js` - assumed)
+- Interface (`text-to-voice.html`) to synthesize speech from text.
+- Backend (`routes/voice.js`) interacts with configured text-to-speech APIs.
+- Configuration stored in `models/VoiceApi.js`.
+
+### Admin Settings (`routes/admin.js`, `public/js/admin.js`)
+- Interface (`admin-settings.html`) for administrators.
+- Allows configuration of AI API providers and keys (`AiApi`, `ImageApi`, `VoiceApi` models).
+- May include other administrative functions.
 
 ## License
 

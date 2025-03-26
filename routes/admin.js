@@ -6,9 +6,10 @@ const Channel = require('../models/Channel');
 const Message = require('../models/Message');
 const AiApi = require('../models/AiApi');
 const ImageApi = require('../models/ImageApi');
+const VoiceSettings = require('../models/VoiceSettings'); // Add this line
+const ImageSettings = require('../models/ImageSettings');
 const fetch = require('node-fetch');
 const { parseCurlCommand } = require('../utils/apiHelpers');  // Add this line
-const ImageSettings = require('../models/ImageSettings'); // Add this line
 
 // Add stats endpoint at the top of the file
 router.get('/stats', auth, async (req, res) => {
@@ -757,6 +758,105 @@ router.put('/image-settings/:type', auth, async (req, res) => {
     } catch (err) {
         console.error('Error saving settings:', err);
         res.status(500).json({ message: err.message || 'Failed to update settings' });
+    }
+});
+
+// Get voice settings
+router.get('/voice-settings/:type', auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    try {
+        const { type } = req.params;
+        if (!['speed', 'pitch'].includes(type)) {
+            return res.status(400).json({ message: 'Invalid settings type' });
+        }
+
+        let settings = await VoiceSettings.findOne({ type });
+        if (!settings) {
+            // Create default settings if none exist
+            settings = new VoiceSettings({
+                type,
+                range: {
+                    min: type === 'speed' ? 0.5 : 0.5,
+                    max: type === 'speed' ? 2.0 : 2.0,
+                    step: 0.1,
+                    default: 1.0
+                }
+            });
+            await settings.save();
+        }
+        res.json(settings);
+    } catch (err) {
+        console.error('Error fetching voice settings:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Update voice settings
+router.put('/voice-settings/:type', auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    try {
+        const { type } = req.params;
+        if (!['speed', 'pitch'].includes(type)) {
+            return res.status(400).json({ message: 'Invalid settings type' });
+        }
+
+        const { range } = req.body;
+
+        // Validate input
+        if (!range || typeof range !== 'object') {
+            return res.status(400).json({ message: 'Invalid range data' });
+        }
+
+        // Validate required fields
+        const requiredFields = ['min', 'max', 'default', 'step'];
+        for (const field of requiredFields) {
+            if (typeof range[field] !== 'number') {
+                return res.status(400).json({ 
+                    message: `Invalid ${field} value. Must be a number.`
+                });
+            }
+        }
+
+        // Validate ranges
+        if (range.min >= range.max) {
+            return res.status(400).json({ 
+                message: 'Minimum value must be less than maximum value'
+            });
+        }
+
+        if (range.default < range.min || range.default > range.max) {
+            return res.status(400).json({ 
+                message: 'Default value must be between min and max values'
+            });
+        }
+
+        if (range.step <= 0) {
+            return res.status(400).json({ 
+                message: 'Step must be greater than 0'
+            });
+        }
+
+        // Update or create settings
+        const settings = await VoiceSettings.findOneAndUpdate(
+            { type },
+            { 
+                $set: { 
+                    range,
+                    updatedAt: new Date()
+                }
+            },
+            { 
+                new: true,
+                upsert: true
+            }
+        );
+
+        res.json(settings);
+    } catch (err) {
+        console.error('Error saving voice settings:', err);
+        res.status(500).json({ message: err.message || 'Failed to save settings' });
     }
 });
 
