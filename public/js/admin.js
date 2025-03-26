@@ -1439,3 +1439,215 @@ async function loadVoiceApiList() {
         `;
     }
 }
+
+// Add voice entry to the list
+function addVoiceEntry(voice = null) {
+    const voiceList = document.getElementById('voice-list');
+    const voiceId = `voice-${Date.now()}`;
+    
+    const div = document.createElement('div');
+    div.className = 'voice-entry';
+    div.innerHTML = `
+        <div class="form-row">
+            <div class="form-group flex-1">
+                <label for="${voiceId}-name">Voice Name</label>
+                <input type="text" id="${voiceId}-name" class="form-input" 
+                       value="${voice?.name || ''}" required>
+            </div>
+            <div class="form-group flex-1">
+                <label for="${voiceId}-gender">Gender</label>
+                <select id="${voiceId}-gender" class="form-select" required>
+                    <option value="female" ${voice?.gender === 'female' ? 'selected' : ''}>Female</option>
+                    <option value="male" ${voice?.gender === 'male' ? 'selected' : ''}>Male</option>
+                    <option value="neutral" ${voice?.gender === 'neutral' ? 'selected' : ''}>Neutral</option>
+                </select>
+            </div>
+            <div class="form-group flex-1">
+                <label for="${voiceId}-language">Language</label>
+                <input type="text" id="${voiceId}-language" class="form-input" 
+                       value="${voice?.language || ''}" required>
+            </div>
+            <button type="button" class="btn btn-icon btn-danger" onclick="removeEntry(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    voiceList.appendChild(div);
+}
+
+// Add language entry to the list
+function addLanguageEntry(language = null) {
+    const languageList = document.getElementById('language-list');
+    const langId = `lang-${Date.now()}`;
+    
+    const div = document.createElement('div');
+    div.className = 'language-entry';
+    div.innerHTML = `
+        <div class="form-row">
+            <div class="form-group flex-1">
+                <label for="${langId}-name">Language Name</label>
+                <input type="text" id="${langId}-name" class="form-input" 
+                       value="${language?.name || ''}" required>
+            </div>
+            <div class="form-group flex-1">
+                <label for="${langId}-code">Language Code</label>
+                <input type="text" id="${langId}-code" class="form-input" 
+                       placeholder="e.g., en-US" 
+                       value="${language?.code || ''}" required>
+            </div>
+            <button type="button" class="btn btn-icon btn-danger" onclick="removeEntry(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    languageList.appendChild(div);
+}
+
+// Remove an entry (works for both voice and language)
+function removeEntry(button) {
+    const entry = button.closest('.voice-entry, .language-entry');
+    entry.remove();
+}
+
+// Collect all voice entries
+function collectVoiceEntries() {
+    return Array.from(document.querySelectorAll('.voice-entry')).map(entry => ({
+        id: entry.querySelector('input[id$="-name"]').value.toLowerCase().replace(/\s+/g, '-'),
+        name: entry.querySelector('input[id$="-name"]').value,
+        gender: entry.querySelector('select[id$="-gender"]').value,
+        language: entry.querySelector('input[id$="-language"]').value,
+        isActive: true
+    }));
+}
+
+// Collect all language entries
+function collectLanguageEntries() {
+    return Array.from(document.querySelectorAll('.language-entry')).map(entry => ({
+        id: entry.querySelector('input[id$="-code"]').value.toLowerCase(),
+        name: entry.querySelector('input[id$="-name"]').value,
+        code: entry.querySelector('input[id$="-code"]').value,
+        isActive: true
+    }));
+}
+
+// Update the voice API form initialization
+if (voiceElements.form) {
+    // Add button handlers
+    document.getElementById('add-voice-btn').addEventListener('click', () => addVoiceEntry());
+    document.getElementById('add-language-btn').addEventListener('click', () => addLanguageEntry());
+
+    // Update form submission to include voices and languages
+    voiceElements.form.addEventListener('submit', async (e) => {
+        // ...existing form submission code...
+
+        const formData = {
+            // ...existing formData properties...
+            supportedVoices: collectVoiceEntries(),
+            supportedLanguages: collectLanguageEntries(),
+        };
+
+        // ...rest of existing submission code...
+    });
+}
+
+// ...existing code...
+
+if (voiceElements.form) {
+    // Add button handlers
+    document.getElementById('add-voice-btn').addEventListener('click', () => addVoiceEntry());
+    document.getElementById('add-language-btn').addEventListener('click', () => addLanguageEntry());
+
+    // Add test API handler
+    document.getElementById('test-voice-api').addEventListener('click', async () => {
+        const testBtn = document.getElementById('test-voice-api');
+        const curlCommand = document.getElementById('voice-curl-command').value;
+        const requestPath = document.getElementById('voice-request-path').value;
+        const responsePath = document.getElementById('voice-response-path').value;
+        const previewStatus = voiceElements.form.querySelector('.preview-status');
+
+        if (!curlCommand || !requestPath) {
+            showNotification('cURL command and request path are required', 'error');
+            return;
+        }
+
+        try {
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+            previewStatus.textContent = 'Testing connection...';
+
+            const response = await fetch('/api/admin/voice-apis/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                },
+                body: JSON.stringify({ 
+                    curlCommand,
+                    requestPath,
+                    responsePath
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                previewStatus.textContent = 'API Test Successful';
+                previewStatus.style.color = 'var(--success-color)';
+                showNotification('Voice API test successful', 'success');
+            } else {
+                throw new Error(data.message || 'API test failed');
+            }
+        } catch (err) {
+            previewStatus.textContent = 'API Test Failed';
+            previewStatus.style.color = 'var(--error-color)';
+            showNotification(err.message, 'error');
+        } finally {
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
+            setTimeout(() => {
+                if (previewStatus) {
+                    previewStatus.textContent = '';
+                }
+            }, 3000);
+        }
+    });
+
+    // Add format cURL handler
+    document.getElementById('format-voice-curl').addEventListener('click', () => {
+        const curlInput = document.getElementById('voice-curl-command');
+        try {
+            const formatted = formatCurlCommand(curlInput.value);
+            curlInput.value = formatted;
+            showNotification('cURL command formatted', 'success');
+        } catch (err) {
+            showNotification('Invalid cURL command', 'error');
+        }
+    });
+
+    // Update form submission to include voices and languages
+    voiceElements.form.addEventListener('submit', async (e) => {
+        // ...existing submission code...
+    });
+}
+
+// Add helper function to format cURL commands
+function formatCurlCommand(curlCommand) {
+    try {
+        const { endpoint, headers, method, body } = parseCurlCommand(curlCommand);
+        let formatted = `curl "${endpoint}"`;
+        if (method !== 'GET') {
+            formatted += `\n  --request ${method}`;
+        }
+        Object.entries(headers).forEach(([key, value]) => {
+            formatted += `\n  --header "${key}: ${value}"`;
+        });
+        if (body) {
+            formatted += `\n  --data '${JSON.stringify(body, null, 2)}'`;
+        }
+        return formatted;
+    } catch (err) {
+        throw new Error('Invalid cURL command');
+    }
+}
+
+// ...existing code...
