@@ -1,3 +1,8 @@
 node_modules/
 .DS_Store
 .env
+
+# Database Migration
+migration.log
+scripts/data/
+*.backup.json
