@@ -134,6 +134,8 @@ app.use('/api/channels', require('./routes/channels'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
 app.use('/api/ai', authMiddleware, require('./routes/ai')); // Add this line
 app.use('/api/images', authMiddleware, require('./routes/images')); // Add this line
+app.use('/api/voice', require('./routes/voice'));
+app.use('/api/admin/voice-apis', require('./routes/voice'));
 
 const botName = BOT_NAME;
 

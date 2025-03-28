@@ -1650,4 +1650,116 @@ function formatCurlCommand(curlCommand) {
     }
 }
 
+// Update form submission handler for voice API
+if (voiceElements.form) {
+    voiceElements.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            // Collect form data
+            const formData = {
+                name: document.getElementById('voice-api-name').value.trim(),
+                apiType: document.getElementById('voice-api-type').value,
+                responseType: document.getElementById('voice-response-type').value,
+                endpoint: document.getElementById('voice-endpoint').value.trim(),
+                requestMethod: document.getElementById('voice-request-method').value,
+                isActive: document.getElementById('voice-is-active').checked,
+                headers: {}, // Will be populated from header inputs
+                requestPath: document.getElementById('voice-request-path').value.trim(),
+                responsePath: document.getElementById('voice-response-path').value.trim(),
+                supportedVoices: collectVoiceEntries(),
+                supportedLanguages: collectLanguageEntries()
+            };
+
+            // Add authentication if needed
+            if (formData.apiType === 'hearing') {
+                formData.auth = {
+                    type: 'hearing',
+                    loginEndpoint: document.getElementById('auth-endpoint').value.trim(),
+                    tokenPath: document.getElementById('token-path').value.trim(),
+                    credentials: {
+                        username: document.getElementById('auth-username').value.trim(),
+                        password: document.getElementById('auth-password').value.trim()
+                    }
+                };
+            }
+
+            // Collect headers from header inputs
+            const headerInputs = document.querySelectorAll('.header-entry');
+            headerInputs.forEach(entry => {
+                const key = entry.querySelector('.header-key').value.trim();
+                const value = entry.querySelector('.header-value').value.trim();
+                if (key && value) {
+                    formData.headers[key] = value;
+                }
+            });
+
+            const res = await fetch('/api/admin/voice-apis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'Failed to save Voice API');
+            }
+
+            showNotification('Voice API saved successfully', 'success');
+            voiceElements.form.reset();
+            voiceElements.form.style.display = 'none';
+            voiceElements.addButton.style.display = 'block';
+            if (voiceElements.authSection) {
+                voiceElements.authSection.style.display = 'none';
+            }
+            await loadVoiceApiList();
+
+        } catch (err) {
+            console.error('Error saving Voice API:', err);
+            showNotification(err.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+        }
+    });
+}
+
+// Helper function to collect voice entries
+function collectVoiceEntries() {
+    const voices = [];
+    document.querySelectorAll('.voice-entry').forEach(entry => {
+        const voice = {
+            name: entry.querySelector('[id$="-name"]').value.trim(),
+            gender: entry.querySelector('[id$="-gender"]').value,
+            language: entry.querySelector('[id$="-language"]').value.trim()
+        };
+        if (voice.name && voice.language) {
+            voices.push(voice);
+        }
+    });
+    return voices;
+}
+
+// Helper function to collect language entries
+function collectLanguageEntries() {
+    const languages = [];
+    document.querySelectorAll('.language-entry').forEach(entry => {
+        const language = {
+            code: entry.querySelector('[id$="-code"]').value.trim(),
+            name: entry.querySelector('[id$="-name"]').value.trim()
+        };
+        if (language.code && language.name) {
+            languages.push(language);
+        }
+    });
+    return languages;
+}
+
 // ...existing code...

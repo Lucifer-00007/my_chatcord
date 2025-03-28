@@ -76,6 +76,119 @@ module.exports = {
         titlePromptTemplate: 'Suggest an extremely short 2-3 word title for this message: "{message}"'
     },
 
+    // Voice API Configuration
+    VOICE_API_CONFIG: {
+        types: {
+            DIRECT: 'direct',      // Single API call
+            AUTHENTICATED: 'auth',  // Requires authentication token
+            FORM: 'form',          // Form-urlencoded data
+            QUERY: 'query'         // Query parameters in URL
+        },
+        responseTypes: {
+            BINARY: 'binary',           // Direct audio buffer
+            BASE64: 'base64',          // Base64 encoded audio
+            DECODED_BASE64: 'decoded_base64', // Base64 that needs decoding
+            URL: 'url'                 // URL to audio file
+        },
+        contentTypes: {
+            JSON: 'application/json',
+            FORM: 'application/x-www-form-urlencoded',
+            MULTIPART: 'multipart/form-data'
+        },
+        defaultVoices: {
+            kokoro: {
+                model: "kokoro",
+                response_format: "mp3",
+                speed: 1.0
+            },
+            deepgram: {
+                model: "aura-arcas-en"
+            },
+            ttsmp3: {
+                source: "ttsmp3",
+                speed: "1.00"
+            },
+            tiktok: {
+                voice: "en_us_rocket"
+            }
+        },
+        authConfig: {
+            tokenHeader: 'Authorization',
+            tokenPrefix: 'Bearer ',
+            tokenPath: 'token', // Default path to extract token from response
+            tokenExpiry: 3600   // Default token expiry in seconds
+        },
+        voiceProviders: {
+            kokoro: {
+                name: "Kokoro TTS",
+                voiceKey: 'voice',
+                textKey: 'input',
+                speedKey: 'speed',
+                modelKey: 'model',
+                formatKey: 'response_format',
+                defaults: {
+                    model: "kokoro",
+                    response_format: "mp3",
+                    speed: 1.0
+                }
+            },
+            deepgram: {
+                name: "Deepgram",
+                voiceKey: 'model',
+                textKey: 'text',
+                defaults: {
+                    model: "aura-arcas-en"
+                }
+            },
+            ttsmp3: {
+                name: "TTS MP3",
+                voiceKey: 'lang',
+                textKey: 'msg',
+                speedKey: 'speed',
+                sourceKey: 'source',
+                defaults: {
+                    source: "ttsmp3",
+                    speed: "1.00"
+                }
+            },
+            tiktok: {
+                name: "TikTok TTS",
+                voiceKey: 'voice',
+                textKey: 'text',
+                defaults: {
+                    voice: "en_us_rocket"
+                }
+            },
+            hearing: {
+                name: "Hearing API",
+                requiresAuth: true,
+                voiceKey: 'voice',
+                textKey: 'text',
+                languageKey: 'language'
+            }
+        },
+
+        // Common language codes supported across providers
+        supportedLanguages: [
+            { code: "en-US", name: "English (US)" },
+            { code: "en-GB", name: "English (UK)" },
+            { code: "es-ES", name: "Spanish" },
+            { code: "fr-FR", name: "French" },
+            { code: "de-DE", name: "German" },
+            { code: "it-IT", name: "Italian" },
+            { code: "ja-JP", name: "Japanese" },
+            { code: "ko-KR", name: "Korean" },
+            { code: "zh-CN", name: "Chinese (Simplified)" }
+        ],
+
+        // Default voice configurations
+        defaultVoiceTypes: [
+            { id: "female", name: "Female" },
+            { id: "male", name: "Male" },
+            { id: "neutral", name: "Neutral" }
+        ]
+    },
+
     // Chat Messages
     MESSAGES: {
         welcome: "Welcome to ChatCord!",
