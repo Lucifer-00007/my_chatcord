@@ -779,9 +779,6 @@ function initImageApiSection() {
     loadGlobalSettings();
 }
 
-// IMPORTANT: Remove these duplicate handlers:
-// - document.getElementById('image-api-form').addEventListener('submit', ...)
-// - imageApiForm.addEventListener('submit', ...)
 
 async function loadImageApiList() {
     const imageApiList = document.getElementById('image-api-list');
@@ -1309,62 +1306,62 @@ if (voiceElements.addButton && voiceElements.form) {
     }
 
     // Form submission handler
-    voiceElements.form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = e.target.querySelector('button[type="submit"]');
+    // voiceElements.form.addEventListener('submit', async (e) => {
+    //     e.preventDefault();
+    //     const submitBtn = e.target.querySelector('button[type="submit"]');
         
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    //     try {
+    //         submitBtn.disabled = true;
+    //         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-            const formData = {
-                name: document.getElementById('voice-api-name').value.trim(),
-                apiType: document.getElementById('voice-api-type').value,
-                responseType: document.getElementById('voice-response-type').value,
-                curlCommand: document.getElementById('voice-curl-command').value,
-                requestPath: document.getElementById('voice-request-path').value,
-                responsePath: document.getElementById('voice-response-path').value || '',
-                auth: voiceElements.apiTypeSelect.value === 'hearing' ? {
-                    type: 'hearing',
-                    loginEndpoint: document.getElementById('auth-endpoint').value,
-                    tokenPath: document.getElementById('token-path').value,
-                    credentials: {
-                        username: document.getElementById('auth-username').value,
-                        password: document.getElementById('auth-password').value
-                    }
-                } : { type: 'none' }
-            };
+    //         const formData = {
+    //             name: document.getElementById('voice-api-name').value.trim(),
+    //             apiType: document.getElementById('voice-api-type').value,
+    //             responseType: document.getElementById('voice-response-type').value,
+    //             curlCommand: document.getElementById('voice-curl-command').value,
+    //             requestPath: document.getElementById('voice-request-path').value,
+    //             responsePath: document.getElementById('voice-response-path').value || '',
+    //             auth: voiceElements.apiTypeSelect.value === 'hearing' ? {
+    //                 type: 'hearing',
+    //                 loginEndpoint: document.getElementById('auth-endpoint').value,
+    //                 tokenPath: document.getElementById('token-path').value,
+    //                 credentials: {
+    //                     username: document.getElementById('auth-username').value,
+    //                     password: document.getElementById('auth-password').value
+    //                 }
+    //             } : { type: 'none' }
+    //         };
 
-            const res = await fetch('/api/admin/voice', { // Change from /api/admin/voice-apis
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-                },
-                body: JSON.stringify(formData)
-            });
+    //         const res = await fetch('/api/admin/voice', { // Change from /api/admin/voice-apis
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+    //             },
+    //             body: JSON.stringify(formData)
+    //         });
 
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.message || 'Failed to save Voice API');
-            }
+    //         const data = await res.json();
+    //         if (!res.ok) {
+    //             throw new Error(data.message || 'Failed to save Voice API');
+    //         }
 
-            showNotification('Voice API saved successfully', 'success');
-            voiceElements.form.reset();
-            voiceElements.form.style.display = 'none';
-            voiceElements.addButton.style.display = 'block';
-            if (voiceElements.authSection) {
-                voiceElements.authSection.style.display = 'none';
-            }
-            await loadVoiceApiList();
-        } catch (err) {
-            console.error('Error saving Voice API:', err);
-            showNotification(err.message, 'error');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
-        }
-    });
+    //         showNotification('Voice API saved successfully', 'success');
+    //         voiceElements.form.reset();
+    //         voiceElements.form.style.display = 'none';
+    //         voiceElements.addButton.style.display = 'block';
+    //         if (voiceElements.authSection) {
+    //             voiceElements.authSection.style.display = 'none';
+    //         }
+    //         await loadVoiceApiList();
+    //     } catch (err) {
+    //         console.error('Error saving Voice API:', err);
+    //         showNotification(err.message, 'error');
+    //     } finally {
+    //         submitBtn.disabled = false;
+    //         submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+    //     }
+    // });
 }
 
 async function loadVoiceApiList() {
@@ -1439,127 +1436,108 @@ async function loadVoiceApiList() {
     }
 }
 
-// Update form submission handler for voice API
-if (voiceElements.form) {
-    voiceElements.form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+// Remove all existing voice form handlers and keep this single function
+const initializeVoiceForm = () => {
+    const voiceElements = {
+        form: document.getElementById('voice-api-form'),
+        addButton: document.getElementById('add-voice-api-btn'),
+        closeButton: document.getElementById('close-voice-form'),
+        apiTypeSelect: document.getElementById('voice-api-type'),
+        authSection: document.getElementById('auth-section'),
+        testButton: document.getElementById('test-voice-api')
+    };
 
-            const formData = {
-                name: document.getElementById('voice-api-name').value.trim(),
-                apiType: document.getElementById('voice-api-type').value,
-                responseType: document.getElementById('voice-response-type').value,
-                endpoint: document.getElementById('voice-endpoint').value.trim(),
-                requestMethod: document.getElementById('voice-request-method').value,
-                isActive: document.getElementById('voice-is-active').checked,
-                headers: {}, // Will be populated from header inputs
-                requestPath: document.getElementById('voice-request-path').value.trim(),
-                responsePath: document.getElementById('voice-response-path').value.trim(),
-                supportedVoices: collectVoices() // Use the function from text-to-voice.js
-            };
+    // Log found elements
+    console.log('Voice form elements:', {
+        hasForm: !!voiceElements.form,
+        hasAddButton: !!voiceElements.addButton,
+        hasCloseButton: !!voiceElements.closeButton,
+        hasApiTypeSelect: !!voiceElements.apiTypeSelect,
+        hasAuthSection: !!voiceElements.authSection,
+        hasTestButton: !!voiceElements.testButton
+    });
 
-            const res = await fetch('/api/admin/voice', { // Change from /api/admin/voice-apis
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-                },
-                body: JSON.stringify(formData)
-            });
+    if (!voiceElements.form || !voiceElements.addButton) {
+        console.error('Required voice form elements not found');
+        return;
+    }
 
-            if (!res.ok) {
-                throw new Error('Failed to save voice API');
-            }
+    // Show/Hide form handlers
+    voiceElements.addButton.addEventListener('click', () => {
+        voiceElements.form.style.display = 'block';
+        voiceElements.addButton.style.display = 'none';
+    });
 
-            showNotification('Voice API saved successfully', 'success');
-            voiceElements.form.reset();
+    if (voiceElements.closeButton) {
+        voiceElements.closeButton.addEventListener('click', () => {
             voiceElements.form.style.display = 'none';
             voiceElements.addButton.style.display = 'block';
-            await loadVoiceApiList();
-
-        } catch (err) {
-            console.error('Error saving Voice API:', err);
-            showNotification(err.message || 'Failed to save Voice API', 'error');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
-        }
-    });
-}
-
-// Add helper function to format cURL commands
-function formatCurlCommand(curlCommand) {
-    try {
-        const { endpoint, headers, method, body } = parseCurlCommand(curlCommand);
-        let formatted = `curl "${endpoint}"`;
-        if (method !== 'GET') {
-            formatted += `\n  --request ${method}`;
-        }
-        Object.entries(headers).forEach(([key, value]) => {
-            formatted += `\n  --header "${key}: ${value}"`;
+            voiceElements.form.reset();
+            if (voiceElements.authSection) {
+                voiceElements.authSection.style.display = 'none';
+            }
         });
-        if (body) {
-            formatted += `\n  --data '${JSON.stringify(body, null, 2)}'`;
-        }
-        return formatted;
-    } catch (err) {
-        throw new Error('Invalid cURL command');
     }
-}
 
-// Update form submission handler for voice API
-if (voiceElements.form) {
+    // Single form submission handler
     voiceElements.form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        
+        if (!submitBtn) return;
+
         try {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-            // Collect form data
+            const formElements = {
+                name: document.getElementById('voice-api-name'),
+                apiType: document.getElementById('voice-api-type'),
+                responseType: document.getElementById('voice-response-type'),
+                curlCommand: document.getElementById('voice-curl-command'),
+                requestPath: document.getElementById('voice-request-path'),
+                responsePath: document.getElementById('voice-response-path')
+            };
+
+            // Validate required elements exist
+            for (const [key, element] of Object.entries(formElements)) {
+                if (!element) {
+                    throw new Error(`Missing required form element: ${key}`);
+                }
+            }
+
             const formData = {
-                name: document.getElementById('voice-api-name').value.trim(),
-                apiType: document.getElementById('voice-api-type').value,
-                responseType: document.getElementById('voice-response-type').value,
-                endpoint: document.getElementById('voice-endpoint').value.trim(),
-                requestMethod: document.getElementById('voice-request-method').value,
-                isActive: document.getElementById('voice-is-active').checked,
-                headers: {}, // Will be populated from header inputs
-                requestPath: document.getElementById('voice-request-path').value.trim(),
-                responsePath: document.getElementById('voice-response-path').value.trim(),
-                supportedVoices: collectVoiceEntries(),
-                supportedLanguages: collectLanguageEntries()
+                name: formElements.name.value.trim(),
+                apiType: formElements.apiType.value,
+                responseType: formElements.responseType.value,
+                curlCommand: formElements.curlCommand.value,
+                requestPath: formElements.requestPath.value.trim(),
+                responsePath: formElements.responsePath.value.trim(),
+                supportedVoices: window.collectVoices ? window.collectVoices() : []
             };
 
             // Add authentication if needed
             if (formData.apiType === 'hearing') {
-                formData.auth = {
-                    type: 'hearing',
-                    loginEndpoint: document.getElementById('auth-endpoint').value.trim(),
-                    tokenPath: document.getElementById('token-path').value.trim(),
-                    credentials: {
-                        username: document.getElementById('auth-username').value.trim(),
-                        password: document.getElementById('auth-password').value.trim()
-                    }
+                const authElements = {
+                    loginEndpoint: document.getElementById('auth-endpoint'),
+                    tokenPath: document.getElementById('token-path'),
+                    username: document.getElementById('auth-username'),
+                    password: document.getElementById('auth-password')
                 };
+
+                if (Object.values(authElements).every(el => el?.value?.trim())) {
+                    formData.auth = {
+                        type: 'hearing',
+                        loginEndpoint: authElements.loginEndpoint.value.trim(),
+                        tokenPath: authElements.tokenPath.value.trim(),
+                        credentials: {
+                            username: authElements.username.value.trim(),
+                            password: authElements.password.value.trim()
+                        }
+                    };
+                }
             }
 
-            // Collect headers from header inputs
-            const headerInputs = document.querySelectorAll('.header-entry');
-            headerInputs.forEach(entry => {
-                const key = entry.querySelector('.header-key').value.trim();
-                const value = entry.querySelector('.header-value').value.trim();
-                if (key && value) {
-                    formData.headers[key] = value;
-                }
-            });
-
-            const res = await fetch('/api/admin/voice', { // Change from /api/admin/voice-apis
+            const response = await fetch('/api/admin/voice', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1568,8 +1546,11 @@ if (voiceElements.form) {
                 body: JSON.stringify(formData)
             });
 
-            const data = await res.json();
-            if (!res.ok) {
+            const data = await response.json();
+            if (!response.ok) {
+                if (data.code === 'DUPLICATE_NAME') {
+                    throw new Error(`An API named "${formData.name}" already exists`);
+                }
                 throw new Error(data.message || 'Failed to save Voice API');
             }
 
@@ -1583,44 +1564,32 @@ if (voiceElements.form) {
             await loadVoiceApiList();
 
         } catch (err) {
-            console.error('Error saving Voice API:', err);
-            showNotification(err.message, 'error');
+            console.error('Error saving Voice API:', {
+                message: err.message,
+                stack: err.stack
+            });
+            showNotification(err.message || 'Failed to save Voice API', 'error');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
         }
     });
-}
 
-// Helper function to collect voice entries
-function collectVoiceEntries() {
-    const voices = [];
-    document.querySelectorAll('.voice-entry').forEach(entry => {
-        const voice = {
-            name: entry.querySelector('[id$="-name"]').value.trim(),
-            gender: entry.querySelector('[id$="-gender"]').value,
-            language: entry.querySelector('[id$="-language"]').value.trim()
-        };
-        if (voice.name && voice.language) {
-            voices.push(voice);
-        }
-    });
-    return voices;
-}
+    // Add API type change handler
+    if (voiceElements.apiTypeSelect && voiceElements.authSection) {
+        voiceElements.apiTypeSelect.addEventListener('change', () => {
+            voiceElements.authSection.style.display = 
+                voiceElements.apiTypeSelect.value === 'hearing' ? 'block' : 'none';
+        });
+    }
+};
 
-// Helper function to collect language entries
-function collectLanguageEntries() {
-    const languages = [];
-    document.querySelectorAll('.language-entry').forEach(entry => {
-        const language = {
-            code: entry.querySelector('[id$="-code"]').value.trim(),
-            name: entry.querySelector('[id$="-name"]').value.trim()
-        };
-        if (language.code && language.name) {
-            languages.push(language);
-        }
-    });
-    return languages;
-}
+// Call initialize function when document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing initialization code...
+    initializeVoiceForm();
+    // ...existing initialization code...
+});
 
 // ...existing code...
+

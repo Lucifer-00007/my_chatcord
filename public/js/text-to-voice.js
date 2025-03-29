@@ -1,18 +1,59 @@
 document.addEventListener('DOMContentLoaded', () => {
-    initializeVoiceInterface();
+    loadVoiceConfig().then(() => {
+        initializeVoiceInterface();
+    });
 });
 
+let VOICE_API_CONFIG = null;
+
+async function loadVoiceConfig() {
+    try {
+        const response = await fetch('/api/admin/voice/config', {
+            headers: {
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            }
+        });
+        VOICE_API_CONFIG = await response.json();
+    } catch (err) {
+        console.error('Failed to load voice config:', err);
+        window.showNotification('Failed to load voice configuration', 'error');
+    }
+}
+
 function initializeVoiceInterface() {
+    console.log('Initializing voice interface');
+    if (!VOICE_API_CONFIG) {
+        console.error('Voice configuration not loaded');
+        return;
+    }
+
     // Get elements
     const providerSelect = document.getElementById('voice-api-type');
     const voiceList = document.getElementById('voice-list');
     const addVoiceButton = document.getElementById('add-voice-btn');
+    const testButton = document.getElementById('test-voice-api');
     
+    console.log('Found elements:', {
+        providerSelect: !!providerSelect,
+        voiceList: !!voiceList,
+        addVoiceButton: !!addVoiceButton,
+        testButton: !!testButton
+    });
+
     // Add single event handler for add voice button
     if (addVoiceButton) {
         addVoiceButton.addEventListener('click', (e) => {
             e.preventDefault();
             addVoiceEntry();
+        });
+    }
+
+    // Add direct event listener for test button
+    if (testButton) {
+        console.log('Adding test button listener');
+        testButton.addEventListener('click', (e) => {
+            console.log('Test button clicked');
+            testVoiceApi(e);
         });
     }
 
@@ -105,33 +146,57 @@ function collectVoices() {
     }));
 }
 
-// Add new test API function
-async function testVoiceApi() {
-    const testBtn = document.getElementById('test-voice-api');
-    const curlCommand = document.getElementById('voice-curl-command').value;
-    const requestPath = document.getElementById('voice-request-path').value;
-    const responsePath = document.getElementById('voice-response-path').value;
-    const apiType = document.getElementById('voice-api-type').value;
-    const responseType = document.getElementById('voice-response-type').value;
-    const previewStatus = document.querySelector('#voice-api-form .preview-status');
+// Update test API function
+async function testVoiceApi(e) {
+    e?.preventDefault();
+    console.log('Test API function called');
+    
+    const elements = {
+        testBtn: document.getElementById('test-voice-api'),
+        form: document.getElementById('voice-api-form'),
+        curlCommand: document.getElementById('voice-curl-command'),
+        requestPath: document.getElementById('voice-request-path'),
+        responsePath: document.getElementById('voice-response-path'),
+        apiType: document.getElementById('voice-api-type'),
+        responseType: document.getElementById('voice-response-type')
+    };
 
-    if (!curlCommand || !requestPath) {
+    // Log found elements
+    console.log('Found elements:', Object.fromEntries(
+        Object.entries(elements).map(([k, v]) => [k, !!v])
+    ));
+
+    // Validate required elements
+    if (!elements.testBtn || !elements.form) {
+        console.error('Required elements not found for test');
+        return;
+    }
+
+    // Get preview status element
+    const previewStatus = elements.form.querySelector('.preview-status');
+    if (!previewStatus) {
+        console.error('Preview status element not found');
+        return;
+    }
+
+    // Validate required fields
+    if (!elements.curlCommand?.value || !elements.requestPath?.value) {
         window.showNotification('cURL command and request path are required', 'error');
         return;
     }
 
     try {
-        testBtn.disabled = true;
-        testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+        elements.testBtn.disabled = true;
+        elements.testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
         previewStatus.textContent = 'Testing API...';
 
         const testData = {
-            curlCommand,
-            requestPath,
-            responsePath,
-            apiType,
-            responseType,
-            auth: apiType === 'hearing' ? {
+            curlCommand: elements.curlCommand.value,
+            requestPath: elements.requestPath.value,
+            responsePath: elements.responsePath.value,
+            apiType: elements.apiType.value,
+            responseType: elements.responseType.value,
+            auth: elements.apiType.value === 'hearing' ? {
                 loginEndpoint: document.getElementById('auth-endpoint')?.value,
                 tokenPath: document.getElementById('token-path')?.value,
                 username: document.getElementById('auth-username')?.value,
@@ -139,7 +204,12 @@ async function testVoiceApi() {
             } : null
         };
 
-        const response = await fetch('/api/admin/voice/test', { // Change from /api/voice/test
+        console.log('Sending test request to server...', {
+            endpoint: '/api/admin/voice/test',
+            dataKeys: Object.keys(testData)
+        });
+
+        const response = await fetch('/api/admin/voice/test', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -148,26 +218,38 @@ async function testVoiceApi() {
             body: JSON.stringify(testData)
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
-        }
+        console.log('Received response:', {
+            status: response.status,
+            ok: response.ok
+        });
 
         const data = await response.json();
+        console.log('Response data:', data);
+
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        }
+
         previewStatus.textContent = 'API Test Successful';
         previewStatus.style.color = 'var(--success-color)';
         window.showNotification('Voice API test successful', 'success');
 
     } catch (err) {
-        console.error('Test API error:', err);
+        console.error('Test API error:', {
+            message: err.message,
+            stack: err.stack
+        });
         previewStatus.textContent = 'API Test Failed';
         previewStatus.style.color = 'var(--error-color)';
         window.showNotification(err.message || 'Failed to test Voice API', 'error');
     } finally {
-        testBtn.disabled = false;
-        testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
+        console.log('Test completed, resetting button state');
+        if (elements.testBtn) {
+            elements.testBtn.disabled = false;
+            elements.testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
+        }
         setTimeout(() => {
-            if (previewStatus.textContent.includes('Testing')) {
+            if (previewStatus?.textContent.includes('Testing')) {
                 previewStatus.textContent = '';
             }
         }, 3000);
