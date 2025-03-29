@@ -1304,64 +1304,6 @@ if (voiceElements.addButton && voiceElements.form) {
             }
         });
     }
-
-    // Form submission handler
-    // voiceElements.form.addEventListener('submit', async (e) => {
-    //     e.preventDefault();
-    //     const submitBtn = e.target.querySelector('button[type="submit"]');
-        
-    //     try {
-    //         submitBtn.disabled = true;
-    //         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    //         const formData = {
-    //             name: document.getElementById('voice-api-name').value.trim(),
-    //             apiType: document.getElementById('voice-api-type').value,
-    //             responseType: document.getElementById('voice-response-type').value,
-    //             curlCommand: document.getElementById('voice-curl-command').value,
-    //             requestPath: document.getElementById('voice-request-path').value,
-    //             responsePath: document.getElementById('voice-response-path').value || '',
-    //             auth: voiceElements.apiTypeSelect.value === 'hearing' ? {
-    //                 type: 'hearing',
-    //                 loginEndpoint: document.getElementById('auth-endpoint').value,
-    //                 tokenPath: document.getElementById('token-path').value,
-    //                 credentials: {
-    //                     username: document.getElementById('auth-username').value,
-    //                     password: document.getElementById('auth-password').value
-    //                 }
-    //             } : { type: 'none' }
-    //         };
-
-    //         const res = await fetch('/api/admin/voice', { // Change from /api/admin/voice-apis
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-    //             },
-    //             body: JSON.stringify(formData)
-    //         });
-
-    //         const data = await res.json();
-    //         if (!res.ok) {
-    //             throw new Error(data.message || 'Failed to save Voice API');
-    //         }
-
-    //         showNotification('Voice API saved successfully', 'success');
-    //         voiceElements.form.reset();
-    //         voiceElements.form.style.display = 'none';
-    //         voiceElements.addButton.style.display = 'block';
-    //         if (voiceElements.authSection) {
-    //             voiceElements.authSection.style.display = 'none';
-    //         }
-    //         await loadVoiceApiList();
-    //     } catch (err) {
-    //         console.error('Error saving Voice API:', err);
-    //         showNotification(err.message, 'error');
-    //     } finally {
-    //         submitBtn.disabled = false;
-    //         submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
-    //     }
-    // });
 }
 
 async function loadVoiceApiList() {
@@ -1371,7 +1313,7 @@ async function loadVoiceApiList() {
     try {
         voiceApiList.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading Voice APIs...</div>';
         
-        const res = await fetch('/api/admin/voice', { // Change from /api/admin/voice-apis
+        const res = await fetch('/api/admin/voice', {
             headers: {
                 'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
             }
@@ -1392,35 +1334,40 @@ async function loadVoiceApiList() {
             return;
         }
 
-        // Render API list
-        voiceApiList.innerHTML = apis.map(api => `
-            <div class="api-item" data-id="${api._id}" data-name="${api.name}">
-                <div class="api-details">
-                    <div class="api-name">
-                        <span class="api-status ${api.isActive ? 'active' : 'inactive'}"></span>
-                        ${api.name}
+        // Updated API list rendering
+        voiceApiList.innerHTML = apis.map(api => {
+            // Extract URL from curl command
+            const urlMatch = api.curlCommand.match(/(?:--location\s+)?['"]?(https?:\/\/[^'"]+)['"]?/i);
+            const apiUrl = urlMatch ? urlMatch[1] : 'URL not found';
+            
+            return `
+                <div class="api-item" data-id="${api._id}" data-name="${api.name}">
+                    <div class="api-details">
+                        <div class="api-name">
+                            <span class="api-status ${api.isActive ? 'active' : 'inactive'}"></span>
+                            ${api.name}
+                        </div>
+                        <div class="api-endpoint">${apiUrl}</div>
+                        <div class="api-paths">
+                            <small>API Type: ${api.apiType.charAt(0).toUpperCase() + api.apiType.slice(1)} | Response Type: ${api.responseType.charAt(0).toUpperCase() + api.responseType.slice(1)}</small>
+                        </div>
                     </div>
-                    <div class="api-type">${api.apiType}</div>
-                    <div class="api-info">
-                        <small>Response: ${api.responseType}</small>
-                        ${api.apiType === 'hearing' ? '<small>| Authentication: Required</small>' : ''}
+                    <div class="api-controls">
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="api-toggle" 
+                                   data-id="${api._id}" ${api.isActive ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <button class="btn btn-icon edit-api" onclick="editVoiceApi('${api._id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-icon btn-danger" onclick="deleteVoiceApi('${api._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="api-controls">
-                    <label class="toggle-switch">
-                        <input type="checkbox" class="api-toggle" 
-                               data-id="${api._id}" ${api.isActive ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <button class="btn btn-icon" onclick="editVoiceApi('${api._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-icon btn-danger" onclick="deleteVoiceApi('${api._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
     } catch (err) {
         console.error('Error loading Voice APIs:', err);
@@ -1461,6 +1408,9 @@ const initializeVoiceForm = () => {
         console.error('Required voice form elements not found');
         return;
     }
+
+    // Initial load of voice APIs - Add this line
+    loadVoiceApiList();
 
     // Show/Hide form handlers
     voiceElements.addButton.addEventListener('click', () => {
@@ -1588,6 +1538,27 @@ const initializeVoiceForm = () => {
 document.addEventListener('DOMContentLoaded', () => {
     // ...existing initialization code...
     initializeVoiceForm();
+    // ...existing initialization code...
+});
+
+// Add event listener for the text2voice section visibility
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing initialization code...
+
+    // Add this section to handle voice section visibility
+    const voiceSection = document.getElementById('text2voice');
+    const voiceMenuItem = document.querySelector('[data-section="text2voice"]');
+    
+    if (voiceMenuItem) {
+        voiceMenuItem.addEventListener('click', () => {
+            if (voiceSection.classList.contains('active')) {
+                loadVoiceApiList(); // Reload list when section becomes visible
+            }
+        });
+    }
+
+    initializeVoiceForm();
+    loadVoiceSettings();
     // ...existing initialization code...
 });
 
