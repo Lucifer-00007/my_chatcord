@@ -69,7 +69,7 @@ router.post('/generate', auth, async (req, res) => {
 // Add test endpoint
 router.post('/test', auth, async (req, res) => {
     try {
-        const { curlCommand, requestPath, responsePath } = req.body;
+        const { curlCommand, requestPath, responsePath, apiType, responseType, auth } = req.body;
 
         if (!curlCommand || !requestPath) {
             return res.status(400).json({ 
@@ -80,7 +80,12 @@ router.post('/test', auth, async (req, res) => {
 
         // Parse cURL command
         const curlData = parseCurlCommand(curlCommand);
-        console.log('Making test request with:', curlData);
+        console.log('Making test request with:', {
+            url: curlData.url,
+            method: curlData.method,
+            headers: curlData.headers,
+            hasBody: !!curlData.body
+        });
         
         // Make test request
         const testResponse = await fetch(curlData.url, {
@@ -95,28 +100,29 @@ router.post('/test', auth, async (req, res) => {
         
         if (contentType && contentType.includes('application/json')) {
             responseData = await testResponse.json();
-        } else {
+        } else if (contentType && contentType.includes('text')) {
             responseData = await testResponse.text();
+        } else {
+            // For binary responses, just confirm we got a response
+            responseData = 'Binary data received';
         }
 
         console.log('Test response:', {
             status: testResponse.status,
-            statusText: testResponse.statusText,
             contentType,
-            responseData
+            hasData: !!responseData
         });
 
         res.json({
             success: true,
-            message: 'API test completed',
+            message: 'API test completed successfully',
             details: {
                 statusCode: testResponse.status,
                 statusText: testResponse.statusText,
                 contentType: contentType,
                 hasData: !!responseData,
-                dataPreview: typeof responseData === 'object' ? 
-                    JSON.stringify(responseData).slice(0, 200) + '...' : 
-                    responseData.slice(0, 200) + '...'
+                apiType,
+                responseType
             }
         });
 

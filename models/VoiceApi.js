@@ -21,72 +21,52 @@ const languageSchema = new mongoose.Schema({
     }
 });
 
-const voiceApiSchema = new mongoose.Schema({
+const VoiceApiSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        trim: true,
         unique: true
-    },
-    endpoint: {
-        type: String,
-        required: true
-    },
-    curlCommand: {
-        type: String,
-        required: true
     },
     apiType: {
         type: String,
-        enum: ['direct', 'hearing'],
-        default: 'direct'
-    },
-    requestMethod: {
-        type: String,
-        enum: ['GET', 'POST'],
-        default: 'POST'
+        required: true
     },
     responseType: {
         type: String,
-        enum: ['binary', 'base64', 'decoded_base64', 'url'],
         required: true
-    },
-    headers: {
-        type: Map,
-        of: String
     },
     requestPath: {
         type: String,
         required: true
     },
-    responsePath: {
-        type: String
+    responsePath: String,
+    curlCommand: {
+        type: String,
+        required: true
     },
     isActive: {
         type: Boolean,
         default: true
     },
-    supportedVoices: [voiceSchema],
-    supportedLanguages: [languageSchema],
     auth: {
         type: {
             type: String,
-            enum: ['none', 'hearing'],
-            default: 'none'
+            enum: ['none', 'hearing']
         },
         loginEndpoint: String,
         tokenPath: String,
         credentials: {
             username: String,
             password: String
-        },
-        currentToken: String,
-        tokenExpiry: Date
+        }
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
+    supportedVoices: [{
+        id: String,
+        name: String,
+        gender: String
+    }]
+}, {
+    timestamps: true
 });
 
-module.exports = mongoose.model('VoiceApi', voiceApiSchema);
+module.exports = mongoose.model('VoiceApi', VoiceApiSchema);

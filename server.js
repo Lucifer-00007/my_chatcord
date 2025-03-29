@@ -132,10 +132,12 @@ app.get('/admin-settings', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/channels', require('./routes/channels'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
-app.use('/api/ai', authMiddleware, require('./routes/ai')); // Add this line
-app.use('/api/images', authMiddleware, require('./routes/images')); // Add this line
-app.use('/api/voice', require('./routes/voice'));
-app.use('/api/admin/voice-apis', require('./routes/voice'));
+app.use('/api/ai', authMiddleware, require('./routes/ai'));
+app.use('/api/images', authMiddleware, require('./routes/images'));
+
+// Fix voice routes - Change these lines
+app.use('/api/voice', authMiddleware, require('./routes/voice'));
+app.use('/api/admin/voice', authMiddleware, require('./routes/admin/voice')); // Change from voice-apis to voice
 
 const botName = BOT_NAME;
 
