@@ -9,6 +9,8 @@ router.get('/config', (req, res) => {
         if (!VOICE_API_CONFIG) {
             throw new Error('Voice configuration not found');
         }
+        
+        // Send the entire voiceProviders object to preserve all properties
         res.json({
             defaultVoiceTypes: VOICE_API_CONFIG.defaultVoiceTypes || [],
             voiceProviders: VOICE_API_CONFIG.voiceProviders || {}

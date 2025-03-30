@@ -1,6 +1,7 @@
 node_modules/
 .DS_Store
 .env
+public/js/admin-ai.js
 
 # Database Migration
 migration.log

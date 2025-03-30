@@ -63,7 +63,8 @@ const VoiceApiSchema = new mongoose.Schema({
     supportedVoices: [{
         id: String,
         name: String,
-        gender: String
+        gender: String,
+        language: String
     }]
 }, {
     timestamps: true

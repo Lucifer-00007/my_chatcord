@@ -29,6 +29,7 @@ function initializeVoiceInterface() {
 
     // Get elements
     const providerSelect = document.getElementById('voice-api-type');
+    const authSection = document.getElementById('auth-section');
     const voiceList = document.getElementById('voice-list');
     const addVoiceButton = document.getElementById('add-voice-btn');
     const testButton = document.getElementById('test-voice-api');
@@ -60,15 +61,26 @@ function initializeVoiceInterface() {
     // Populate provider dropdown
     if (providerSelect) {
         Object.entries(VOICE_API_CONFIG.voiceProviders).forEach(([key, provider]) => {
-            const option = new Option(provider.name, key);
+            const option = new Option(provider.name, provider.id);
+            option.dataset.requiresAuth = provider.requiresAuth;
             providerSelect.add(option);
         });
 
-        // Add change event listener
-        providerSelect.addEventListener('change', () => {
-            const selectedProvider = VOICE_API_CONFIG.voiceProviders[providerSelect.value];
+        // Add change event listener for provider select
+        providerSelect.addEventListener('change', (e) => {
+            const selectedProvider = VOICE_API_CONFIG.voiceProviders[e.target.value.toUpperCase()];
+            console.log('Selected provider:', selectedProvider);
+            
+            // Toggle auth section based on provider requirements
+            if (authSection) {
+                authSection.style.display = selectedProvider?.requiresAuth ? 'block' : 'none';
+                console.log('Auth section visibility:', authSection.style.display);
+            }
             updateVoiceList(selectedProvider);
         });
+
+        // Trigger initial change event
+        providerSelect.dispatchEvent(new Event('change'));
     }
 }
 
@@ -142,7 +154,8 @@ function collectVoices() {
     return Array.from(document.querySelectorAll('.voice-entry')).map(entry => ({
         id: entry.querySelector('[id$="-id"]').value,
         name: entry.querySelector('[id$="-name"]').value,
-        gender: entry.querySelector('[id$="-gender"]').value
+        gender: entry.querySelector('[id$="-gender"]').value,
+        language: entry.querySelector('[id$="-language"]').value // Add this line
     }));
 }
 

@@ -1268,44 +1268,6 @@ async function loadVoiceSettings() {
     }
 }
 
-// Voice API Form Handling
-const voiceElements = {
-    form: document.getElementById('voice-api-form'),
-    addButton: document.getElementById('add-voice-api-btn'),
-    closeButton: document.getElementById('close-voice-form'),
-    apiTypeSelect: document.getElementById('voice-api-type'),
-    authSection: document.getElementById('auth-section')
-};
-
-if (voiceElements.addButton && voiceElements.form) {
-    // Show/Hide form handlers
-    voiceElements.addButton.addEventListener('click', () => {
-        voiceElements.form.style.display = 'block';
-        voiceElements.addButton.style.display = 'none';
-    });
-
-    if (voiceElements.closeButton) {
-        voiceElements.closeButton.addEventListener('click', () => {
-            voiceElements.form.style.display = 'none';
-            voiceElements.addButton.style.display = 'block';
-            voiceElements.form.reset();
-            if (voiceElements.authSection) {
-                voiceElements.authSection.style.display = 'none';
-            }
-        });
-    }
-
-    // Toggle authentication section based on API type
-    if (voiceElements.apiTypeSelect) {
-        voiceElements.apiTypeSelect.addEventListener('change', () => {
-            if (voiceElements.authSection) {
-                voiceElements.authSection.style.display = 
-                    voiceElements.apiTypeSelect.value === 'hearing' ? 'block' : 'none';
-            }
-        });
-    }
-}
-
 async function loadVoiceApiList() {
     const voiceApiList = document.getElementById('voice-api-list');
     const apiCount = document.querySelector('.voice-api-count');
@@ -1561,6 +1523,40 @@ document.addEventListener('DOMContentLoaded', () => {
     loadVoiceSettings();
     // ...existing initialization code...
 });
+
+async function populateApiTypes() {
+    const apiTypeSelect = document.getElementById('voice-api-type');
+    if (!apiTypeSelect) return;
+
+    try {
+        const res = await fetch('/api/admin/voice/config', {
+            headers: {
+                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+            }
+        });
+        
+        const config = await res.json();
+        
+        // Clear existing options
+        apiTypeSelect.innerHTML = '';
+        
+        // Add options from config
+        Object.values(config.voiceProviders).forEach(provider => {
+            const option = document.createElement('option');
+            option.value = provider.id;
+            option.textContent = provider.name;
+            option.dataset.requiresAuth = provider.requiresAuth;
+            apiTypeSelect.appendChild(option);
+        });
+
+        // Trigger change event to set initial state
+        apiTypeSelect.dispatchEvent(new Event('change'));
+
+    } catch (err) {
+        console.error('Error loading API types:', err);
+        showNotification('Failed to load API types', 'error');
+    }
+}
 
 // ...existing code...
 

@@ -118,52 +118,19 @@ module.exports = {
             tokenPath: 'token', // Default path to extract token from response
             tokenExpiry: 3600   // Default token expiry in seconds
         },
+
         voiceProviders: {
-            kokoro: {
-                name: "Kokoro TTS",
-                voiceKey: 'voice',
-                textKey: 'input',
-                speedKey: 'speed',
-                modelKey: 'model',
-                formatKey: 'response_format',
-                defaults: {
-                    model: "kokoro",
-                    response_format: "mp3",
-                    speed: 1.0
-                }
+            DIRECT: {
+                id: 'direct',
+                name: 'Direct (Single Request)',
+                description: 'Simple API that accepts text and returns audio directly',
+                requiresAuth: false
             },
-            deepgram: {
-                name: "Deepgram",
-                voiceKey: 'model',
-                textKey: 'text',
-                defaults: {
-                    model: "aura-arcas-en"
-                }
-            },
-            ttsmp3: {
-                name: "TTS MP3",
-                voiceKey: 'lang',
-                textKey: 'msg',
-                speedKey: 'speed',
-                sourceKey: 'source',
-                defaults: {
-                    source: "ttsmp3",
-                    speed: "1.00"
-                }
-            },
-            tiktok: {
-                name: "TikTok TTS",
-                voiceKey: 'voice',
-                textKey: 'text',
-                defaults: {
-                    voice: "en_us_rocket"
-                }
-            },
-            hearing: {
-                name: "Hearing API",
-                requiresAuth: true,
-                voiceKey: 'voice',
-                textKey: 'text'
+            HEARING: {
+                id: 'hearing',
+                name: 'Hearings API (Token Required)',
+                description: 'API that requires authentication before use',
+                requiresAuth: true
             }
         },
 
