@@ -1496,13 +1496,6 @@ const initializeVoiceForm = () => {
     }
 };
 
-// Call initialize function when document is ready
-document.addEventListener('DOMContentLoaded', () => {
-    // ...existing initialization code...
-    initializeVoiceForm();
-    // ...existing initialization code...
-});
-
 // Add event listener for the text2voice section visibility
 document.addEventListener('DOMContentLoaded', () => {
     // ...existing initialization code...
