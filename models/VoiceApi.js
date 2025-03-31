@@ -70,4 +70,21 @@ const VoiceApiSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Add custom index options to schema
+VoiceApiSchema.index({ 
+    name: 1 
+}, { 
+    unique: true,
+    collation: { locale: 'en', strength: 2 } // Case-insensitive index
+});
+
+// Add pre-save middleware to normalize name
+VoiceApiSchema.pre('save', function(next) {
+    // Trim whitespace and normalize case if name is modified
+    if (this.isModified('name')) {
+        this.name = this.name.trim();
+    }
+    next();
+});
+
 module.exports = mongoose.model('VoiceApi', VoiceApiSchema);
