@@ -539,14 +539,15 @@ async function generateVoiceAudio(preview = false) {
         await validateAudioBlob(audioBlob);
         const audioSource = URL.createObjectURL(audioBlob);
 
-        // Create simple audio player without metadata
+        // Get accurate duration using AudioContext
+        const duration = await getAudioDurationWithContext(audioBlob);
+        const durationFormatted = formatDuration(duration);
+
+        // Create audio player without attempting to modify audio duration
         if (elements.audioPlayer) {
-            elements.audioPlayer.innerHTML = `
-                <audio controls autoplay>
-                    <source src="${audioSource}" type="${audioType}">
-                    Your browser does not support the audio element.
-                </audio>
-            `;
+            const selectedVoice = elements.voiceSelection.options[elements.voiceSelection.selectedIndex].text;
+            elements.audioPlayer.innerHTML = buildCustomAudioPlayer(audioSource, audioType, duration, selectedVoice);
+            initializeCustomPlayer();
         }
 
         // Show audio result and enable download
@@ -730,7 +731,7 @@ async function generateVoiceRequest() {
 
 
     // Function to download audio file
-    function downloadAudio(url, format) {
+    window.downloadAudio = function(url, format) {
         if (!url) {
             showNotification('Download URL not available', 'error');
             return;
@@ -864,4 +865,225 @@ async function generateVoiceRequest() {
             }, 3000);
         }, 100);
     }
+}
+
+// Move downloadAudio function to the global scope
+window.downloadAudio = function(url, format) {
+    if (!url) {
+        showNotification('Download URL not available', 'error');
+        return;
+    }
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `voice-${new Date().getTime()}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
+// Function to get audio duration using AudioContext (more accurate)
+function getAudioDurationWithContext(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext.decodeAudioData(event.target.result,
+                (buffer) => {
+                    resolve(buffer.duration);
+                    audioContext.close();
+                },
+                (error) => {
+                    console.error('Error decoding audio data:', error);
+                    reject(error);
+                    audioContext.close();
+                }
+            );
+        };
+        reader.onerror = (error) => {
+            console.error('FileReader error:', error);
+            reject(error);
+        };
+        reader.readAsArrayBuffer(blob);
+    });
+}
+
+// Replace the old getAudioDuration function
+async function getAudioDuration(blob) {
+    try {
+        const duration = await getAudioDurationWithContext(blob);
+        return duration;
+    } catch (error) {
+        console.error('Failed to get audio duration:', error);
+        // Fallback to simple audio element method
+        return new Promise((resolve) => {
+            const audio = new Audio();
+            const url = URL.createObjectURL(blob);
+            
+            audio.addEventListener('loadedmetadata', () => {
+                URL.revokeObjectURL(url);
+                audio.remove();
+                resolve(audio.duration);
+            });
+
+            audio.addEventListener('error', () => {
+                URL.revokeObjectURL(url);
+                audio.remove();
+                resolve(0);
+            });
+
+            audio.preload = 'metadata';
+            audio.src = url;
+        });
+    }
+}
+
+// Add these helper functions
+function formatDuration(seconds) {
+    // Ensure we have a valid number and it's not Infinity
+    if (!seconds || seconds === Infinity || isNaN(seconds)) {
+        return '0:00';
+    }
+    
+    // Round down to nearest whole number
+    seconds = Math.floor(seconds);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function buildCustomAudioPlayer(audioSource, audioType, duration, selectedVoice) {
+    const durationFormatted = formatDuration(duration);
+    
+    return `
+        <div class="custom-audio-player">
+            <audio id="audioElement" preload="metadata">
+                <source src="${audioSource}" type="${audioType}">
+                Your browser does not support the audio element.
+            </audio>
+            
+            <div class="player-controls">
+                <button class="play-pause-btn">
+                    <i class="fas fa-play"></i>
+                </button>
+                
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+                
+                <div class="time-display">
+                    <span class="current-time">0:00</span>
+                    <span class="current-time">/</span>
+                    <span class="duration">${durationFormatted}</span>
+                </div>
+            </div>
+            
+            <div class="audio-info">
+                <div class="audio-meta">
+                <span><i class="fas fa-clock"></i> ${durationFormatted}</span>
+                <span><i class="fas fa-microphone-alt"></i> ${selectedVoice}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function initializeCustomPlayer() {
+    const audio = document.getElementById('audioElement');
+    if (!audio) return;
+
+    const player = audio.closest('.custom-audio-player');
+    if (!player) return;
+
+    const playPauseBtn = player.querySelector('.play-pause-btn');
+    const progress = player.querySelector('.progress');
+    const currentTimeDisplay = player.querySelector('.current-time');
+    const durationDisplay = player.querySelector('.duration');
+    const progressBar = player.querySelector('.progress-bar');
+
+    if (!playPauseBtn || !progress || !currentTimeDisplay || !durationDisplay || !progressBar) {
+        console.error("Custom audio player elements not found!");
+        return;
+    }
+
+    let animationFrameId = null;
+
+    function updateProgress() {
+        if (audio.duration && !isNaN(audio.duration)) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progress.style.width = `${percent}%`;
+            currentTimeDisplay.textContent = formatDuration(audio.currentTime);
+        } else {
+            progress.style.width = '0%';
+            currentTimeDisplay.textContent = formatDuration(0);
+        }
+    }
+
+    function animationLoop() {
+        updateProgress();
+        if (!audio.paused && !audio.ended) {
+            animationFrameId = requestAnimationFrame(animationLoop);
+        } else {
+            animationFrameId = null;
+        }
+    }
+
+    function startLoop() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        animationFrameId = requestAnimationFrame(animationLoop);
+    }
+
+    function stopLoop() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+        if (audio.paused) {
+            audio.play();
+        } else {
+            audio.pause();
+        }
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+        if (audio.duration && !isNaN(audio.duration)) {
+            durationDisplay.textContent = formatDuration(audio.duration);
+            const audioMetaDuration = player.querySelector('.audio-meta span:first-child');
+            if (audioMetaDuration) {
+                audioMetaDuration.innerHTML = `<i class="fas fa-clock"></i> ${formatDuration(audio.duration)}`;
+            }
+            updateProgress();
+        }
+    });
+
+    progressBar.addEventListener('click', (e) => {
+        if (audio.duration && !isNaN(audio.duration)) {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
+            updateProgress();
+        }
+    });
+
+    audio.addEventListener('play', () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        startLoop();
+    });
+
+    audio.addEventListener('pause', () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        stopLoop();
+    });
+
+    audio.addEventListener('ended', () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        stopLoop();
+        progress.style.width = '100%';
+        currentTimeDisplay.textContent = formatDuration(0);
+    });
 }

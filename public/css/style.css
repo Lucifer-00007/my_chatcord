@@ -906,11 +906,47 @@ chat-messages .message .meta span {
 }
 
 .audio-player {
-    padding: 20px;
+    padding: 13px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    width: 150%; /* Maintain relative width */
+    max-width: 800px; /* Control maximum width */
+    margin-left: auto; /* Center horizontally */
+    margin-right: auto; /* Center horizontally */
+    position: relative; /* Add for proper centering */
+    left: 50%; /* Start from center */
+    transform: translateX(-50%); /* Pull back by half width */
+}
+
+.audio-player audio {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.audio-info {
+    padding: 10px;
+    background: var(--light-color);
+    border-radius: 5px;
+}
+
+.audio-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--dark-color-a);
+    font-size: 0.9em;
+}
+
+.audio-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.audio-meta i {
+    color: var(--dark-color-b);
 }
 
 .download-options {
@@ -2069,4 +2105,69 @@ input:checked+.toggle-slider:before {
 /* Voice Configuration Styles */
 #text2voice .global-settings-section > h3 {
     margin-bottom: 20px;
+}
+
+/* Custom Audio Player Styles */
+.custom-audio-player {
+    background: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 100%; /* Added to match parent */
+    max-width: 800px; /* Added to match parent */
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.play-pause-btn {
+    background: var(--dark-color-a);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.play-pause-btn:hover {
+    background: var(--dark-color-b);
+    transform: scale(1.05);
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+}
+
+.progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: var(--dark-color-a);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.time-display {
+    font-size: 0.9em;
+    color: #666;
+    min-width: 100px;
+    text-align: center;
+    display: flex;
+    gap: 10px;
 }
