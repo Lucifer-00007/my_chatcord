@@ -71,6 +71,7 @@ const cspConfig = {
         styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
         fontSrc: ["'self'", "cdnjs.cloudflare.com", "fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:", "*"],
+        mediaSrc: ["'self'", "blob:", "data:"],
         connectSrc: ["'self'", "ws:", "wss:"]
     }
 };

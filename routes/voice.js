@@ -8,8 +8,16 @@ const { VOICE_API_CONFIG } = require('../config/constants');
 router.post('/generate', auth, async (req, res) => {
     try {
         const { text, apiId, voice, language, speed, pitch } = req.body;
-        const api = await VoiceApi.findById(apiId);
+        
+        // Validate required fields
+        if (!text || !apiId || !voice) {
+            return res.status(400).json({ 
+                message: 'Missing required fields: text, apiId, and voice are required' 
+            });
+        }
 
+        // Find and validate API
+        const api = await VoiceApi.findById(apiId);
         if (!api || !api.isActive) {
             return res.status(404).json({ message: 'Voice API not found or inactive' });
         }
@@ -17,52 +25,96 @@ router.post('/generate', auth, async (req, res) => {
         // Handle authentication if needed
         let headers = { ...api.headers };
         if (api.apiType === 'hearing') {
-            const token = await TokenManager.getToken(api);
-            headers['Authorization'] = `Bearer ${token}`;
+            try {
+                const token = await TokenManager.getToken(api);
+                headers['Authorization'] = `Bearer ${token}`;
+            } catch (authErr) {
+                console.error('Authentication error:', authErr);
+                return res.status(401).json({ message: 'Authentication failed' });
+            }
         }
 
-        // Prepare request
-        let requestBody = {};
-        if (api.requestMethod === 'POST') {
+        // Extract endpoint URL from curlCommand
+        const urlMatch = api.curlCommand.match(/['"](https?:\/\/[^'"\s]+)['"]/);
+        if (!urlMatch) {
+            return res.status(400).json({ message: 'Invalid API configuration: No valid URL found' });
+        }
+        const endpoint = urlMatch[1];
+
+        // Prepare request body
+        let requestBody;
+        try {
             requestBody = await buildRequestBody(api, { text, voice, language, speed, pitch });
+        } catch (err) {
+            console.error('Error building request body:', err);
+            return res.status(422).json({ message: 'Failed to build request body: ' + err.message });
         }
 
-        // Make request
-        const response = await fetch(api.endpoint, {
-            method: api.requestMethod,
-            headers,
-            ...(api.requestMethod === 'POST' && { body: JSON.stringify(requestBody) })
+        // Log request details for debugging
+        console.log('Making voice API request:', {
+            endpoint,
+            method: api.requestMethod || 'POST',
+            headerKeys: Object.keys(headers),
+            requestBody
         });
 
-        // Handle response based on type
+        // Make request to voice API
+        const response = await fetch(endpoint, {
+            method: api.requestMethod || 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers
+            },
+            body: JSON.stringify(requestBody) // Send requestBody directly, not nested
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error('API Response Error:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorBody
+            });
+            throw new Error(`API request failed: ${response.statusText}`);
+        }
+
+        // Set response type based on API configuration
+        const contentType = response.headers.get('Content-Type');
+        res.set('Content-Type', contentType || 'audio/mpeg');
+
+        // Handle different response types
         switch (api.responseType) {
             case 'binary':
-                const buffer = await response.buffer();
-                res.set('Content-Type', 'audio/mpeg');
-                return res.send(buffer);
+                const arrayBuffer = await response.arrayBuffer();
+                return res.send(Buffer.from(arrayBuffer));
 
             case 'base64':
                 const data = await response.json();
-                const base64Data = extractFromPath(data, api.responsePath);
-                res.set('Content-Type', 'audio/mpeg');
-                return res.send(Buffer.from(base64Data, 'base64'));
+                try {
+                    const base64Data = extractFromPath(data, api.responsePath);
+                    if (!base64Data) {
+                        throw new Error('No audio data found in response');
+                    }
+                    return res.send(Buffer.from(base64Data, 'base64'));
+                } catch (err) {
+                    console.error('Base64 decode error:', err);
+                    return res.status(422).json({ message: 'Failed to decode audio data' });
+                }
 
             case 'decoded_base64':
-                const decodedData = await response.json();
-                const audioData = extractFromPath(decodedData, api.responsePath);
-                return res.json({ audioData });
-
             case 'url':
-                const urlData = await response.json();
-                const audioUrl = extractFromPath(urlData, api.responsePath);
-                return res.json({ audioUrl });
+                return res.json(await response.json());
 
             default:
                 throw new Error('Unsupported response type');
         }
     } catch (err) {
         console.error('Voice generation error:', err);
-        res.status(500).json({ message: err.message });
+        const statusCode = err.status || 500;
+        res.status(statusCode).json({ 
+            message: err.message || 'Failed to generate voice audio',
+            error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
     }
 });
 
@@ -159,21 +211,22 @@ function parseCurlCommand(curlCommand) {
             headers[headerMatch[1].trim()] = headerMatch[2].trim();
         }
 
-        // Extract body based on content type
+        // Extract and parse JSON body with improved error handling
         let body = null;
-        if (headers['Content-Type']?.includes('json')) {
-            const bodyMatch = cleaned.match(/--data\s+['"]({[\s\S]*?})['"]|--data-raw\s+['"]({[\s\S]*?})['"]/);
-            if (bodyMatch) {
-                body = JSON.parse(bodyMatch[1] || bodyMatch[2]);
+        const bodyMatch = cleaned.match(/--data\s+['"]({[\s\S]*?})['"]|--data-raw\s+['"]({[\s\S]*?})['"]/);
+        if (bodyMatch) {
+            try {
+                const jsonStr = bodyMatch[1] || bodyMatch[2];
+                // Remove escaped quotes and newlines before parsing
+                const cleanJson = jsonStr
+                    .replace(/\\"/g, '"')
+                    .replace(/\\\//g, '/')
+                    .replace(/\\n/g, '\n');
+                body = JSON.parse(cleanJson);
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                throw new Error('Invalid JSON in curl command: ' + parseError.message);
             }
-        } else if (headers['Content-Type']?.includes('form')) {
-            const formData = {};
-            const formPattern = /--data-urlencode\s+['"]([^=]+)=([^'"]+)['"]/g;
-            let formMatch;
-            while ((formMatch = formPattern.exec(cleaned)) !== null) {
-                formData[formMatch[1]] = formMatch[2];
-            }
-            body = formData;
         }
 
         return { url, method, headers, body };
@@ -183,54 +236,93 @@ function parseCurlCommand(curlCommand) {
 }
 
 function extractFromPath(data, path) {
-    return path.split('.').reduce((obj, key) => obj[key], data);
+    try {
+        return path.split('.').reduce((obj, key) => {
+            if (obj === null || obj === undefined) {
+                throw new Error(`Cannot read property '${key}' of ${obj}`);
+            }
+            return obj[key];
+        }, data);
+    } catch (err) {
+        console.error('Path extraction error:', err);
+        return null;
+    }
 }
 
 async function buildRequestBody(api, params) {
     try {
-        const providerConfig = VOICE_API_CONFIG.voiceProviders[api.apiType];
-        if (!providerConfig) {
-            throw new Error(`Unsupported API type: ${api.apiType}`);
+        // Parse the curl command to get the original request structure
+        const { body: templateBody } = parseCurlCommand(api.curlCommand);
+        if (!templateBody) {
+            throw new Error('No valid request body template found in curl command');
         }
 
-        // Build base request body using provider configuration
-        let requestBody = {
-            ...providerConfig.defaults
+        // Create a deep copy of the template body
+        let requestBody = JSON.parse(JSON.stringify(templateBody));
+
+        // Get the request path components
+        const pathComponents = api.requestPath.split('.');
+
+        // Function to set value in nested object
+        const setNestedValue = (obj, path, value) => {
+            let current = obj;
+            for (let i = 0; i < path.length - 1; i++) {
+                if (current[path[i]] === undefined) {
+                    current[path[i]] = {};
+                }
+                current = current[path[i]];
+            }
+            current[path[path.length - 1]] = value;
         };
 
-        // Map parameters to provider-specific keys
-        if (params.text && providerConfig.textKey) {
-            requestBody[providerConfig.textKey] = params.text;
-        }
-        if (params.voice && providerConfig.voiceKey) {
-            requestBody[providerConfig.voiceKey] = params.voice;
-        }
-        if (params.speed && providerConfig.speedKey) {
-            requestBody[providerConfig.speedKey] = parseFloat(params.speed);
-        }
-        if (params.language && providerConfig.languageKey) {
-            requestBody[providerConfig.languageKey] = params.language;
-        }
+        // Map the parameters to the request body structure
+        Object.entries(params).forEach(([key, value]) => {
+            if (value != null) {
+                switch (key) {
+                    case 'text':
+                        setNestedValue(requestBody, [...pathComponents], value);
+                        break;
+                    case 'voice':
+                        if (templateBody.voice !== undefined) {
+                            requestBody.voice = value;
+                        }
+                        break;
+                    case 'speed':
+                        if (templateBody.speed !== undefined) {
+                            requestBody.speed = value;
+                        }
+                        break;
+                    case 'pitch':
+                        if (templateBody.pitch !== undefined) {
+                            requestBody.pitch = value;
+                        }
+                        break;
+                    // Add more parameter mappings as needed
+                }
+            }
+        });
 
-        // Handle provider-specific parameters
-        if (api.customParams) {
-            requestBody = {
-                ...requestBody,
-                ...api.customParams
-            };
-        }
+        // Preserve any default values from the template that weren't overwritten
+        const preserveDefaults = (template, target) => {
+            Object.entries(template).forEach(([key, value]) => {
+                if (target[key] === undefined) {
+                    if (typeof value === 'object' && value !== null) {
+                        target[key] = {};
+                        preserveDefaults(value, target[key]);
+                    } else {
+                        target[key] = value;
+                    }
+                }
+            });
+        };
 
-        // If custom request path is provided, nest the body accordingly
-        if (api.requestPath) {
-            const paths = api.requestPath.split('.');
-            return setValueAtPath({}, paths, requestBody);
-        }
+        preserveDefaults(templateBody, requestBody);
 
         console.log('Built request body:', requestBody);
         return requestBody;
     } catch (err) {
         console.error('Error building request body:', err);
-        throw new Error('Failed to build request body');
+        throw new Error('Failed to build request body: ' + err.message);
     }
 }
 

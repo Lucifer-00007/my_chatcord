@@ -29,7 +29,8 @@ const VoiceApiSchema = new mongoose.Schema({
     },
     apiType: {
         type: String,
-        required: true
+        required: true,
+        set: value => value.toLowerCase() // Ensure consistent casing
     },
     responseType: {
         type: String,
@@ -86,5 +87,11 @@ VoiceApiSchema.pre('save', function(next) {
     }
     next();
 });
+
+// Add validation for apiType
+VoiceApiSchema.path('apiType').validate(function(value) {
+    const validTypes = ['direct', 'hearing']; // Add other valid types as needed
+    return validTypes.includes(value.toLowerCase());
+}, 'Invalid API type');
 
 module.exports = mongoose.model('VoiceApi', VoiceApiSchema);

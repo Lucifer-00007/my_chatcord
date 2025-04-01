@@ -124,7 +124,20 @@ module.exports = {
                 id: 'direct',
                 name: 'Direct (Single Request)',
                 description: 'Simple API that accepts text and returns audio directly',
-                requiresAuth: false
+                requiresAuth: false,
+                defaults: {
+                    response_format: "mp3"  // Add any default parameters required by the API
+                },
+                requestStructure: {
+                    wrapper: 'input', // Add wrapper key for request body
+                    keys: {
+                        text: 'text',
+                        voice: 'voice',
+                        speed: 'speed',
+                        pitch: 'pitch',
+                        language: 'language'
+                    }
+                }
             },
             HEARING: {
                 id: 'hearing',
