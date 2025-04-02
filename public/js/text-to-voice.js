@@ -538,14 +538,18 @@ async function generateVoiceAudio(preview = false) {
 
         await validateAudioBlob(audioBlob);
         const audioSource = URL.createObjectURL(audioBlob);
-
-        // Get accurate duration using AudioContext
-        const duration = await getAudioDurationWithContext(audioBlob);
+        
+        console.log('Starting duration calculation for audio...');
+        console.log(`Audio blob details: type=${audioType}, size=${audioBlob.size} bytes`);
+        
+        const duration = await getAudioDuration(audioBlob);
+        console.log(`Final duration passed to buildCustomAudioPlayer: ${duration}`);
         const durationFormatted = formatDuration(duration);
+        console.log(`Formatted duration for display: ${durationFormatted}`);
 
-        // Create audio player without attempting to modify audio duration
         if (elements.audioPlayer) {
             const selectedVoice = elements.voiceSelection.options[elements.voiceSelection.selectedIndex].text;
+            console.log(`Building audio player with duration: ${duration}, formatted: ${durationFormatted}`);
             elements.audioPlayer.innerHTML = buildCustomAudioPlayer(audioSource, audioType, duration, selectedVoice);
             initializeCustomPlayer();
         }
@@ -887,10 +891,13 @@ function getAudioDurationWithContext(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (event) => {
+            console.log('FileReader loaded audio data, creating AudioContext...');
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             audioContext.decodeAudioData(event.target.result,
                 (buffer) => {
-                    resolve(buffer.duration);
+                    const duration = buffer.duration;
+                    console.log(`AudioContext decoded duration: ${duration} seconds`);
+                    resolve(duration);
                     audioContext.close();
                 },
                 (error) => {
@@ -904,29 +911,41 @@ function getAudioDurationWithContext(blob) {
             console.error('FileReader error:', error);
             reject(error);
         };
+        console.log('Starting to read audio blob as ArrayBuffer...');
         reader.readAsArrayBuffer(blob);
     });
 }
 
-// Replace the old getAudioDuration function
 async function getAudioDuration(blob) {
+    let duration = 0;
     try {
-        const duration = await getAudioDurationWithContext(blob);
+        console.log("Attempting duration calculation with AudioContext...");
+        console.log(`Blob type: ${blob.type}, size: ${blob.size} bytes`);
+        
+        duration = await getAudioDurationWithContext(blob);
+        console.log(`AudioContext method succeeded. Duration: ${duration}`);
         return duration;
     } catch (error) {
-        console.error('Failed to get audio duration:', error);
-        // Fallback to simple audio element method
+        console.error('AudioContext method failed:', error);
+        console.log("Falling back to HTMLAudioElement method...");
+        
         return new Promise((resolve) => {
             const audio = new Audio();
             const url = URL.createObjectURL(blob);
-            
+
             audio.addEventListener('loadedmetadata', () => {
+                const fallbackDuration = audio.duration;
+                console.log(`HTMLAudioElement loadedmetadata duration: ${fallbackDuration}`);
                 URL.revokeObjectURL(url);
                 audio.remove();
-                resolve(audio.duration);
+                if (fallbackDuration === Infinity) {
+                    console.warn('HTMLAudioElement reported Infinity duration, defaulting to 0');
+                }
+                resolve(fallbackDuration === Infinity ? 0 : fallbackDuration);
             });
 
-            audio.addEventListener('error', () => {
+            audio.addEventListener('error', (e) => {
+                console.error('HTMLAudioElement error:', audio.error || e);
                 URL.revokeObjectURL(url);
                 audio.remove();
                 resolve(0);
@@ -934,6 +953,17 @@ async function getAudioDuration(blob) {
 
             audio.preload = 'metadata';
             audio.src = url;
+            console.log('HTMLAudioElement created and metadata loading started...');
+
+            const timeoutId = setTimeout(() => {
+                console.warn("HTMLAudioElement fallback timed out after 5 seconds");
+                URL.revokeObjectURL(url);
+                audio.remove();
+                resolve(0);
+            }, 5000);
+
+            audio.addEventListener('loadedmetadata', () => clearTimeout(timeoutId));
+            audio.addEventListener('error', () => clearTimeout(timeoutId));
         });
     }
 }
@@ -999,6 +1029,7 @@ function initializeCustomPlayer() {
     const progress = player.querySelector('.progress');
     const currentTimeDisplay = player.querySelector('.current-time');
     const durationDisplay = player.querySelector('.duration');
+    const audioMetaDuration = player.querySelector('.audio-meta span:first-child');
     const progressBar = player.querySelector('.progress-bar');
 
     if (!playPauseBtn || !progress || !currentTimeDisplay || !durationDisplay || !progressBar) {
@@ -1006,11 +1037,16 @@ function initializeCustomPlayer() {
         return;
     }
 
+    // Get the pre-calculated duration from the display
+    const initialDuration = parseDurationString(durationDisplay.textContent);
+    console.log(`Using pre-calculated duration: ${initialDuration}s`);
+
     let animationFrameId = null;
 
     function updateProgress() {
-        if (audio.duration && !isNaN(audio.duration)) {
-            const percent = (audio.currentTime / audio.duration) * 100;
+        if (!isNaN(audio.currentTime)) {
+            // Use our initial duration rather than audio.duration
+            const percent = (audio.currentTime / initialDuration) * 100;
             progress.style.width = `${percent}%`;
             currentTimeDisplay.textContent = formatDuration(audio.currentTime);
         } else {
@@ -1020,26 +1056,39 @@ function initializeCustomPlayer() {
     }
 
     function animationLoop() {
+        // console.log(`RAF Loop: time=${audio.currentTime.toFixed(2)}, paused=${audio.paused}, ended=${audio.ended}`);
+        
         updateProgress();
+
         if (!audio.paused && !audio.ended) {
             animationFrameId = requestAnimationFrame(animationLoop);
         } else {
+            console.log("RAF Loop stopping.");
             animationFrameId = null;
         }
     }
 
     function startLoop() {
         if (animationFrameId) {
+            console.log("Cancelling existing RAF frame before starting new one.");
             cancelAnimationFrame(animationFrameId);
         }
+        console.log("Starting RAF Loop...");
         animationFrameId = requestAnimationFrame(animationLoop);
     }
 
     function stopLoop() {
         if (animationFrameId) {
+            console.log("Stopping RAF Loop via stopLoop().");
             cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
         }
+    }
+
+    // Helper function to parse duration string back to seconds
+    function parseDurationString(durationStr) {
+        const [minutes, seconds] = durationStr.split(':').map(Number);
+        return minutes * 60 + seconds;
     }
 
     playPauseBtn.addEventListener('click', () => {
@@ -1051,39 +1100,48 @@ function initializeCustomPlayer() {
     });
 
     audio.addEventListener('loadedmetadata', () => {
-        if (audio.duration && !isNaN(audio.duration)) {
-            durationDisplay.textContent = formatDuration(audio.duration);
-            const audioMetaDuration = player.querySelector('.audio-meta span:first-child');
-            if (audioMetaDuration) {
-                audioMetaDuration.innerHTML = `<i class="fas fa-clock"></i> ${formatDuration(audio.duration)}`;
-            }
-            updateProgress();
+        console.log(`Audio metadata loaded. HTMLAudioElement reports duration: ${audio.duration.toFixed(2)}s. Using pre-calculated duration: ${initialDuration}s`);
+        
+        // Only log a warning if the durations are significantly different
+        const durationDiff = Math.abs(audio.duration - initialDuration);
+        if (durationDiff > 1) {
+            console.warn(`Duration discrepancy detected: HTMLAudioElement duration differs by ${durationDiff.toFixed(2)}s from calculated duration`);
         }
+
+        updateProgress();
     });
 
     progressBar.addEventListener('click', (e) => {
-        if (audio.duration && !isNaN(audio.duration)) {
-            const rect = progressBar.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = percent * audio.duration;
-            updateProgress();
-        }
+        const rect = progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        // Use initial duration for seeking calculations
+        const newTime = percent * initialDuration;
+        console.log(`Seeking to: ${newTime.toFixed(2)}s (${(percent * 100).toFixed(1)}%)`);
+        audio.currentTime = newTime;
+        updateProgress();
     });
 
     audio.addEventListener('play', () => {
+        console.log('Play event triggered');
         playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
         startLoop();
     });
 
     audio.addEventListener('pause', () => {
+        console.log('Pause event triggered');
         playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
         stopLoop();
     });
 
     audio.addEventListener('ended', () => {
+        console.log(`Audio ended event. Final time: ${audio.currentTime.toFixed(2)}`);
         playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
         stopLoop();
-        progress.style.width = '100%';
+        progress.style.width = '0%';
         currentTimeDisplay.textContent = formatDuration(0);
+        audio.currentTime = 0; // Reset to beginning for replay
     });
+
+    // Initialize progress bar
+    updateProgress();
 }
