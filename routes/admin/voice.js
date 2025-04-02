@@ -23,6 +23,20 @@ router.get('/config', (req, res) => {
     }
 });
 
+// Get single voice API by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const api = await VoiceApi.findById(req.params.id);
+        if (!api) {
+            return res.status(404).json({ message: 'Voice API not found' });
+        }
+        res.json(api);
+    } catch (err) {
+        console.error('Error fetching voice API:', err);
+        res.status(500).json({ message: 'Error fetching voice API details', error: err.message });
+    }
+});
+
 // Get all voice APIs
 router.get('/', async (req, res) => {
     try {

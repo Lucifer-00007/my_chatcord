@@ -2171,3 +2171,40 @@ input:checked+.toggle-slider:before {
     display: flex;
     gap: 10px;
 }
+
+/* Voice Configuration Styles */
+.voice-entry {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--light-color);
+    border-radius: 8px;
+}
+
+.entry-fields {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.voice-entry .form-group {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.voice-entry .form-input,
+.voice-entry .form-select {
+    height: 38px;
+    padding: 8px 12px;
+}
+
+.voice-entry .remove-voice {
+    padding: 8px;
+    height: 38px;
+    width: 38px;
+    min-width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
