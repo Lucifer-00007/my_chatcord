@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { security, chat } = require('../config/constants');
 const Channel = require('../models/Channel');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const Message = require('../models/Message');
-const { JWT_SECRET, ROOM_TOKEN_EXPIRE, MAX_MESSAGES } = require('../config/constants');
 
 // Get all channels
 router.get('/', auth, async (req, res) => {
@@ -72,7 +72,7 @@ router.get('/:name/messages', auth, async (req, res) => {
     const messages = await Message.find({ channel: channel._id })
       .populate('user', 'username')
       .sort({ createdAt: -1 })
-      .limit(MAX_MESSAGES);
+      .limit(chat.MAX_MESSAGES);
 
     res.json(messages);
   } catch (err) {
@@ -94,8 +94,8 @@ router.post('/join', auth, async (req, res) => {
         username: user.username,
         room 
       },
-      JWT_SECRET,
-      { expiresIn: ROOM_TOKEN_EXPIRE }
+      security.JWT_SECRET,
+      { expiresIn: security.ROOM_TOKEN_EXPIRE }
     );
 
     res.json({ roomToken });

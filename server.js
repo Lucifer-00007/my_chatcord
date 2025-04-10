@@ -5,7 +5,6 @@ const express = require("express");
 const socketio = require("socket.io");
 const helmet = require("helmet"); // Add helmet for security
 const rateLimit = require("express-rate-limit"); // Add rate limiting
-const Joi = require("joi"); // Add Joi for input validation
 const formatMessage = require("./utils/messages");
 const connectDB = require('./config/db');
 const cookieParser = require('cookie-parser');
@@ -17,13 +16,10 @@ const Message = require('./models/Message'); // Import Message model
 const Channel = require('./models/Channel'); // Add Channel model import
 const { initializeChannels } = require('./config/init'); // Add this import
 const {
-    PORT,
-    HOST,
-    RATE_LIMIT_WINDOW,
-    RATE_LIMIT_MAX,
-    BOT_NAME,
-    CORS_CONFIG,
-    MESSAGES
+    env,
+    security,
+    chat,
+    cors
 } = require('./config/constants');
 
 // Import additional libraries and set up Redis for Socket.io adapter
@@ -56,7 +52,7 @@ initializeChannels();
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server, {
-  cors: CORS_CONFIG
+  cors
 });
 
 // Serve static files from the 'public' directory
@@ -83,8 +79,8 @@ app.use(helmet({
 
 // Apply rate limiting
 const limiter = rateLimit({
-  windowMs: RATE_LIMIT_WINDOW,
-  max: RATE_LIMIT_MAX
+  windowMs: security.RATE_LIMIT_WINDOW,
+  max: security.RATE_LIMIT_MAX
 });
 app.use(limiter);
 
@@ -153,7 +149,7 @@ app.use('/api/admin/settings', require('./routes/admin/settings'));
 // Apply admin middleware to all admin routes
 app.use('/api/admin', require('./middleware/admin'));
 
-const botName = BOT_NAME;
+const botName = chat.BOT_NAME;
 
 // Modified Redis connection setup with try-catch
 (async () => {
@@ -225,12 +221,12 @@ io.on("connection", (socket) => {
     const roomUsers = getRoomUsers(socket.room);
     
     // Welcome current user
-    socket.emit("message", formatMessage(botName, MESSAGES.welcome));
+    socket.emit("message", formatMessage(botName, chat.MESSAGES.welcome));
     
     // Broadcast user joined
     socket.broadcast
       .to(socket.room)
-      .emit("message", formatMessage(botName, MESSAGES.userJoined(socket.username)));
+      .emit("message", formatMessage(botName, chat.MESSAGES.userJoined(socket.username)));
     
     // Send users and room info to all clients in the room
     io.to(socket.room).emit("roomUsers", {
@@ -267,7 +263,7 @@ io.on("connection", (socket) => {
         }
       } catch (err) {
         console.error('Message error:', err);
-        socket.emit("error", MESSAGES.sendError);
+        socket.emit("error", chat.MESSAGES.sendError);
       }
     });
 
@@ -277,7 +273,7 @@ io.on("connection", (socket) => {
       if (user) {
         io.to(user.room).emit(
           "message",
-          formatMessage(botName, MESSAGES.userLeft(user.username))
+          formatMessage(botName, chat.MESSAGES.userLeft(user.username))
         );
 
         io.to(user.room).emit("roomUsers", {
@@ -292,4 +288,4 @@ io.on("connection", (socket) => {
 });
 
 // Start the server and listen on the specified port
-server.listen(PORT, process.env.HOST, () => console.log(`Server running on port ${PORT}`));
+server.listen(env.PORT, process.env.HOST, () => console.log(`Server running on port ${env.PORT}`));

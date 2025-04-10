@@ -5,7 +5,7 @@ const AiApi = require('../models/AiApi');
 const AiChat = require('../models/AiChat'); // Add this line
 const fetch = require('node-fetch');
 const { parseCurlCommand } = require('../utils/apiHelpers');
-const { AI_CONFIG } = require('../config/constants');  // Add this line
+const { ai } = require('../config/constants');  // Add this line
 
 // Get user's chat sessions
 router.get('/sessions', auth, async (req, res) => {
@@ -52,7 +52,7 @@ router.post('/sessions', auth, async (req, res) => {
 
         // Create initial system message
         const session = new AiChat({
-            title: AI_CONFIG.defaultTitle,
+            title: ai.defaultTitle,
             user: req.user._id,
             apiModel: {
                 name: api.name,
@@ -60,7 +60,7 @@ router.post('/sessions', auth, async (req, res) => {
             },
             messages: [{
                 role: 'system',
-                content: AI_CONFIG.initialMessage
+                content: ai.initialMessage
             }]
         });
 
@@ -140,7 +140,7 @@ router.post('/chat', auth, async (req, res) => {
         if (!session) {
             // Create new session if none exists
             session = new AiChat({
-                title: AI_CONFIG.defaultTitle,
+                title: ai.defaultTitle,
                 user: req.user._id,
                 apiModel: {
                     name: api.name,

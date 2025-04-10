@@ -10,7 +10,7 @@ const VoiceSettings = require('../models/VoiceSettings');
 const ImageSettings = require('../models/ImageSettings');
 const fetch = require('node-fetch');
 const { parseCurlCommand } = require('../utils/apiHelpers');
-const { ADMIN_CONSTANTS } = require('../config/constants');
+const { admin } = require('../config/constants');
 const { 
     setValueAtPath, 
     validateVoiceRange, 
@@ -224,7 +224,7 @@ router.post('/ai-apis/test', auth, async (req, res) => {
 
         // Create request body using helper
         let requestBody = JSON.parse(JSON.stringify(body));
-        requestBody = setValueAtPath(requestBody, requestPath, ADMIN_CONSTANTS.TEST_MESSAGE);
+        requestBody = setValueAtPath(requestBody, requestPath, admin.TEST_MESSAGE);
 
         console.log('Test request:', {
             endpoint,
@@ -433,7 +433,7 @@ router.post('/image-apis/test', auth, async (req, res) => {
 
         const { endpoint, headers, method, body: parsedBody } = parseCurlCommand(curlCommand);
         let requestBody = JSON.parse(JSON.stringify(parsedBody || {}));
-        requestBody = setValueAtPath(requestBody, requestPath, ADMIN_CONSTANTS.TEST_MESSAGE);
+        requestBody = setValueAtPath(requestBody, requestPath, admin.TEST_MESSAGE);
 
         console.log('Sending test request:', {
             endpoint,
@@ -597,7 +597,7 @@ router.put('/image-settings/:type', auth, async (req, res) => {
 
     try {
         const { type } = req.params;
-        if (!ADMIN_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(type)) {
+        if (!admin.SUPPORTED_IMAGE_TYPES.includes(type)) {
             return res.status(400).json(createApiResponse(false, 'Invalid settings type'));
         }
 
@@ -671,7 +671,7 @@ router.put('/voice-settings/:type', auth, async (req, res) => {
 
     try {
         const { type } = req.params;
-        if (!ADMIN_CONSTANTS.SUPPORTED_VOICE_TYPES.includes(type)) {
+        if (!admin.SUPPORTED_VOICE_TYPES.includes(type)) {
             return res.status(400).json(createApiResponse(false, 'Invalid settings type'));
         }
 

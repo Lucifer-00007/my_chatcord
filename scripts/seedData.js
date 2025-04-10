@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Message = require('../models/Message');
 const Channel = require('../models/Channel');
-const { DEMO_CONFIG, DEFAULT_CHANNELS } = require('../config/constants');
+const { demo, chat } = require('../config/constants');
 
 async function createCollectionsIfNotExist() {
     try {
@@ -50,7 +50,7 @@ async function seedDatabase() {
 
         // Create users
         const users = [];
-        for (const userData of DEMO_CONFIG.users) {
+        for (const userData of demo.users) {
             const user = new User(userData);
             await user.save();
             users.push(user);
@@ -59,7 +59,7 @@ async function seedDatabase() {
 
         // Create all default channels
         const channels = [];
-        for (const channelData of DEFAULT_CHANNELS) {
+        for (const channelData of chat.DEFAULT_CHANNELS) {
             const channel = new Channel({
                 ...channelData,
                 description: `Channel for ${channelData.name} developers`,
@@ -73,9 +73,9 @@ async function seedDatabase() {
         // Create demo messages in JavaScript channel
         const jsChannel = channels.find(ch => ch.name === 'JavaScript');
         if (jsChannel) {
-            const messagePromises = DEMO_CONFIG.messages.map((content, index) => {
+            const messagePromises = demo.messages.map((content, index) => {
                 const user = users[index % users.length];
-                const timeOffset = index * DEMO_CONFIG.messageInterval;
+                const timeOffset = index * demo.messageInterval;
                 
                 return new Message({
                     content,

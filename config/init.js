@@ -1,7 +1,14 @@
 const Channel = require('../models/Channel');
-const { DEFAULT_CHANNELS } = require('./constants');
+const { chat } = require('./constants');
+
+const DEFAULT_CHANNELS = chat.DEFAULT_CHANNELS;
 
 const initializeChannels = async () => {
+    if (!DEFAULT_CHANNELS || !Array.isArray(DEFAULT_CHANNELS)) {
+        console.error('Error: DEFAULT_CHANNELS is missing or not an array in the configuration.');
+        return; // Stop execution if config is invalid
+    }
+    
     try {
         for (const channelData of DEFAULT_CHANNELS) {
             const existing = await Channel.findOne({ name: channelData.name });

@@ -4,29 +4,10 @@ const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/jwt');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-
-// Cookie configuration based on environment
-const cookieConfig = {
-    production: {
-        httpOnly: true,
-        secure: true,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        path: '/',
-        sameSite: 'strict',
-        domain: process.env.PROD_DOMAIN
-    },
-    development: {
-        httpOnly: true,
-        secure: false,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        path: '/',
-        sameSite: 'lax',
-        domain: 'localhost'
-    }
-};
+const { cookie } = require('../config/constants');
 
 // Select cookie options based on environment
-const cookieOptions = cookieConfig[process.env.NODE_ENV || 'development'];
+const cookieOptions = cookie;
 
 // Register user
 router.post('/register', async (req, res) => {

@@ -1,21 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const VoiceApi = require('../../models/VoiceApi');
-const { VOICE_API_CONFIG } = require('../../config/constants');
-const auth = require('../../middleware/auth');
+const { voice } = require('../../config/constants');
 const { parseCurlCommand } = require('../../utils/apiHelpers');
 
 // Update route to get voice config
 router.get('/config', (req, res) => {
     try {
-        if (!VOICE_API_CONFIG) {
+        if (!voice) {
             throw new Error('Voice configuration not found');
         }
         
         // Send the entire voiceProviders object to preserve all properties
         res.json({
-            defaultVoiceTypes: VOICE_API_CONFIG.defaultVoiceTypes || [],
-            voiceProviders: VOICE_API_CONFIG.voiceProviders || {}
+            defaultVoiceTypes: voice.defaultVoiceTypes || [],
+            voiceProviders: voice.voiceProviders || {}
         });
     } catch (err) {
         res.status(500).json({ 

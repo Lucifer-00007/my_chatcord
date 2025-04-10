@@ -1,4 +1,4 @@
-const { ADMIN_CONSTANTS, VALIDATION } = require('../config/constants');
+const { validation } = require('../config/constants');
 
 /**
  * Validates and processes request path value setting
@@ -58,7 +58,7 @@ function validateVoiceRange(range) {
         throw new Error('Default value must be between min and max values');
     }
 
-    if (range.step <= 0 || range.step > VALIDATION.MAX_STEP) {
+    if (range.step <= 0 || range.step > validation.MAX_STEP) {
         throw new Error('Invalid step value');
     }
 
@@ -90,8 +90,8 @@ function processImageSettings(type, values) {
             }
             
             if (isNaN(width) || isNaN(height) || 
-                width < VALIDATION.MIN_WIDTH || width > VALIDATION.MAX_WIDTH ||
-                height < VALIDATION.MIN_HEIGHT || height > VALIDATION.MAX_HEIGHT) {
+                width < validation.MIN_WIDTH || width > validation.MAX_WIDTH ||
+                height < validation.MIN_HEIGHT || height > validation.MAX_HEIGHT) {
                 throw new Error(`Invalid dimensions: ${width}x${height}`);
             }
 
