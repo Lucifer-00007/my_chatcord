@@ -124,6 +124,7 @@ router.get('/me', auth, async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('Error fetching user:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -134,6 +135,7 @@ router.post('/logout', auth, async (req, res) => {
     res.clearCookie('token');
     res.json({ message: 'Logged out successfully' });
   } catch (err) {
+    console.error('Logout error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

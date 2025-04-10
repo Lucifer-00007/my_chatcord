@@ -1,0 +1,81 @@
+<div class="section-header">
+    <div class="section-title">
+        <h2><i class="fas fa-robot"></i> AI Chat Configuration</h2>
+        <span class="section-description">Configure AI chat models and endpoints</span>
+    </div>
+    <button id="add-api-btn" class="btn btn-wide">
+        <i class="fas fa-plus"></i> Add New API
+    </button>
+</div>
+
+<div class="api-config-section">
+    <form id="api-form" class="admin-form" style="display: none;">
+        <div class="form-header">
+            <h3><i class="fas fa-plus"></i> Add New API</h3>
+            <button type="button" id="close-form" class="btn-close">&times;</button>
+        </div>
+
+        <div class="form-group">
+            <label for="api-name">API Name</label>
+            <input type="text" id="api-name" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+            <label for="curl-command">cURL Command</label>
+            <div class="code-input-container">
+                <textarea id="curl-command" class="code-input" rows="4" required></textarea>
+                <button type="button" class="btn-format" onclick="formatCurl()">
+                    <i class="fas fa-code"></i> Format
+                </button>
+            </div>
+            <span class="form-hint">Enter the cURL command for making requests to the API</span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group flex-1">
+                <label for="request-path">Request Path</label>
+                <input type="text" id="request-path" class="form-input" required>
+                <span class="form-hint">JSON path for request data (e.g., "messages[0].content")</span>
+            </div>
+            <div class="form-group flex-1">
+                <label for="response-path">Response Path</label>
+                <input type="text" id="response-path" class="form-input">
+                <span class="form-hint">JSON path for response data (e.g., "choices[0].text")</span>
+            </div>
+        </div>
+
+        <!-- Replace API Preview with Test Status section -->
+        <div class="test-status-section" style="display: none;">
+            <div class="test-header">
+                <h4><i class="fas fa-vial"></i> API Test Status</h4>
+                <div class="test-indicator"></div>
+            </div>
+            <div class="test-content">
+                <div class="test-message"></div>
+                <div class="test-details" style="display: none;">
+                    <pre class="test-response"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" id="test-api" class="btn btn-secondary">
+                <i class="fas fa-vial"></i> Test API
+            </button>
+            <button type="submit" class="btn">
+                <i class="fas fa-save"></i> Save API
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="list-header">
+    <div class="list-title">
+        <h3>Available APIs</h3>
+        <span class="api-count">0 APIs</span>
+    </div>
+</div>
+
+<div id="api-list" class="api-list-section">
+    <!-- APIs will be populated here -->
+</div>

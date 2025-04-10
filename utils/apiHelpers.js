@@ -1,41 +1,55 @@
+// Enhanced curl command parser
 function parseCurlCommand(curlCommand) {
+    console.log('Starting cURL command parse');
     try {
-        // Remove newlines and extra spaces
-        const normalizedCommand = curlCommand.replace(/\\\s*\n/g, ' ').trim();
-        
+        const cleaned = curlCommand.trim().replace(/\\\n/g, ' ').replace(/\s+/g, ' ');
+        console.log('Cleaned command:', cleaned);
+
         // Extract URL
-        const urlMatch = normalizedCommand.match(/curl\s+(?:--location\s+)?['"]([^'"]+)['"]/);
-        const endpoint = urlMatch ? urlMatch[1] : null;
+        const urlMatch = cleaned.match(/(?:--location\s+)?['"]?(https?:\/\/[^'"]+)['"]?/i);
+        if (!urlMatch) {
+            throw new Error('No valid URL found in cURL command');
+        }
+        const url = urlMatch[1].replace(/^['"]|['"]$/g, '');
 
         // Extract headers
         const headers = {};
-        const headerMatches = normalizedCommand.matchAll(/--header\s+['"]([^:]+):\s*([^'"]+)['"]/g);
-        for (const match of headerMatches) {
-            headers[match[1].trim()] = match[2].trim();
+        const headerRegex = /--header\s+['"]([^:]+):\s*([^'"]+)['"]/g;
+        let headerMatch;
+        while ((headerMatch = headerRegex.exec(cleaned)) !== null) {
+            headers[headerMatch[1].trim()] = headerMatch[2].trim();
+        }
+
+        // Extract body preserving all fields
+        let body = null;
+        const dataMatch = /--data\s+['"]({[\s\S]*?})['"]/g.exec(cleaned);
+        if (dataMatch) {
+            try {
+                body = JSON.parse(dataMatch[1]);
+            } catch (e) {
+                console.error('Failed to parse body as JSON:', e);
+                body = dataMatch[1];
+            }
         }
 
         // Extract method
-        const methodMatch = normalizedCommand.match(/--request\s+(['"]?)(\w+)\1/);
-        const method = methodMatch ? methodMatch[2] : 'POST';
+        const methodMatch = /-X\s+(\w+)/i.exec(cleaned);
+        const method = methodMatch ? methodMatch[1] : (body ? 'POST' : 'GET');
 
-        // Extract body data
-        const dataPattern = /--data\s+['"]({[\s\S]*?})['"]\s*$/;
-        const dataMatch = normalizedCommand.match(dataPattern);
-        let body = null;
-        
-        if (dataMatch) {
-            const bodyContent = dataMatch[1]
-                .replace(/\\"/g, '"')
-                .replace(/\\\n\s*/g, '')
-                .trim();
-            body = JSON.parse(bodyContent);
-        }
+        console.log('Parsed curl data:', { 
+            url, 
+            method,
+            headerCount: Object.keys(headers).length,
+            hasBody: !!body 
+        });
 
-        return { endpoint, headers, method, body };
+        return { url, method, headers, body };
     } catch (err) {
-        console.error('Error parsing cURL command:', err);
-        throw new Error('Invalid cURL command format: ' + err.message);
+        console.error('cURL parsing error:', err);
+        throw new Error(`Failed to parse cURL command: ${err.message}`);
     }
 }
 
-module.exports = { parseCurlCommand };
+module.exports = {
+    parseCurlCommand
+};

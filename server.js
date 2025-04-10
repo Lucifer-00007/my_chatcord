@@ -10,6 +10,7 @@ const formatMessage = require("./utils/messages");
 const connectDB = require('./config/db');
 const cookieParser = require('cookie-parser');
 const authMiddleware = require('./middleware/auth');
+const adminMiddleware = require('./middleware/admin');  // Add this line
 const { verifyToken } = require('./utils/jwt'); // Add this import
 const User = require('./models/User'); // Add this import
 const Message = require('./models/Message'); // Import Message model
@@ -22,7 +23,6 @@ const {
     RATE_LIMIT_MAX,
     BOT_NAME,
     CORS_CONFIG,
-    CSP_CONFIG,
     MESSAGES
 } = require('./config/constants');
 
@@ -132,13 +132,26 @@ app.get('/admin-settings', (req, res) => {
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/channels', require('./routes/channels'));
-app.use('/api/admin', authMiddleware, require('./routes/admin'));
+app.use('/api/admin', authMiddleware, adminMiddleware, require('./routes/admin'));
 app.use('/api/ai', authMiddleware, require('./routes/ai'));
 app.use('/api/images', authMiddleware, require('./routes/images'));
-
-// Fix voice routes - Change these lines
 app.use('/api/voice', authMiddleware, require('./routes/voice'));
-app.use('/api/admin/voice', authMiddleware, require('./routes/admin/voice')); // Change from voice-apis to voice
+app.use('/api/admin/users', authMiddleware, adminMiddleware, require('./routes/admin/users'));
+app.use('/api/admin/logs', authMiddleware, adminMiddleware, require('./routes/admin/logs'));
+app.use('/api/admin/settings', authMiddleware, adminMiddleware, require('./routes/admin/settings'));
+app.use('/api/admin/voice', authMiddleware, adminMiddleware, require('./routes/admin/voice')); // Add this line
+
+// Admin routes
+app.use('/api/admin/stats', require('./routes/admin/stats'));
+app.use('/api/admin/ai-apis', require('./routes/admin/ai-apis'));
+app.use('/api/admin/voice', require('./routes/admin/voice'));
+app.use('/api/admin/image-apis', require('./routes/admin/image-apis'));
+app.use('/api/admin/users', require('./routes/admin/users'));
+app.use('/api/admin/logs', require('./routes/admin/logs'));
+app.use('/api/admin/settings', require('./routes/admin/settings'));
+
+// Apply admin middleware to all admin routes
+app.use('/api/admin', require('./middleware/admin'));
 
 const botName = BOT_NAME;
 

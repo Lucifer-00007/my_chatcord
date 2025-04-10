@@ -1,65 +1,60 @@
 const mongoose = require('mongoose');
 
-const imageApiSchema = new mongoose.Schema({
+const sizeSchema = new mongoose.Schema({
+    id: String,
+    label: String,
+    width: Number,
+    height: Number,
+    isActive: {
+        type: Boolean,
+        default: true
+    }
+});
+
+const styleSchema = new mongoose.Schema({
+    id: String,
+    name: String,
+    isActive: {
+        type: Boolean,
+        default: true
+    }
+});
+
+// Add indexes for faster querying
+sizeSchema.index({ id: 1 });
+styleSchema.index({ id: 1 });
+
+const ImageApiSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        trim: true,
-        unique: true  // Add unique constraint
-    },
-    endpoint: {
-        type: String,
-        required: true
+        unique: true
     },
     curlCommand: {
         type: String,
         required: true
     },
-    headers: {
-        type: Map,
-        of: String
-    },
-    method: {
-        type: String,
-        default: 'POST'
-    },
-    isActive: {
-        type: Boolean,
-        default: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
     requestPath: {
         type: String,
         required: true
     },
-    responsePath: {
-        type: String,
-        required: false
+    responsePath: String,
+    isActive: {
+        type: Boolean,
+        default: true
     },
-    displayName: {
-        type: String,
-        required: false
-    }
+    supportedSizes: [sizeSchema],
+    supportedStyles: [styleSchema]
+}, {
+    timestamps: true
 });
 
-// Just update displayName if not set
-imageApiSchema.pre('save', function(next) {
-    if (!this.displayName) {
-        this.displayName = this.name;
-    }
-    next();
+// Add custom index options
+ImageApiSchema.index({ 
+    name: 1 
+}, { 
+    unique: true,
+    collation: { locale: 'en', strength: 2 }
 });
 
-// Add error handling middleware for duplicate key errors
-imageApiSchema.post('save', function(error, doc, next) {
-    if (error.name === 'MongoServerError' && error.code === 11000) {
-        next(new Error('DUPLICATE_NAME'));
-    } else {
-        next(error);
-    }
-});
-
-module.exports = mongoose.model('ImageApi', imageApiSchema);
+module.exports = mongoose.model('ImageApi', ImageApiSchema);

@@ -1,0 +1,179 @@
+<div class="section-header">
+    <div class="section-title">
+        <h2><i class="fas fa-microphone-alt"></i> Voice Configuration</h2>
+        <span class="section-description">Configure text-to-speech APIs and voice settings</span>
+    </div>
+    <button id="add-voice-api-btn" class="btn btn-wide">
+        <i class="fas fa-plus"></i> Add New API
+    </button>
+</div>
+
+<div class="global-settings-section">
+    <div class="settings-header">
+        <h3>Voice Settings</h3>
+    </div>
+    <div class="settings-group">
+        <div class="settings-header">
+            <h4>Speed Configuration</h4>
+        </div>
+        <div class="range-settings">
+            <div class="range-item">
+                <label for="speed-min">Minimum Speed</label>
+                <input type="number" id="speed-min" step="0.1" value="">
+            </div>
+            <div class="range-item">
+                <label for="speed-max">Maximum Speed</label>
+                <input type="number" id="speed-max" step="0.1" value="">
+            </div>
+            <div class="range-item">
+                <label for="speed-default">Default Speed</label>
+                <input type="number" id="speed-default" step="0.1" value="">
+            </div>
+            <div class="range-item">
+                <label for="speed-step">Step Size</label>
+                <input type="number" id="speed-step" step="0.1" value="">
+            </div>
+        </div>
+        <button class="btn" onclick="saveVoiceSettings('speed')">Save Speed Settings</button>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-header">
+            <h4>Pitch Configuration</h4>
+        </div>
+        <div class="range-settings">
+            <div class="range-item">
+                <label for="pitch-min">Minimum Pitch</label>
+                <input type="number" id="pitch-min" step="0.1" value="">
+            </div>
+            <div class="range-item">
+                <label for="pitch-max">Maximum Pitch</label>
+                <input type="number" id="pitch-max" step="0.1" value="">
+            </div>
+            <div class="range-item">
+                <label for="pitch-default">Default Pitch</label>
+                <input type="number" id="pitch-default" step="0.1" value="">
+            </div>
+            <div class="range-item">
+                <label for="pitch-step">Step Size</label>
+                <input type="number" id="pitch-step" step="0.1" value="">
+            </div>
+        </div>
+        <button class="btn" onclick="saveVoiceSettings('pitch')">Save Pitch Settings</button>
+    </div>
+</div>
+
+<div id="voice-api-form" class="api-config-section" style="display: none;">
+    <form class="admin-form">
+        <div class="form-header">
+            <h3><i class="fas fa-plus"></i> Add New Voice API</h3>
+            <button type="button" id="close-voice-form" class="btn-close">&times;</button>
+        </div>
+
+        <div class="form-group">
+            <label for="voice-api-name">API Name</label>
+            <input type="text" id="voice-api-name" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+            <label for="voice-api-type">API Type</label>
+            <select id="voice-api-type" class="form-select" required>
+                <option value="">Select API Type</option>
+                <option value="direct">Direct (Single Request)</option>
+                <option value="hearing">Hearing (Token Required)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="voice-response-type">Response Type</label>
+            <select id="voice-response-type" class="form-select" required>
+                <option value="">Select Response Type</option>
+                <option value="binary">Binary (Audio File)</option>
+                <option value="base64">Base64 (Encoded Audio)</option>
+                <option value="url">URL (Audio Link)</option>
+            </select>
+        </div>
+
+        <div id="auth-section" style="display: none;">
+            <div class="form-group">
+                <label for="auth-endpoint">Authentication Endpoint</label>
+                <input type="text" id="auth-endpoint" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="token-path">Token Path</label>
+                <input type="text" id="token-path" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="auth-username">Username</label>
+                <input type="text" id="auth-username" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="auth-password">Password</label>
+                <input type="password" id="auth-password" class="form-input">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="voice-curl-command">cURL Command</label>
+            <div class="code-input-container">
+                <textarea id="voice-curl-command" class="code-input" rows="4" required></textarea>
+            </div>
+            <span class="form-hint">Enter the cURL command for making requests to the API</span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group flex-1">
+                <label for="voice-request-path">Request Path</label>
+                <input type="text" id="voice-request-path" class="form-input" required>
+                <span class="form-hint">JSON path for request data</span>
+            </div>
+            <div class="form-group flex-1">
+                <label for="voice-response-path">Response Path</label>
+                <input type="text" id="voice-response-path" class="form-input">
+                <span class="form-hint">JSON path for response data</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Supported Voices</label>
+            <div id="voice-entries-container"></div>
+            <button type="button" id="add-voice-btn" class="btn btn-secondary">
+                <i class="fas fa-plus"></i> Add Voice
+            </button>
+        </div>
+
+        <!-- Test Status section -->
+        <div class="test-status-section" style="display: none;">
+            <div class="test-header">
+                <h4><i class="fas fa-vial"></i> API Test Status</h4>
+                <div class="test-indicator"></div>
+            </div>
+            <div class="test-content">
+                <div class="test-message"></div>
+                <div class="test-details" style="display: none;">
+                    <pre class="test-response"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" id="test-voice-api" class="btn btn-secondary">
+                <i class="fas fa-vial"></i> Test API
+            </button>
+            <button type="submit" class="btn">
+                <i class="fas fa-save"></i> Save API
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="list-header">
+    <div class="list-title">
+        <h3>Available Voice APIs</h3>
+        <span class="voice-api-count">0 APIs</span>
+    </div>
+</div>
+
+<div id="voice-api-list" class="api-list-section">
+    <!-- Voice APIs will be populated here -->
+</div>

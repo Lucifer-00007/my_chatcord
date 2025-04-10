@@ -1,9 +1,13 @@
 node_modules/
 .DS_Store
 .env
-public/js/admin-ai.js
 
 # Database Migration
 migration.log
 scripts/data/
 *.backup.json
+
+#scripts
+fixIndexes.js
+rebuildIndexes.js
+restoreUniqueIndex.js

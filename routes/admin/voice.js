@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../../middleware/auth');  // Add this line at the top
 const VoiceApi = require('../../models/VoiceApi');
+const fetch = require('node-fetch');
+const { parseCurlCommand } = require('../../utils/apiHelpers');
 const { VOICE_API_CONFIG } = require('../../config/constants');
 
 // Update route to get voice config
@@ -43,13 +46,32 @@ router.get('/', async (req, res) => {
         const apis = await VoiceApi.find();
         res.json(apis);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error('Error fetching voice APIs:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
     }
 });
 
 // Create new voice API
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     try {
+        const { curlCommand, requestPath, responsePath } = req.body;
+        
+        // Parse the curl command
+        const { method } = parseCurlCommand(curlCommand);
+
+        // For GET requests, validate parameter format
+        if (method.toLowerCase() === 'get') {
+            // Validate that paths are in param=value format
+            const textParamValid = requestPath.includes('=');
+            const voiceParamValid = responsePath.includes('=');
+
+            if (!textParamValid || !voiceParamValid) {
+                return res.status(400).json({
+                    message: 'For GET requests, requestPath and responsePath must be in format "param=value"'
+                });
+            }
+        }
+
         // Check for duplicate name
         const existingApi = await VoiceApi.findOne({ name: req.body.name });
         if (existingApi) {
@@ -63,6 +85,7 @@ router.post('/', async (req, res) => {
         const savedApi = await voiceApi.save();
         res.status(201).json(savedApi);
     } catch (err) {
+        console.error('Error creating voice API:', err);
         res.status(400).json({ 
             message: err.message,
             code: err.code === 11000 ? 'DUPLICATE_NAME' : 'ERROR'
@@ -79,6 +102,7 @@ router.put('/:id', async (req, res) => {
         }
         res.json(api);
     } catch (err) {
+        console.error('Error updating voice API:', err);
         res.status(400).json({ message: err.message });
     }
 });
@@ -92,6 +116,7 @@ router.delete('/:id', async (req, res) => {
         }
         res.json({ message: 'Voice API deleted' });
     } catch (err) {
+        console.error('Error deleting voice API:', err);
         res.status(500).json({ message: err.message });
     }
 });
@@ -107,15 +132,24 @@ router.patch('/:id/toggle', async (req, res) => {
         await api.save();
         res.json({ message: 'Status updated', api });
     } catch (err) {
+        console.error('Error toggling voice API:', err);
         res.status(400).json({ message: err.message });
     }
 });
 
-// Add test endpoint
-router.post('/test', async (req, res) => {
+// Test voice API endpoint
+router.post('/test', auth, async (req, res) => {
     console.log('Test endpoint called');
     try {
-        const { curlCommand, requestPath, responsePath, apiType, responseType, auth } = req.body;
+        // First check auth
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Admin access required' 
+            });
+        }
+
+        const { curlCommand, requestPath, responsePath, apiType, responseType, auth: authData } = req.body;
         
         console.log('Received test request:', {
             hasCurlCommand: !!curlCommand,
@@ -123,7 +157,7 @@ router.post('/test', async (req, res) => {
             responsePath,
             apiType,
             responseType,
-            hasAuth: !!auth
+            hasAuth: !!authData
         });
 
         if (!curlCommand || !requestPath) {
@@ -134,130 +168,101 @@ router.post('/test', async (req, res) => {
         }
 
         // Parse cURL command
-        const curlData = parseCurlCommand(curlCommand);
+        const { url, method, headers, body } = parseCurlCommand(curlCommand);
         console.log('Making test request with:', {
-            url: curlData.url,
-            method: curlData.method,
-            headers: curlData.headers,
-            hasBody: !!curlData.body
+            url,
+            method,
+            headers,
+            hasBody: !!body
         });
 
-        // Make test request with proper error handling
-        try {
-            const testResponse = await fetch(curlData.url, {
-                method: curlData.method,
-                headers: curlData.headers, // Use headers directly from parsed curl command
-                body: curlData.body ? JSON.stringify(curlData.body) : undefined
-            });
+        // Handle GET requests with query parameters
+        if (method.toLowerCase() === 'get') {
+            const urlObj = new URL(url);
+            const params = new URLSearchParams(urlObj.search);
 
-            // Handle different response status codes
-            if (testResponse.status === 524) {
-                throw new Error('API timeout - The server took too long to respond');
+            // Get the text parameter key from requestPath
+            const textParamKey = requestPath.split('=')[0];
+            params.set(textParamKey, 'Test message');
+
+            // Get voice parameter key and value from first supported voice
+            if (req.body.supportedVoices?.[0]) {
+                const voiceParamKey = responsePath.split('=')[0];
+                params.set(voiceParamKey, req.body.supportedVoices[0].id);
             }
 
-            if (!testResponse.ok) {
-                throw new Error(`API request failed with status ${testResponse.status}: ${testResponse.statusText}`);
-            }
+            // Update URL with parameters
+            urlObj.search = params.toString();
+            url = urlObj.toString();
+            body = null; // No body for GET requests
+        } else {
+            // For POST/PUT requests, set up the request body
+            if (body) {
+                let requestBody = JSON.parse(JSON.stringify(body));
+                requestBody = setValueAtPath(requestBody, requestPath, 'Test message');
 
-            // Get response data based on content type
-            const contentType = testResponse.headers.get('content-type');
-            let responseData;
-
-            if (contentType?.includes('audio') || responseType === 'binary') {
-                const buffer = await testResponse.arrayBuffer();
-                responseData = 'Binary audio data received successfully';
-            } else if (contentType?.includes('application/json')) {
-                const jsonData = await testResponse.json();
-                responseData = 'JSON response received successfully';
-            } else {
-                responseData = await testResponse.text();
-            }
-
-            res.json({
-                success: true,
-                message: 'API test completed successfully',
-                details: {
-                    statusCode: testResponse.status,
-                    statusText: testResponse.statusText,
-                    contentType: contentType || 'unknown',
-                    responseType: responseType,
-                    responsePreview: responseData
+                // If we have voice parameter and supported voices
+                if (responsePath && req.body.supportedVoices?.[0]) {
+                    requestBody = setValueAtPath(requestBody, responsePath, req.body.supportedVoices[0].id);
                 }
-            });
 
-        } catch (fetchError) {
-            console.error('Fetch error:', fetchError);
-            throw new Error(fetchError.message || 'Failed to connect to the API');
+                body = requestBody;
+            }
         }
 
-    } catch (err) {
-        console.error('Test endpoint error:', {
-            message: err.message,
-            stack: err.stack
+        // Make test request
+        const testResponse = await fetch(url, {
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : undefined
         });
-        
+
+        // Handle different response types
+        const contentType = testResponse.headers.get('content-type');
+        let responseData;
+
+        if (responseType === 'base64') {
+            const data = await testResponse.json();
+            if (responsePath) {
+                let base64Data = data;
+                for (const part of responsePath.split('.')) {
+                    base64Data = base64Data[part];
+                }
+                responseData = `Base64 audio data received (${base64Data.length} chars)`;
+            } else {
+                responseData = 'Base64 audio data received';
+            }
+        } else if (responseType === 'binary' || contentType?.includes('audio/')) {
+            const buffer = await testResponse.arrayBuffer();
+            responseData = `Binary audio data received (${buffer.byteLength} bytes)`;
+        } else if (responseType === 'url') {
+            const data = await testResponse.json();
+            let audioUrl = data;
+            if (responsePath) {
+                audioUrl = responsePath.split('.').reduce((obj, key) => obj?.[key], data);
+            }
+            responseData = `Audio URL received: ${audioUrl}`;
+        }
+
+        res.json({
+            success: true,
+            message: 'API test successful',
+            details: {
+                statusCode: testResponse.status,
+                statusText: testResponse.statusText,
+                contentType,
+                responseType,
+                responsePreview: responseData
+            }
+        });
+
+    } catch (err) {
+        console.error('Test endpoint error:', err);
         res.status(400).json({
             success: false,
-            message: err.message || 'Failed to test voice API',
-            error: {
-                type: err.name,
-                details: err.message,
-                statusCode: err.status || 400
-            }
+            message: err.message || 'Failed to test voice API'
         });
     }
 });
-
-// Helper function to parse cURL command
-function parseCurlCommand(curlCommand) {
-    console.log('Starting cURL command parse');
-    try {
-        const cleaned = curlCommand.trim().replace(/\\\n/g, ' ').replace(/\s+/g, ' ');
-        console.log('Cleaned command:', cleaned);
-
-        // Extract URL
-        const urlMatch = cleaned.match(/(?:--location\s+)?['"]?(https?:\/\/[^'"]+)['"]?/i);
-        if (!urlMatch) {
-            throw new Error('No valid URL found in cURL command');
-        }
-        const url = urlMatch[1].replace(/^['"]|['"]$/g, '');
-
-        // Extract headers - preserve all headers as is
-        const headers = {};
-        const headerRegex = /--header\s+['"]([^:]+):\s*([^'"]+)['"]/g;
-        let headerMatch;
-        while ((headerMatch = headerRegex.exec(cleaned)) !== null) {
-            headers[headerMatch[1].trim()] = headerMatch[2].trim();
-        }
-
-        // Extract body preserving all fields
-        let body = null;
-        const dataMatch = /--data\s+['"]({[\s\S]*?})['"]/g.exec(cleaned);
-        if (dataMatch) {
-            try {
-                body = JSON.parse(dataMatch[1]);
-            } catch (e) {
-                console.error('Failed to parse body as JSON:', e);
-                body = dataMatch[1];
-            }
-        }
-
-        // Extract method
-        const methodMatch = /-X\s+(\w+)/i.exec(cleaned);
-        const method = methodMatch ? methodMatch[1] : (body ? 'POST' : 'GET');
-
-        console.log('Parsed curl data:', { 
-            url, 
-            method,
-            headerCount: Object.keys(headers).length,
-            hasBody: !!body 
-        });
-
-        return { url, method, headers, body };
-    } catch (err) {
-        console.error('cURL parsing error:', err);
-        throw new Error(`Failed to parse cURL command: ${err.message}`);
-    }
-}
 
 module.exports = router;

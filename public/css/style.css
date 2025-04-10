@@ -6,7 +6,8 @@
     --light-color: #e6e9ff;
     --success-color: #5cb85c;
     --error-color: #d9534f;
-    --primary-color: var(--dark-color-a); /* Assuming primary color is dark-color-a based on usage */
+    --primary-color: var(--dark-color-a);
+    /* Assuming primary color is dark-color-a based on usage */
 }
 
 * {
@@ -84,7 +85,8 @@ a {
 
 .nav-item:hover {
     background-color: var(--dark-color-b);
-    color: #fff; /* Added from .nav-item.admin:hover */
+    color: #fff;
+    /* Added from .nav-item.admin:hover */
 }
 
 .nav-item.active {
@@ -125,12 +127,15 @@ a {
     margin-top: 10px;
     background: #bcc3ff;
     color: var(--dark-color-a);
-    width: 100%; /* From later definition */
+    width: 100%;
+    /* From later definition */
 }
 
 .btn:hover {
-    background: var(--dark-color-a); /* From later definition */
-    color: #fff; /* From later definition */
+    background: var(--dark-color-a);
+    /* From later definition */
+    color: #fff;
+    /* From later definition */
 }
 
 .btn-action {
@@ -142,12 +147,15 @@ a {
 
 /* Special Buttons */
 #leave-btn {
-    background: var(--error-color); /* Keep error color */
-    color: #fff; /* Keep white text */
+    background: var(--error-color);
+    /* Keep error color */
+    color: #fff;
+    /* Keep white text */
     width: auto;
     min-width: 100px;
     padding: 8px 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* From later definition */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    /* From later definition */
 }
 
 #logout-btn {
@@ -159,8 +167,10 @@ a {
 }
 
 #leave-btn:hover {
-    background: #f0f0f0; /* From later definition (overrides #c9302c) */
-    color: #000; /* From later definition */
+    background: #f0f0f0;
+    /* From later definition (overrides #c9302c) */
+    color: #000;
+    /* From later definition */
 }
 
 #logout-btn:hover {
@@ -185,7 +195,8 @@ a {
 }
 
 .form-control input::placeholder {
-    color: #666; /* From later definition */
+    color: #666;
+    /* From later definition */
 }
 
 .form-control input:focus {
@@ -197,27 +208,35 @@ a {
 .password-field {
     position: relative;
     width: 100%;
-    height: 50px; /* Added fixed height */
-    display: flex; /* From later definition */
-    align-items: center; /* From later definition */
+    height: 50px;
+    /* Added fixed height */
+    display: flex;
+    /* From later definition */
+    align-items: center;
+    /* From later definition */
 }
 
 .password-field input {
-    position: absolute; /* Added */
+    position: absolute;
+    /* Added */
     width: 100%;
-    height: 50px !important; /* Force constant height */
-    padding: 12px 35px 12px 15px !important; /* Adjusted padding */
+    height: 50px !important;
+    /* Force constant height */
+    padding: 12px 35px 12px 15px !important;
+    /* Adjusted padding */
     border: 1px solid rgba(0, 0, 0, 0.2);
     background: #fff;
     border-radius: 5px;
     font-size: 16px;
     color: #333;
-    padding-right: 35px !important; /* Make room for the toggle button (overrides 40px) */
+    padding-right: 35px !important;
+    /* Make room for the toggle button (overrides 40px) */
 }
 
 .password-toggle {
     position: absolute;
-    right: 10px; /* Adjusted */
+    right: 10px;
+    /* Adjusted */
     top: 50%;
     transform: translateY(-50%);
     z-index: 2;
@@ -227,11 +246,16 @@ a {
     border: none;
     cursor: pointer;
     color: #666;
-    display: flex; /* Added */
-    align-items: center; /* Added */
-    justify-content: center; /* Added */
-    width: 30px; /* Increased */
-    height: 30px; /* Increased */
+    display: flex;
+    /* Added */
+    align-items: center;
+    /* Added */
+    justify-content: center;
+    /* Added */
+    width: 30px;
+    /* Increased */
+    height: 30px;
+    /* Increased */
 }
 
 .password-toggle:hover {
@@ -485,23 +509,31 @@ chat-messages .message .meta span {
 .generation-area {
     /* Merged properties */
     padding: 20px;
-    background: #f4f4f4; /* Original */
+    background: #f4f4f4;
+    /* Original */
     height: 100%;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 25px; /* From later definition */
+    gap: 25px;
+    /* From later definition */
     width: 100%;
-    max-width: 1200px; /* From later definition */
-    margin: 0 auto; /* From later definition */
+    max-width: 1200px;
+    /* From later definition */
+    margin: 0 auto;
+    /* From later definition */
 }
 
 .prompt-section {
     /* Merged properties */
-    background: var(--light-color); /* From later definition */
-    padding: 25px; /* From later definition */
-    border-radius: 12px; /* From later definition */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* From later definition */
+    background: var(--light-color);
+    /* From later definition */
+    padding: 25px;
+    /* From later definition */
+    border-radius: 12px;
+    /* From later definition */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* From later definition */
 }
 
 .prompt-section textarea {
@@ -509,13 +541,18 @@ chat-messages .message .meta span {
     width: 100%;
     padding: 15px;
     border: 1px solid #ddd;
-    border-radius: 8px; /* From later definition */
+    border-radius: 8px;
+    /* From later definition */
     resize: vertical;
-    font-size: 1rem; /* From later definition */
+    font-size: 1rem;
+    /* From later definition */
     margin-bottom: 15px;
-    min-height: 120px; /* From later definition */
-    font-family: inherit; /* From later definition */
-    transition: border-color 0.3s ease; /* From later definition */
+    min-height: 120px;
+    /* From later definition */
+    font-family: inherit;
+    /* From later definition */
+    transition: border-color 0.3s ease;
+    /* From later definition */
 }
 
 .prompt-section textarea:focus {
@@ -528,16 +565,22 @@ chat-messages .message .meta span {
 .image-options {
     /* Merged properties */
     display: flex;
-    gap: 25px; /* From later definition */
-    margin: 20px 0; /* From later definition */
+    gap: 25px;
+    /* From later definition */
+    margin: 20px 0;
+    /* From later definition */
 }
 
 .option-group {
     /* Merged properties */
-    display: flex; /* From first definition */
-    flex-direction: column; /* From first definition */
-    gap: 0.5rem; /* From first definition */
-    flex: 1; /* From later definitions */
+    display: flex;
+    /* From first definition */
+    flex-direction: column;
+    /* From first definition */
+    gap: 0.5rem;
+    /* From first definition */
+    flex: 1;
+    /* From later definitions */
 }
 
 .option-group label {
@@ -551,20 +594,30 @@ chat-messages .message .meta span {
 
 .image-options select {
     /* Merged properties */
-    padding: 12px; /* From later definition */
+    padding: 12px;
+    /* From later definition */
     border-radius: 4px;
     border: 1px solid #ddd;
     min-width: 200px;
     width: 100%;
-    background-color: #cad1ff; /* From later definition */
-    color: var(--dark-color); /* From later definition */
-    font-size: 0.95rem; /* From later definition */
-    cursor: pointer; /* From later definition */
-    appearance: none; /* From later definition */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); /* From later definition */
-    background-repeat: no-repeat; /* From later definition */
-    background-position: right 12px center; /* From later definition */
-    background-size: 16px; /* From later definition */
+    background-color: #cad1ff;
+    /* From later definition */
+    color: var(--dark-color);
+    /* From later definition */
+    font-size: 0.95rem;
+    /* From later definition */
+    cursor: pointer;
+    /* From later definition */
+    appearance: none;
+    /* From later definition */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    /* From later definition */
+    background-repeat: no-repeat;
+    /* From later definition */
+    background-position: right 12px center;
+    /* From later definition */
+    background-size: 16px;
+    /* From later definition */
 }
 
 .image-options select:focus {
@@ -576,19 +629,28 @@ chat-messages .message .meta span {
 .results-section {
     /* Merged properties */
     flex: 1;
-    background: var(--light-color); /* From later definition */
-    padding: 25px; /* From later definition */
-    border-radius: 12px; /* From later definition */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* From later definition */
+    background: var(--light-color);
+    /* From later definition */
+    padding: 25px;
+    /* From later definition */
+    border-radius: 12px;
+    /* From later definition */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* From later definition */
     text-align: center;
     margin-top: 20px;
     width: 100%;
     display: flex;
-    flex-direction: column; /* From later definition */
-    align-items: center; /* From later definition */
-    justify-content: center; /* From later definition */
-    position: relative; /* From later definition */
-    min-height: 630px; /* From later definition */
+    flex-direction: column;
+    /* From later definition */
+    align-items: center;
+    /* From later definition */
+    justify-content: center;
+    /* From later definition */
+    position: relative;
+    /* From later definition */
+    min-height: 630px;
+    /* From later definition */
 }
 
 .generated-image {
@@ -603,21 +665,30 @@ chat-messages .message .meta span {
 
 .generated-image img {
     /* Merged properties */
-    width: 750px; /* From later definition */
-    height: 500px; /* From later definition */
+    width: 750px;
+    /* From later definition */
+    height: 500px;
+    /* From later definition */
     object-fit: contain;
-    border-radius: 8px; /* From later definition */
-    margin-bottom: 10px; /* From first definition */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* From later definition */
+    border-radius: 8px;
+    /* From later definition */
+    margin-bottom: 10px;
+    /* From first definition */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* From later definition */
 }
 
 .image-actions {
     /* Merged properties */
-    width: 100%; /* From first definition */
+    width: 100%;
+    /* From first definition */
     display: flex;
-    justify-content: center; /* From first definition */
-    gap: 15px; /* From later definition */
-    margin-top: 10px; /* From later definition */
+    justify-content: center;
+    /* From first definition */
+    gap: 15px;
+    /* From later definition */
+    margin-top: 10px;
+    /* From later definition */
 }
 
 .image-actions button {
@@ -631,19 +702,30 @@ chat-messages .message .meta span {
 #generate-btn {
     /* Merged properties */
     width: 100%;
-    padding: 15px; /* From later definition */
+    padding: 15px;
+    /* From later definition */
     font-size: 1.1rem;
-    margin-top: 20px; /* From later definition */
+    margin-top: 20px;
+    /* From later definition */
     transition: all 0.3s ease;
-    border-radius: 8px; /* From later definition */
-    background-color: #bcc3ff !important; /* From later definition */
-    color: #667aff; /* From later definition */
-    border: none; /* From later definition */
-    cursor: pointer; /* From later definition */
-    display: flex; /* From later definition */
-    align-items: center; /* From later definition */
-    justify-content: center; /* From later definition */
-    gap: 10px; /* From later definition */
+    border-radius: 8px;
+    /* From later definition */
+    background-color: #bcc3ff !important;
+    /* From later definition */
+    color: #667aff;
+    /* From later definition */
+    border: none;
+    /* From later definition */
+    cursor: pointer;
+    /* From later definition */
+    display: flex;
+    /* From later definition */
+    align-items: center;
+    /* From later definition */
+    justify-content: center;
+    /* From later definition */
+    gap: 10px;
+    /* From later definition */
 }
 
 #generate-btn:hover {
@@ -655,9 +737,11 @@ chat-messages .message .meta span {
 
 #generate-btn:disabled {
     /* Merged properties */
-    background-color: var(--dark-color-a); /* From later definition */
+    background-color: var(--dark-color-a);
+    /* From later definition */
     cursor: not-allowed;
-    transform: none; /* From later definition */
+    transform: none;
+    /* From later definition */
 }
 
 /* Loading indicator */
@@ -669,15 +753,20 @@ chat-messages .message .meta span {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.95); /* From later definition */
-    padding: 30px; /* Updated from merge */
-    border-radius: 12px; /* From later definition */
+    background: rgba(255, 255, 255, 0.95);
+    /* From later definition */
+    padding: 30px;
+    /* Updated from merge */
+    border-radius: 12px;
+    /* From later definition */
     display: flex;
     align-items: center;
-    gap: 15px; /* From later definition */
+    gap: 15px;
+    /* From later definition */
     z-index: 10;
     flex-direction: column;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* From later definition */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* From later definition */
 }
 
 .error-message {
@@ -747,9 +836,12 @@ chat-messages .message .meta span {
 .text-input-section {
     /* Merged properties */
     background: #fff;
-    padding: 25px; /* From later definition */
-    border-radius: 8px; /* From later definition */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* From later definition */
+    padding: 25px;
+    /* From later definition */
+    border-radius: 8px;
+    /* From later definition */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* From later definition */
 }
 
 .voice-options {
@@ -778,7 +870,7 @@ chat-messages .message .meta span {
 
 .audio-section {
     flex: 1;
-    background: #e6e9ff;
+    background: var(--light-color);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -827,7 +919,7 @@ chat-messages .message .meta span {
     grid-template-columns: 1fr 2fr 1fr;
     gap: 20px;
     padding: 20px;
-    background: #e6e9ff;
+    background: var(--light-color);
     border-radius: 6px;
 }
 
@@ -888,8 +980,10 @@ chat-messages .message .meta span {
     display: flex;
     gap: 15px;
     /* width: 95%; */
-    justify-content: center; /* Center horizontally */
-    margin-left: auto; /* Auto margins for horizontal centering */
+    justify-content: center;
+    /* Center horizontally */
+    margin-left: auto;
+    /* Auto margins for horizontal centering */
     margin-right: auto;
     margin-top: 2%;
 }
@@ -911,13 +1005,20 @@ chat-messages .message .meta span {
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
-    width: 150%; /* Maintain relative width */
-    max-width: 800px; /* Control maximum width */
-    margin-left: auto; /* Center horizontally */
-    margin-right: auto; /* Center horizontally */
-    position: relative; /* Add for proper centering */
-    left: 50%; /* Start from center */
-    transform: translateX(-50%); /* Pull back by half width */
+    width: 150%;
+    /* Maintain relative width */
+    max-width: 800px;
+    /* Control maximum width */
+    margin-left: auto;
+    /* Center horizontally */
+    margin-right: auto;
+    /* Center horizontally */
+    position: relative;
+    /* Add for proper centering */
+    left: 50%;
+    /* Start from center */
+    transform: translateX(-50%);
+    /* Pull back by half width */
 }
 
 .audio-player audio {
@@ -1057,15 +1158,18 @@ chat-messages .message .meta span {
 .admin-form {
     /* Merged properties */
     margin-bottom: 30px;
-    padding: 25px; /* From later definition */
+    padding: 25px;
+    /* From later definition */
     background: #f8f9fa;
     border-radius: 6px;
-    border: 1px solid #e9ecef; /* From later definition */
+    border: 1px solid #e9ecef;
+    /* From later definition */
 }
 
 .form-group {
     /* Merged properties */
-    margin-bottom: 25px; /* From later definition */
+    margin-bottom: 25px;
+    /* From later definition */
 }
 
 .form-group label {
@@ -1094,12 +1198,15 @@ chat-messages .message .meta span {
     /* Merged properties */
     display: flex;
     align-items: center;
-    padding: 20px; /* From later definition */
+    padding: 20px;
+    /* From later definition */
     border-radius: 4px;
     margin-bottom: 10px;
     background: var(--light-color);
-    border-bottom: 1px solid #eee; /* From later definition */
-    transition: background-color 0.3s; /* From later definition */
+    border-bottom: 1px solid #eee;
+    /* From later definition */
+    transition: background-color 0.3s;
+    /* From later definition */
 }
 
 /* .api-item:hover {
@@ -1115,7 +1222,8 @@ chat-messages .message .meta span {
     /* Merged properties */
     font-weight: 600;
     color: #333;
-    margin-bottom: 5px; /* From later definition */
+    margin-bottom: 5px;
+    /* From later definition */
 }
 
 .api-endpoint {
@@ -1128,7 +1236,8 @@ chat-messages .message .meta span {
 .api-controls {
     /* Merged properties */
     display: flex;
-    gap: 15px; /* From later definition */
+    gap: 15px;
+    /* From later definition */
     align-items: center;
 }
 
@@ -1185,16 +1294,22 @@ input:checked+.toggle-slider:before {
     /* Merged properties */
     width: 36px;
     height: 36px;
-    padding: 8px; /* From later definition */
+    padding: 8px;
+    /* From later definition */
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px; /* From later definition */
+    border-radius: 4px;
+    /* From later definition */
     transition: all 0.3s ease;
-    background: none; /* From later definition */
-    border: 1px solid #ddd; /* From later definition */
-    cursor: pointer; /* From later definition */
-    color: #666; /* From later definition */
+    background: none;
+    /* From later definition */
+    border: 1px solid #ddd;
+    /* From later definition */
+    cursor: pointer;
+    /* From later definition */
+    color: #666;
+    /* From later definition */
 }
 
 .btn-icon i {
@@ -1204,9 +1319,11 @@ input:checked+.toggle-slider:before {
 
 .btn-icon:hover {
     /* Merged properties */
-    background: #f8f9fa; /* From later definition */
+    background: #f8f9fa;
+    /* From later definition */
     transform: translateY(-1px);
-    color: var(--dark-color-a); /* From later definition */
+    color: var(--dark-color-a);
+    /* From later definition */
 }
 
 .btn-icon.edit-api {
@@ -1230,8 +1347,10 @@ input:checked+.toggle-slider:before {
 
 .btn-icon.btn-danger:hover {
     background: var(--error-color);
-    color: white; /* From .btn-danger:hover merge */
-    border-color: var(--error-color); /* From .btn-danger:hover merge */
+    color: white;
+    /* From .btn-danger:hover merge */
+    border-color: var(--error-color);
+    /* From .btn-danger:hover merge */
 }
 
 .btn-icon.btn-danger:hover i {
@@ -1263,10 +1382,13 @@ input:checked+.toggle-slider:before {
     /* Merged properties */
     display: flex;
     justify-content: space-between;
-    align-items: center; /* From later definition */
+    align-items: center;
+    /* From later definition */
     /* margin-bottom: 25px; */
-    padding-bottom: 20px; /* From first definition */
-    border-bottom: 1px solid #eee; /* From first definition */
+    padding-bottom: 20px;
+    /* From first definition */
+    border-bottom: 1px solid #eee;
+    /* From first definition */
 }
 
 .section-header h2 {
@@ -1274,7 +1396,8 @@ input:checked+.toggle-slider:before {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 0; /* From first definition */
+    margin: 0;
+    /* From first definition */
 }
 
 .section-title {
@@ -1290,20 +1413,25 @@ input:checked+.toggle-slider:before {
 
 .btn-wide {
     /* Merged properties */
-    min-width: 150px; /* From later definition */
+    min-width: 150px;
+    /* From later definition */
     height: 45px !important;
-    padding: 12px 24px; /* From later definition */
+    padding: 12px 24px;
+    /* From later definition */
     margin: 0 !important;
     font-size: 15px !important;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: var(--light-color) !important; /* From later definition */
-    color: var(--dark-color-a) !important; /* From later definition */
+    background: var(--light-color) !important;
+    /* From later definition */
+    color: var(--dark-color-a) !important;
+    /* From later definition */
     border: none !important;
     transition: all 0.3s ease !important;
-    max-width: 180px !important; /* From later definition */
+    max-width: 180px !important;
+    /* From later definition */
 }
 
 .btn-wide:hover {
@@ -1311,18 +1439,21 @@ input:checked+.toggle-slider:before {
     background: var(--dark-color-b) !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    color: #fff !important; /* From later definition */
+    color: #fff !important;
+    /* From later definition */
 }
 
 .form-input {
     /* Merged properties */
     width: 100%;
     height: 42px;
-    padding: 10px 12px; /* From later definition */
+    padding: 10px 12px;
+    /* From later definition */
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
-    transition: border-color 0.3s ease; /* From later definition */
+    transition: border-color 0.3s ease;
+    /* From later definition */
     background: #fff;
 }
 
@@ -1337,7 +1468,8 @@ input:checked+.toggle-slider:before {
     /* Merged properties */
     width: 100%;
     height: 42px;
-    padding: 10px 12px; /* From later definition */
+    padding: 10px 12px;
+    /* From later definition */
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
@@ -1373,7 +1505,8 @@ input:checked+.toggle-slider:before {
 .code-input-container {
     /* Merged properties */
     position: relative;
-    margin-top: 8px; /* From later definition */
+    margin-top: 8px;
+    /* From later definition */
 }
 
 .code-input-container textarea {
@@ -1601,13 +1734,13 @@ input:checked+.toggle-slider:before {
     gap: 10px;
 }
 
-.api-count, 
-.voice-api-count, 
+.api-count,
+.voice-api-count,
 .image-api-count {
     font-size: 0.9em;
     color: #666;
     padding: 2px 8px;
-    background: #f0f0f0;
+    background: var(--light-color);
     border-radius: 12px;
 }
 
@@ -1660,7 +1793,8 @@ input:checked+.toggle-slider:before {
 .model-select-container {
     /* Merged properties */
     position: relative;
-    margin: 10px 0 15px 0; /* margin-bottom updated from 20px */
+    margin: 10px 0 15px 0;
+    /* margin-bottom updated from 20px */
 }
 
 .model-select {
@@ -1677,40 +1811,54 @@ input:checked+.toggle-slider:before {
     transition: all 0.3s ease;
     appearance: none;
     -webkit-appearance: none;
-    -moz-appearance: none; /* Only in first block example */
-    margin-bottom: 10px; /* Only in first block example */
+    -moz-appearance: none;
+    /* Only in first block example */
+    margin-bottom: 10px;
+    /* Only in first block example */
 }
 
 .model-select-container::after {
     /* Merged properties */
-    content: '\f078'; /* From later definition */
+    content: '\f078';
+    /* From later definition */
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
     position: absolute;
-    right: 12px; /* From later definition */
+    right: 12px;
+    /* From later definition */
     top: 45%;
     transform: translateY(-50%);
     pointer-events: none;
-    color: var(--dark-color); /* From later definition */
-    transition: transform 0.3s ease; /* From first definition */
+    color: var(--dark-color);
+    /* From later definition */
+    transition: transform 0.3s ease;
+    /* From first definition */
 }
 
 .model-select:focus {
     /* Merged properties */
-    background: rgba(0, 0, 0, 0.25); /* From first definition */
-    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2); /* From later definition */
-    outline: none; /* From later definitions */
-    border-color: var(--primary-color); /* From later definitions */
+    background: rgba(0, 0, 0, 0.25);
+    /* From first definition */
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+    /* From later definition */
+    outline: none;
+    /* From later definitions */
+    border-color: var(--primary-color);
+    /* From later definitions */
 }
 
 .model-select option {
     /* Merged properties */
     background: var(--dark-color-b);
     color: #fff;
-    padding: 12px; /* From later definition */
-    direction: ltr; /* From first definition */
-    text-align: left; /* From first definition */
-    font-size: 14px; /* From later definition */
+    padding: 12px;
+    /* From later definition */
+    direction: ltr;
+    /* From first definition */
+    text-align: left;
+    /* From first definition */
+    font-size: 14px;
+    /* From later definition */
 }
 
 .model-select option:hover {
@@ -1719,9 +1867,11 @@ input:checked+.toggle-slider:before {
 
 .model-select:disabled {
     /* Merged properties */
-    opacity: 0.7; /* From later definition */
+    opacity: 0.7;
+    /* From later definition */
     cursor: not-allowed;
-    background-color: var(--dark-color-a); /* From later definition */
+    background-color: var(--dark-color-a);
+    /* From later definition */
 }
 
 .model-select-container:hover::after {
@@ -1805,7 +1955,8 @@ input:checked+.toggle-slider:before {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
     margin-top: 10px;
-    margin-bottom: 15px; /* From later definition */
+    margin-bottom: 15px;
+    /* From later definition */
 }
 
 .size-option,
@@ -1818,7 +1969,8 @@ input:checked+.toggle-slider:before {
     background: #f8f9fa;
     border-radius: 4px;
     border: 1px solid #dee2e6;
-    margin-bottom: 8px; /* From later definition */
+    margin-bottom: 8px;
+    /* From later definition */
     /* cursor: pointer; Removed by later definition */
 }
 
@@ -1874,7 +2026,7 @@ input:checked+.toggle-slider:before {
 /* Global Settings Styles */
 .global-settings-section {
     background: #fff;
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
@@ -1920,6 +2072,11 @@ input:checked+.toggle-slider:before {
 .style-item label {
     flex: 1;
     margin: 0;
+    max-width: 9ch;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    font-family: monospace;
 }
 
 .item-controls {
@@ -2008,19 +2165,9 @@ input:checked+.toggle-slider:before {
     margin-bottom: 10px;
 }
 
-.voice-details {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.voice-languages {
-    font-size: 0.9em;
-    color: var(--dark-color-a);
-}
-
 /* Media Queries */
 @media (max-width: 768px) {
+
     /* Merged rules */
     .hamburger {
         display: block;
@@ -2067,8 +2214,10 @@ input:checked+.toggle-slider:before {
         top: 15px;
         right: 20px;
         z-index: 1001;
-        margin: 0; /* Added from second definition */
-        margin-left: auto; /* Added from second definition */
+        margin: 0;
+        /* Added from second definition */
+        margin-left: auto;
+        /* Added from second definition */
     }
 
     /* Hamburger Animation */
@@ -2092,6 +2241,7 @@ input:checked+.toggle-slider:before {
 }
 
 @media (max-width: 700px) {
+
     /* Merged rules - identical definitions */
     .chat-main {
         display: block;
@@ -2103,7 +2253,7 @@ input:checked+.toggle-slider:before {
 }
 
 /* Voice Configuration Styles */
-#text2voice .global-settings-section > h3 {
+#text2voice .global-settings-section>h3 {
     margin-bottom: 20px;
 }
 
@@ -2113,8 +2263,10 @@ input:checked+.toggle-slider:before {
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    width: 100%; /* Added to match parent */
-    max-width: 800px; /* Added to match parent */
+    width: 100%;
+    /* Added to match parent */
+    max-width: 800px;
+    /* Added to match parent */
 }
 
 .player-controls {
@@ -2179,6 +2331,8 @@ input:checked+.toggle-slider:before {
     gap: 15px;
     background: var(--light-color);
     border-radius: 8px;
+    padding: 2%;
+    margin-bottom: 2%;
 }
 
 .entry-fields {
@@ -2207,4 +2361,187 @@ input:checked+.toggle-slider:before {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* User Management Styles */
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--light-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.user-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--dark-color-a);
+}
+
+.user-email {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.user-role {
+    background: var(--dark-color-b);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+/* System Logs Styles */
+.log-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.log-entry {
+    display: grid;
+    grid-template-columns: auto 100px 1fr;
+    gap: 15px;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+.log-entry.error {
+    background: rgba(217, 83, 79, 0.1);
+    border-left: 3px solid var(--error-color);
+}
+
+.log-entry.warn {
+    background: rgba(240, 173, 78, 0.1);
+    border-left: 3px solid #f0ad4e;
+}
+
+.log-entry.info {
+    background: rgba(91, 192, 222, 0.1);
+    border-left: 3px solid #5bc0de;
+}
+
+.log-timestamp {
+    color: #666;
+    font-family: monospace;
+}
+
+.log-level {
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 0.8em;
+}
+
+.log-entry.error .log-level {
+    color: var(--error-color);
+}
+
+.log-entry.warn .log-level {
+    color: #f0ad4e;
+}
+
+.log-entry.info .log-level {
+    color: #5bc0de;
+}
+
+/* System Settings Styles */
+.settings-form {
+    display: grid;
+    gap: 20px;
+    padding: 20px;
+    background: var(--light-color);
+    border-radius: 8px;
+}
+
+.settings-group {
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0px 0px 15px rgba(34, 35, 58, 0.2);
+}
+
+.settings-group h4 {
+    margin-bottom: 15px;
+    color: var(--dark-color-a);
+    font-size: 1.1em;
+}
+
+/* API Test Status Section Styles */
+.test-status-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.test-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.test-header h4 {
+    margin: 0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.test-indicator {
+    font-size: 0.9em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.test-indicator.running {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.test-indicator.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.test-indicator.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.test-message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    background: white;
+}
+
+.test-details {
+    margin-top: 10px;
+}
+
+.test-response {
+    background: #2d2d2d;
+    color: #fff;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 0;
 }

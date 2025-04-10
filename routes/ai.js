@@ -35,6 +35,7 @@ router.get('/sessions/:id', auth, async (req, res) => {
 
         res.json(session);
     } catch (err) {
+        console.error('Error fetching session:', err);
         res.status(500).json({ message: 'Failed to fetch chat session' });
     }
 });
@@ -66,6 +67,7 @@ router.post('/sessions', auth, async (req, res) => {
         await session.save();
         res.status(201).json(session);
     } catch (err) {
+        console.error('Error creating session:', err);
         res.status(500).json({ message: 'Failed to create chat session' });
     }
 });
@@ -86,6 +88,7 @@ router.patch('/sessions/:id/title', auth, async (req, res) => {
 
         res.json(session);
     } catch (err) {
+        console.error('Error updating session title:', err);
         res.status(500).json({ message: 'Failed to update chat title' });
     }
 });

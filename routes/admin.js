@@ -6,12 +6,19 @@ const Channel = require('../models/Channel');
 const Message = require('../models/Message');
 const AiApi = require('../models/AiApi');
 const ImageApi = require('../models/ImageApi');
-const VoiceSettings = require('../models/VoiceSettings'); // Add this line
+const VoiceSettings = require('../models/VoiceSettings');
 const ImageSettings = require('../models/ImageSettings');
 const fetch = require('node-fetch');
-const { parseCurlCommand } = require('../utils/apiHelpers');  // Add this line
+const { parseCurlCommand } = require('../utils/apiHelpers');
+const { ADMIN_CONSTANTS } = require('../config/constants');
+const { 
+    setValueAtPath, 
+    validateVoiceRange, 
+    processImageSettings,
+    createApiResponse 
+} = require('../utils/adminHelpers');
 
-// Add stats endpoint at the top of the file
+// Stats endpoint
 router.get('/stats', auth, async (req, res) => {
     if (!req.user.isAdmin) {
         return res.status(403).json({ message: 'Admin access required' });
@@ -38,7 +45,7 @@ router.get('/stats', auth, async (req, res) => {
     }
 });
 
-// Get all AI APIs
+// AI APIs routes
 router.get('/ai-apis', auth, async (req, res) => {
     if (!req.user.isAdmin) {
         return res.status(403).json({ message: 'Admin access required' });
@@ -48,11 +55,11 @@ router.get('/ai-apis', auth, async (req, res) => {
         const apis = await AiApi.find();
         res.json(apis);
     } catch (err) {
+        console.error('Error fetching AI APIs:', err);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// Add new route to get active APIs only
 router.get('/ai-apis/active', auth, async (req, res) => {
     try {
         const apis = await AiApi.find({ isActive: true });
@@ -189,67 +196,36 @@ router.delete('/ai-apis/:id', auth, async (req, res) => {
     }
 });
 
-// Update test API endpoint
+// Fix duplicate requestBody creation in test endpoint
 router.post('/ai-apis/test', auth, async (req, res) => {
     if (!req.user.isAdmin) {
-        return res.status(403).json({ message: 'Admin access required' });
+        return res.status(403).json(createApiResponse(false, 'Admin access required'));
     }
 
     try {
         const { curlCommand, requestPath, responsePath } = req.body;
         
         if (!curlCommand || !requestPath || !responsePath) {
-            return res.status(400).json({ message: 'cURL command, request path and response path are required' });
+            return res.status(400).json(createApiResponse(
+                false, 
+                'cURL command, request path and response path are required'
+            ));
         }
 
         // Parse the curl command
         const { endpoint, headers, method, body } = parseCurlCommand(curlCommand);
 
-        if (!endpoint) {
-            return res.status(400).json({ message: 'Invalid cURL command: No endpoint found' });
+        if (!endpoint || !body) {
+            return res.status(400).json(createApiResponse(
+                false, 
+                'Invalid cURL command: Missing endpoint or body'
+            ));
         }
 
-        if (!body) {
-            return res.status(400).json({ message: 'Invalid cURL command: No request body found' });
-        }
-
-        // Add a test message to extract using request path
-        const testMessage = "This is a test message";
-        
-        // Create deep copy of body to avoid modifying original
+        // Create request body using helper
         let requestBody = JSON.parse(JSON.stringify(body));
-        
-        // Set the test message using the requestPath
-        let current = requestBody;
-        const pathParts = requestPath.split('.');
-        
-        for (let i = 0; i < pathParts.length - 1; i++) {
-            const part = pathParts[i];
-            const match = part.match(/(\w+)\[(\d+)\]/);
-            
-            if (match) {
-                const [_, prop, index] = match;
-                if (!current[prop]) current[prop] = [];
-                if (!current[prop][index]) current[prop][index] = {};
-                current = current[prop][index];
-            } else {
-                if (!current[part]) current[part] = {};
-                current = current[part];
-            }
-        }
+        requestBody = setValueAtPath(requestBody, requestPath, ADMIN_CONSTANTS.TEST_MESSAGE);
 
-        // Set the value at the final path
-        const lastPart = pathParts[pathParts.length - 1];
-        const lastMatch = lastPart.match(/(\w+)\[(\d+)\]/);
-        if (lastMatch) {
-            const [_, prop, index] = lastMatch;
-            if (!current[prop]) current[prop] = [];
-            current[prop][index] = testMessage;
-        } else {
-            current[lastPart] = testMessage;
-        }
-
-        // Log request details
         console.log('Test request:', {
             endpoint,
             method,
@@ -259,7 +235,6 @@ router.post('/ai-apis/test', auth, async (req, res) => {
             responsePath
         });
 
-        // Send test request
         const testResponse = await fetch(endpoint, {
             method,
             headers,
@@ -267,30 +242,6 @@ router.post('/ai-apis/test', auth, async (req, res) => {
         });
 
         const testData = await testResponse.json();
-
-        // Extract response data using the response path
-        let responseValue = testData;
-        const pathPartsResponse = responsePath.split('.');
-        
-        for (const part of pathPartsResponse) {
-            const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
-            if (arrayMatch) {
-                // Handle array access like messages[0]
-                const [_, prop, index] = arrayMatch;
-                responseValue = responseValue[prop]?.[index];
-            } else {
-                // Handle regular property access
-                responseValue = responseValue[part];
-            }
-            
-            if (responseValue === undefined) break;
-        }
-
-        // Log the extracted response data
-        console.log('Response path data:', {
-            path: responsePath,
-            extractedValue: responseValue
-        });
 
         if (!testResponse.ok) {
             throw new Error(testData?.error?.message || `API responded with status ${testResponse.status}`);
@@ -306,10 +257,7 @@ router.post('/ai-apis/test', auth, async (req, res) => {
         });
     } catch (err) {
         console.error('API test error:', err);
-        res.status(400).json({ 
-            success: false, 
-            message: err.message || 'Failed to test API connection' 
-        });
+        res.status(400).json(createApiResponse(false, err.message));
     }
 });
 
@@ -470,68 +418,22 @@ router.post('/image-apis', auth, async (req, res) => {
     }
 });
 
-// Update test image API endpoint
+// Remove duplicate setValueAtPath function as it's now in adminHelpers
 router.post('/image-apis/test', auth, async (req, res) => {
-    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
-
-    console.log('Image API test request received:', {
-        body: req.body,
-        user: req.user._id
-    });
+    if (!req.user.isAdmin) {
+        return res.status(403).json(createApiResponse(false, 'Admin access required'));
+    }
 
     try {
         const { curlCommand, requestPath, responsePath } = req.body;
         
         if (!curlCommand || !requestPath) {
-            return res.status(400).json({ message: 'cURL command and request path are required' });
+            return res.status(400).json(createApiResponse(false, 'cURL command and request path are required'));
         }
 
-        // Parse curl command
         const { endpoint, headers, method, body: parsedBody } = parseCurlCommand(curlCommand);
-
-        // Create request body using nested path
-        let requestBody = JSON.parse(JSON.stringify(parsedBody || {})); // Clone original body structure
-        const testPrompt = "Test message for API validation";
-
-        // Function to set value at nested path
-        function setValueAtPath(obj, path, value) {
-            const parts = path.split('.');
-            let current = obj;
-            
-            for (let i = 0; i < parts.length; i++) {
-                const part = parts[i];
-                const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
-                
-                if (arrayMatch) {
-                    // Handle array notation (e.g., "contents[0]")
-                    const [_, prop, index] = arrayMatch;
-                    const idx = parseInt(index);
-                    
-                    if (i === parts.length - 1) {
-                        // Last part - set the value
-                        if (!current[prop]) current[prop] = [];
-                        current[prop][idx] = value;
-                    } else {
-                        // Create path if doesn't exist
-                        if (!current[prop]) current[prop] = [];
-                        if (!current[prop][idx]) current[prop][idx] = {};
-                        current = current[prop][idx];
-                    }
-                } else {
-                    // Handle regular property
-                    if (i === parts.length - 1) {
-                        current[part] = value;
-                    } else {
-                        if (!current[part]) current[part] = {};
-                        current = current[part];
-                    }
-                }
-            }
-            return obj;
-        }
-
-        // Set the test prompt at the specified path
-        requestBody = setValueAtPath(requestBody, requestPath, testPrompt);
+        let requestBody = JSON.parse(JSON.stringify(parsedBody || {}));
+        requestBody = setValueAtPath(requestBody, requestPath, ADMIN_CONSTANTS.TEST_MESSAGE);
 
         console.log('Sending test request:', {
             endpoint,
@@ -601,10 +503,7 @@ router.post('/image-apis/test', auth, async (req, res) => {
             type: err.name
         });
 
-        res.status(400).json({
-            success: false,
-            message: err.message || 'Failed to test Image API'
-        });
+        res.status(400).json(createApiResponse(false, err.message));
     }
 });
 
@@ -690,52 +589,29 @@ router.get('/image-settings/:type', auth, async (req, res) => {
     }
 });
 
-// Update global image settings
+// Update image settings with proper validation
 router.put('/image-settings/:type', auth, async (req, res) => {
-    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+    if (!req.user.isAdmin) {
+        return res.status(403).json(createApiResponse(false, 'Admin access required'));
+    }
 
     try {
-        console.log('Updating settings:', {
-            type: req.params.type,
-            values: req.body.values
-        });
-
-        const { values } = req.body;
-        if (!Array.isArray(values)) {
-            return res.status(400).json({ message: 'Values must be an array' });
+        const { type } = req.params;
+        if (!ADMIN_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(type)) {
+            return res.status(400).json(createApiResponse(false, 'Invalid settings type'));
         }
 
-        // Process the values based on type
-        const processedValues = values.map(value => {
-            if (req.params.type === 'sizes') {
-                // Ensure we have valid width and height values
-                const width = parseInt(value.width || value.value?.width);
-                const height = parseInt(value.height || value.value?.height);
-                
-                if (isNaN(width) || isNaN(height)) {
-                    throw new Error('Invalid width or height values');
-                }
-
-                return {
-                    id: value.id || `${width}x${height}`,
-                    name: value.name,
-                    value: { width, height },
-                    isActive: value.isActive !== false
-                };
-            } else {
-                // Process styles with proper ID and value handling
-                const styleId = value.id || value.name.toLowerCase().replace(/\s+/g, '-');
-                return {
-                    id: styleId,
-                    name: value.name,
-                    value: value.value || styleId, // Use ID as value if not provided
-                    isActive: value.isActive !== false
-                };
-            }
+        console.log('Processing settings update:', {
+            type,
+            valuesCount: req.body.values?.length
         });
 
+        const processedValues = processImageSettings(type, req.body.values);
+        
+        console.log('Processed values:', processedValues);
+
         const settings = await ImageSettings.findOneAndUpdate(
-            { type: req.params.type },
+            { type },
             { 
                 $set: { 
                     values: processedValues,
@@ -743,21 +619,16 @@ router.put('/image-settings/:type', auth, async (req, res) => {
                 }
             },
             { 
-                new: true,
-                upsert: true
+                new: true, 
+                upsert: true,
+                runValidators: true // Important: Enable schema validation
             }
         );
 
-        console.log('Settings saved:', {
-            type: req.params.type,
-            count: settings.values.length,
-            values: settings.values
-        });
-
-        res.json(settings);
+        res.json(createApiResponse(true, 'Settings updated successfully', settings));
     } catch (err) {
         console.error('Error saving settings:', err);
-        res.status(500).json({ message: err.message || 'Failed to update settings' });
+        res.status(500).json(createApiResponse(false, err.message || 'Failed to save settings'));
     }
 });
 
@@ -792,53 +663,21 @@ router.get('/voice-settings/:type', auth, async (req, res) => {
     }
 });
 
-// Update voice settings
+// Update voice settings with proper validation
 router.put('/voice-settings/:type', auth, async (req, res) => {
-    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+    if (!req.user.isAdmin) {
+        return res.status(403).json(createApiResponse(false, 'Admin access required'));
+    }
 
     try {
         const { type } = req.params;
-        if (!['speed', 'pitch'].includes(type)) {
-            return res.status(400).json({ message: 'Invalid settings type' });
+        if (!ADMIN_CONSTANTS.SUPPORTED_VOICE_TYPES.includes(type)) {
+            return res.status(400).json(createApiResponse(false, 'Invalid settings type'));
         }
 
         const { range } = req.body;
+        validateVoiceRange(range);
 
-        // Validate input
-        if (!range || typeof range !== 'object') {
-            return res.status(400).json({ message: 'Invalid range data' });
-        }
-
-        // Validate required fields
-        const requiredFields = ['min', 'max', 'default', 'step'];
-        for (const field of requiredFields) {
-            if (typeof range[field] !== 'number') {
-                return res.status(400).json({ 
-                    message: `Invalid ${field} value. Must be a number.`
-                });
-            }
-        }
-
-        // Validate ranges
-        if (range.min >= range.max) {
-            return res.status(400).json({ 
-                message: 'Minimum value must be less than maximum value'
-            });
-        }
-
-        if (range.default < range.min || range.default > range.max) {
-            return res.status(400).json({ 
-                message: 'Default value must be between min and max values'
-            });
-        }
-
-        if (range.step <= 0) {
-            return res.status(400).json({ 
-                message: 'Step must be greater than 0'
-            });
-        }
-
-        // Update or create settings
         const settings = await VoiceSettings.findOneAndUpdate(
             { type },
             { 
@@ -847,16 +686,13 @@ router.put('/voice-settings/:type', auth, async (req, res) => {
                     updatedAt: new Date()
                 }
             },
-            { 
-                new: true,
-                upsert: true
-            }
+            { new: true, upsert: true }
         );
 
-        res.json(settings);
+        res.json(createApiResponse(true, 'Settings updated successfully', settings));
     } catch (err) {
         console.error('Error saving voice settings:', err);
-        res.status(500).json({ message: err.message || 'Failed to save settings' });
+        res.status(500).json(createApiResponse(false, err.message));
     }
 });
 

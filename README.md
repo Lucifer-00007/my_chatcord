@@ -1,11 +1,11 @@
-# ChatCord - Real-time Chat Application with AI Features
+# My_ChatCord - Real-time Chat Application with AI Features
 
 A secure, real-time chat application built with Node.js and Express, featuring user authentication, room-based messaging, and integrated AI capabilities (Chat, Text-to-Image, Text-to-Voice).
 
 ## Features
 
 - JWT-based authentication
-- Real-time messaging (likely using Socket.IO, needs verification)
+- Real-time messaging (using Socket.IO, needs verification)
 - MongoDB data persistence for users, channels, messages, and AI settings
 - Room-based chat system
 - User presence tracking (potential, needs verification)
@@ -13,46 +13,66 @@ A secure, real-time chat application built with Node.js and Express, featuring u
 - **Text-to-Image Generation:** Generate images from text prompts using configurable APIs.
 - **Text-to-Voice Synthesis:** Convert text to speech using configurable APIs.
 - **Admin Settings Panel:** Configure AI API keys and potentially other settings.
-- Mobile-responsive design (assumed from modern web practices)
-- Password visibility toggle (likely in frontend JS)
+- Mobile-responsive design
+- Password visibility toggle
 - Security features (CSP, Rate Limiting - needs verification based on implementation)
 - Environment-based configuration
 
 ## Project Structure
 
 ```
-chatcord/
+my_chatcord/
 ├── config/                 # Configuration files
 │   ├── constants.js        # Application constants
 │   ├── db.js               # Database connection setup (MongoDB)
 │   └── init.js             # Initialization logic
 ├── middleware/             # Express middleware
+│   └── admin.js            
 │   └── auth.js             # Authentication middleware (JWT verification)
 ├── models/                 # Mongoose models for MongoDB
 │   ├── AiApi.js            # AI API configuration model
-│   ├── AiChat.js           # AI Chat history model (potential)
+│   ├── AiChat.js           # AI Chat history model
 │   ├── Channel.js          # Chat channel model
 │   ├── ImageApi.js         # Image API configuration model
-│   ├── ImageSettings.js    # User image generation settings (potential)
+│   ├── ImageSettings.js    # User image generation settings
 │   ├── Message.js          # Chat message model
+│   ├── Settings.js          
+│   ├── SystemLogs.js       
 │   ├── User.js             # User model
 │   ├── VoiceApi.js         # Voice API configuration model
-│   └── VoiceSettings.js    # User voice generation settings (potential)
+│   └── VoiceSettings.js    # User voice generation settings
 ├── public/                 # Static frontend assets
+│   ├── admin/             
+│   │   ├── ai-chat.html
+│   │   ├── dashboard.html
+│   │   ├── system-logs.html
+│   │   ├── system-settings.html
+│   │   ├── text-to-image.html
+│   │   ├── text-to-voice.html
+│   │   └── user-management.html
 │   ├── assets/             # Images, icons, etc.
 │   │   └── favicon.ico
 │   ├── css/                # CSS stylesheets
 │   │   └── style.css
 │   ├── js/                 # Client-side JavaScript
+|   │   ├── /admin
+|   │   │   ├── ai-chat.js             
+|   │   │   ├── dashboard.js
+|   │   │   ├── system-logs.js
+|   │   │   ├── system-settings.js
+|   │   │   ├── text-to-image.js
+|   │   │   ├── text-to-voice.js
+|   │   │   ├── user-management.js             
+|   │   │   └── utils.js             
 │   │   ├── admin.js        # Admin settings page logic
 │   │   ├── ai-chat.js      # AI chat page logic
 │   │   ├── auth-guard.js   # Protects frontend routes
 │   │   ├── auth.js         # Login/Register logic
 │   │   ├── main.js         # Main chat page logic
-│   │   ├── nav.js          # Navigation handling (potential)
+│   │   ├── nav.js          # Navigation handling
 │   │   ├── selectRoom.js   # Room selection logic
 │   │   └── text-to-image.js # Text-to-image page logic
-│   │   └── text-to-voice.js # Text-to-voice page logic (assuming based on html)
+│   │   └── text-to-voice.js # Text-to-voice page logic
 │   ├── admin-settings.html # Admin settings page
 │   ├── ai-chat.html        # AI chat interface page
 │   ├── chat.html           # Main chat interface page
@@ -62,6 +82,16 @@ chatcord/
 │   ├── text-to-image.html  # Text-to-image interface page
 │   └── text-to-voice.html  # Text-to-voice interface page
 ├── routes/                 # API endpoint definitions
+│   ├── /admin
+│   │   ├── ai-apis.js             
+│   │   ├── image-apis.js
+│   │   ├── image-settings.js
+│   │   ├── logs.js
+│   │   ├── settings.js
+│   │   ├── stats.js
+│   │   ├── user.js             
+│   │   ├── voice-settings.js 
+│   │   └── voice.js 
 │   ├── admin.js            # Admin settings routes
 │   ├── ai.js               # AI chat related routes
 │   ├── auth.js             # Authentication routes (login, register)
@@ -69,25 +99,25 @@ chatcord/
 │   ├── images.js           # Text-to-image routes
 │   └── voice.js            # Text-to-voice routes
 ├── scripts/                # Utility/maintenance scripts
-│   ├── fixIndexes.js
+│   ├── exportData.js
 │   ├── flushDb.js
-│   ├── rebuildIndexes.js
-│   ├── restoreUniqueIndex.js
+│   ├── importData.js
 │   └── seedData.js
 ├── services/               # Business logic services
 │   └── tokenManager.js     # JWT creation/management
 ├── utils/                  # Utility functions
+│   ├── adminHelpers.js       
 │   ├── apiHelpers.js       # Helpers for external API calls
 │   ├── jwt.js              # JWT verification helpers
 │   ├── messages.js         # Message formatting/handling utilities
 │   └── users.js            # User related utilities
-├── .env                    # Environment variables (ignored by Git)
+├── .env                    # Environment variables
 ├── .env.template           # Template for .env file
 ├── .gitignore              # Git ignore rules
 ├── package-lock.json       # Exact dependency versions
 ├── package.json            # Project metadata and dependencies
 ├── README.md               # This file
-└── server.js               # Main application entry point (Express server setup)
+└── server.js               # Main application entry point
 ```
 
 ## Prerequisites
@@ -103,28 +133,16 @@ chatcord/
 2.  Fill in the required environment variables:
 
 ```env
-# Server configuration
+NODE_ENV=development
 PORT=3000
-HOST=0.0.0.0 # Or specific IP
-
-# MongoDB connection (required)
-MONGODB_URI=mongodb://localhost:27017/chatcord # Replace with your MongoDB connection string
-
-# Security configuration (required)
-JWT_SECRET=your-very-secure-and-long-jwt-secret-key # Replace with a strong secret (min 64 chars recommended)
-NODE_ENV=development # or 'production'
-
-# Domain configuration (required for production cookies)
-PROD_DOMAIN=your-production-domain.com
-
-# --- AI API Keys (Add keys for the services you want to use) ---
-# Example: OpenAI
-# OPENAI_API_KEY=sk-...
-
-# Example: Stability AI
-# STABILITY_API_KEY=sk-...
-
-# Add other API keys as needed based on configured models in admin settings
+MONGO_URI=mongodb://localhost:27017/mychatcord
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your_secure_jwt_secret
+JWT_EXPIRE=24h
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5000
+RATE_LIMIT_WINDOW=15
+RATE_LIMIT_MAX=100
+LOG_LEVEL=debug
 ```
 
 3.  **Key Environment Variables:**
@@ -135,6 +153,8 @@ PROD_DOMAIN=your-production-domain.com
     *   `NODE_ENV`: Set to `development` or `production`. Affects error handling, logging, and potentially other settings.
     *   `PROD_DOMAIN`: The domain where the app is hosted in production. Used for setting secure cookie domains. **Required for production**.
     *   **AI API Keys**: Add environment variables for the API keys of the AI services you intend to use (e.g., `OPENAI_API_KEY`). These keys are typically configured via the Admin Settings panel in the application itself, but the backend needs them in the environment to function. Check `models/AiApi.js`, `models/ImageApi.js`, `models/VoiceApi.js` and the admin settings implementation for specifics.
+
+
 
 ## Installation
 
@@ -162,6 +182,21 @@ npm start
 ```
 
 The application will be available at `http://localhost:3000` (or your configured PORT)
+
+
+## Config Setup
+The config folder contains crucial application settings. Update the following files based on your requirements:
+
+#### 1. config/constants.js
+#### 2. config/db.js
+#### 3. config/init.js
+
+## Todo List
+- Create a postman collection of all the apis in categorized way.
+- Batch generation
+- Message queue implementation
+- Performance monitoring
+
 
 ## Feature Details
 

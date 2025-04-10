@@ -12,6 +12,7 @@ router.get('/', auth, async (req, res) => {
     const channels = await Channel.find().populate('createdBy', 'username');
     res.json(channels);
   } catch (err) {
+    console.error('Error fetching channels:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -36,6 +37,7 @@ router.post('/', auth, async (req, res) => {
     await channel.save();
     res.status(201).json(channel);
   } catch (err) {
+    console.error('Error creating channel:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -52,6 +54,7 @@ router.get('/:id', auth, async (req, res) => {
     
     res.json(channel);
   } catch (err) {
+    console.error('Error fetching channel:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

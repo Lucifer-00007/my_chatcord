@@ -3,23 +3,16 @@ const mongoose = require('mongoose');
 const voiceSchema = new mongoose.Schema({
     id: String,
     name: String,
-    gender: String,
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'neutral']
+    },
     language: String,
     isActive: {
         type: Boolean,
         default: true
     }
-});
-
-const languageSchema = new mongoose.Schema({
-    id: String,
-    name: String,
-    code: String,
-    isActive: {
-        type: Boolean,
-        default: true
-    }
-});
+}, { _id: false });
 
 const VoiceApiSchema = new mongoose.Schema({
     name: {
@@ -30,68 +23,60 @@ const VoiceApiSchema = new mongoose.Schema({
     apiType: {
         type: String,
         required: true,
-        set: value => value.toLowerCase() // Ensure consistent casing
+        enum: ['direct', 'hearing']
     },
     responseType: {
+        type: String,
+        required: true,
+        enum: ['binary', 'base64', 'url']
+    },
+    curlCommand: {
         type: String,
         required: true
     },
     requestPath: {
         type: String,
-        required: true
+        required: true,
+        validate: {
+            validator: function(v) {
+                // Allow both JSON paths and URL parameter formats
+                return /^([a-zA-Z_]\w*(\[\d+\])?\.)*[a-zA-Z_]\w*(\[\d+\])?$/.test(v) || 
+                       /^[a-zA-Z_]\w*=/.test(v);
+            },
+            message: 'Invalid request path format'
+        }
     },
-    responsePath: String,
-    curlCommand: {
+    responsePath: {
         type: String,
-        required: true
+        validate: {
+            validator: function(v) {
+                if (!v) return true; // Optional field
+                // Allow both JSON paths and URL parameter formats
+                return /^([a-zA-Z_]\w*(\[\d+\])?\.)*[a-zA-Z_]\w*(\[\d+\])?$/.test(v) || 
+                       /^[a-zA-Z_]\w*=/.test(v);
+            },
+            message: 'Invalid response path format'
+        }
     },
+    supportedVoices: [voiceSchema],
     isActive: {
         type: Boolean,
         default: true
     },
     auth: {
-        type: {
-            type: String,
-            enum: ['none', 'hearing']
-        },
         loginEndpoint: String,
         tokenPath: String,
         credentials: {
             username: String,
             password: String
         }
-    },
-    supportedVoices: [{
-        id: String,
-        name: String,
-        gender: String,
-        language: String
-    }]
+    }
 }, {
     timestamps: true
 });
 
-// Add custom index options to schema
-VoiceApiSchema.index({ 
-    name: 1 
-}, { 
-    unique: true,
-    collation: { locale: 'en', strength: 2 } // Case-insensitive index
-});
-
-// Add pre-save middleware to normalize name
-VoiceApiSchema.pre('save', function(next) {
-    // Trim whitespace and normalize case if name is modified
-    if (this.isModified('name')) {
-        this.name = this.name.trim();
-    }
-    next();
-});
-
-// Add validation for apiType
-VoiceApiSchema.path('apiType').validate(function(value) {
-    const validTypes = ['direct', 'hearing']; // Add other valid types as needed
-    return validTypes.includes(value.toLowerCase());
-}, 'Invalid API type');
+// Add indexes for better query performance
+VoiceApiSchema.index({ name: 1 }, { unique: true });
+VoiceApiSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('VoiceApi', VoiceApiSchema);
