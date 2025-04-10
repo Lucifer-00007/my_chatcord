@@ -1,13 +1,25 @@
+# Dependencies
 node_modules/
+
+# OS files
 .DS_Store
+
+# Environment variables
 .env
 
 # Database Migration
 migration.log
 *.backup.json
 
-#scripts
-scripts/data/
-scripts/fixIndexes.js
-scripts/rebuildIndexes.js
-scripts/restoreUniqueIndex.js
+# Scripts directory
+/scripts/fixIndexes.js
+/scripts/rebuildIndexes.js
+/scripts/restoreUniqueIndex.js
+/scripts/data/
+
+# Logs
+*.log
+
+# IDE specific files
+.vscode/
+.idea/
