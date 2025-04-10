@@ -4,10 +4,10 @@ node_modules/
 
 # Database Migration
 migration.log
-scripts/data/
 *.backup.json
 
 #scripts
-fixIndexes.js
-rebuildIndexes.js
-restoreUniqueIndex.js
+scripts/data/
+scripts/fixIndexes.js
+scripts/rebuildIndexes.js
+scripts/restoreUniqueIndex.js
