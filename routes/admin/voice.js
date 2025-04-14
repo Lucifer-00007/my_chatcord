@@ -5,6 +5,7 @@ const VoiceApi = require('../../models/VoiceApi');
 const fetch = require('node-fetch');
 const { parseCurlCommand } = require('../../utils/apiHelpers');
 const { voice } = require('../../config/constants');
+const mongoose = require('mongoose');
 
 // Get all voice APIs
 router.get('/', auth, async (req, res) => {
@@ -67,7 +68,17 @@ router.get('/:id', auth, async (req, res) => {
     }
 
     try {
-        const api = await VoiceApi.findById(req.params.id);
+        const { id } = req.params;
+        
+        // Check if id is a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ 
+                message: 'Invalid voice API ID format',
+                code: 'INVALID_ID'
+            });
+        }
+
+        const api = await VoiceApi.findById(id);
 
         if (!api) {
             return res.status(404).json({
