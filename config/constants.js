@@ -111,7 +111,19 @@ const VOICE_API_CONFIG = {
         { id: "female", name: "Female" },
         { id: "male", name: "Male" },
         { id: "neutral", name: "Neutral" }
-    ]
+    ],
+    messages: {
+        DUPLICATE_NAME: name => `An API named "${name}" already exists`,
+        SAVE_SUCCESS: 'Voice API saved successfully',
+        UPDATE_SUCCESS: 'Voice API updated successfully',
+        DELETE_SUCCESS: 'Voice API deleted successfully',
+        NOT_FOUND: 'Voice API not found',
+        TEST_SUCCESS: 'API test completed successfully',
+        TEST_FAILED: 'Failed to test voice API'
+    },
+    methods: {
+        DEFAULT: 'POST'
+    }
 };
 
 // Demo data configuration (can be useful for seeding/testing)

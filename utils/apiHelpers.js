@@ -3,14 +3,20 @@ function parseCurlCommand(curlCommand) {
     console.log('Starting cURL command parse');
     try {
         const cleaned = curlCommand.trim().replace(/\\\n/g, ' ').replace(/\s+/g, ' ');
-        console.log('Cleaned command:', cleaned);
-
-        // Extract URL
+        
+        // Extract URL and ensure it's absolute
         const urlMatch = cleaned.match(/(?:--location\s+)?['"]?(https?:\/\/[^'"]+)['"]?/i);
         if (!urlMatch) {
-            throw new Error('No valid URL found in cURL command');
+            throw new Error('No valid URL found in cURL command. URL must be absolute (start with http:// or https://)');
         }
         const url = urlMatch[1].replace(/^['"]|['"]$/g, '');
+
+        // Validate URL format
+        try {
+            new URL(url); // This will throw if URL is invalid
+        } catch (urlError) {
+            throw new Error('Invalid URL format. Must be an absolute URL starting with http:// or https://');
+        }
 
         // Extract headers
         const headers = {};
@@ -43,7 +49,7 @@ function parseCurlCommand(curlCommand) {
             hasBody: !!body 
         });
 
-        return { url, method, headers, body };
+        return { endpoint: url, method, headers, body }; // Renamed url to endpoint for clarity
     } catch (err) {
         console.error('cURL parsing error:', err);
         throw new Error(`Failed to parse cURL command: ${err.message}`);

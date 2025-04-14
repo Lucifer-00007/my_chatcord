@@ -18,6 +18,14 @@ const {
     createApiResponse 
 } = require('../utils/adminHelpers');
 
+// Import sub-routes
+const voiceRoutes = require('./admin/voice');
+const imageRoutes = require('./admin/image-apis');
+
+// Use sub-routes
+router.use('/voice', voiceRoutes);
+router.use('/image-apis', imageRoutes);
+
 // Stats endpoint
 router.get('/stats', auth, async (req, res) => {
     if (!req.user.isAdmin) {

@@ -137,6 +137,8 @@ async function handleVoiceFormSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
+    const isEditing = form.dataset.mode === 'edit';
+    const apiId = form.dataset.apiId;
     
     try {
         submitBtn.disabled = true;
@@ -145,10 +147,11 @@ async function handleVoiceFormSubmit(e) {
         const formData = {
             name: document.getElementById('voice-api-name').value.trim(),
             apiType: document.getElementById('voice-api-type').value,
-            responseType: document.getElementById('voice-response-type').value, // Add this line
+            responseType: document.getElementById('voice-response-type').value,
             curlCommand: document.getElementById('voice-curl-command').value,
             requestPath: document.getElementById('voice-request-path').value,
             responsePath: document.getElementById('voice-response-path').value,
+            method: 'POST', // Force POST method
             supportedVoices: collectVoices()
         };
 
@@ -168,16 +171,18 @@ async function handleVoiceFormSubmit(e) {
             throw new Error('Name, API type, cURL command, and request path are required');
         }
 
-        const res = await window.adminUtils.makeApiRequest('/api/admin/voice', {
-            method: 'POST',
+        // Handle create vs update
+        const endpoint = isEditing ? 
+            `/api/admin/voice/${apiId}` : 
+            '/api/admin/voice';
+
+        const res = await window.adminUtils.makeApiRequest(endpoint, {
+            method: isEditing ? 'PUT' : 'POST',
             body: formData
         });
 
-        showNotification('Voice API saved successfully', 'success');
-        form.reset();
-        form.style.display = 'none';
-        document.getElementById('add-voice-api-btn').style.display = 'block';
-        document.getElementById('auth-section').style.display = 'none';
+        showNotification(`Voice API ${isEditing ? 'updated' : 'saved'} successfully`, 'success');
+        resetVoiceForm();
         await loadVoiceApiList();
 
     } catch (err) {
@@ -185,7 +190,7 @@ async function handleVoiceFormSubmit(e) {
         showNotification(err.message, 'error');
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${isEditing ? 'Update' : 'Save'} API`;
     }
 }
 
@@ -255,7 +260,7 @@ async function testVoiceApi() {
         requestPath: document.getElementById('voice-request-path'),
         responsePath: document.getElementById('voice-response-path'),
         apiType: document.getElementById('voice-api-type'),
-        responseType: document.getElementById('voice-response-type'), // Add this line
+        responseType: document.getElementById('voice-response-type'),
         testStatus: document.querySelector('.test-indicator'),
         testMessage: document.querySelector('.test-message'),
         testDetails: document.querySelector('.test-details'),
@@ -285,7 +290,7 @@ async function testVoiceApi() {
             requestPath: elements.requestPath.value,
             responsePath: elements.responsePath?.value,
             apiType: elements.apiType.value,
-            responseType: elements.responseType.value // Use selected response type
+            responseType: elements.responseType.value
         };
 
         // Add auth data if needed
@@ -346,19 +351,34 @@ async function editVoiceApi(id, name) {
         
         // Fill form fields
         document.getElementById('voice-api-name').value = response.name;
-        document.getElementById('voice-api-type').value = response.apiType;
+        document.getElementById('voice-api-type').value = response.apiType || 'direct';
+        document.getElementById('voice-response-type').value = response.responseType || 'binary';
         document.getElementById('voice-curl-command').value = response.curlCommand;
         document.getElementById('voice-request-path').value = response.requestPath;
         document.getElementById('voice-response-path').value = response.responsePath || '';
         
+        // Set method and handle parameter section
+        const methodSelect = document.getElementById('voice-api-method');
+        methodSelect.value = response.method || 'POST';
+        const paramSection = document.getElementById('voice-param-section');
+        paramSection.style.display = response.method === 'GET' ? 'block' : 'none';
+
+        if (response.method === 'GET') {
+            document.getElementById('voice-param').value = response.responsePath || '';
+        }
+        
         // Handle auth section
         const authSection = document.getElementById('auth-section');
-        authSection.style.display = response.apiType === 'hearing' ? 'block' : 'none';
-        if (response.auth) {
-            document.getElementById('auth-endpoint').value = response.auth.loginEndpoint || '';
-            document.getElementById('token-path').value = response.auth.tokenPath || '';
-            document.getElementById('auth-username').value = response.auth.credentials?.username || '';
-            document.getElementById('auth-password').value = response.auth.credentials?.password || '';
+        if (response.apiType === 'hearing' && authSection) {
+            authSection.style.display = 'block';
+            if (response.auth) {
+                document.getElementById('auth-endpoint').value = response.auth.loginEndpoint || '';
+                document.getElementById('token-path').value = response.auth.tokenPath || '';
+                document.getElementById('auth-username').value = response.auth.credentials?.username || '';
+                document.getElementById('auth-password').value = response.auth.credentials?.password || '';
+            }
+        } else if (authSection) {
+            authSection.style.display = 'none';
         }
         
         // Clear and populate voice entries

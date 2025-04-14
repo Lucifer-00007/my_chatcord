@@ -70,6 +70,11 @@ const VoiceApiSchema = new mongoose.Schema({
             username: String,
             password: String
         }
+    },
+    method: {
+        type: String,
+        default: 'POST',
+        enum: ['POST']
     }
 }, {
     timestamps: true
