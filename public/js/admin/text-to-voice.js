@@ -463,9 +463,9 @@ async function editVoiceApi(id, name) {
         formHeader.innerHTML = '<i class="fas fa-edit"></i> Update Voice API';
         submitBtn.innerHTML = '<i class="fas fa-save"></i> Update API';
         
-        // Make name field read-only and add visual indication
+        // Make name field read-only for edit mode
         nameInput.value = response.name;
-        nameInput.readOnly = true;
+        nameInput.readOnly = true;  // Set readonly in edit mode
         nameInput.classList.add('read-only');
         
         document.getElementById('voice-api-type').value = response.apiType || 'direct';
@@ -591,6 +591,14 @@ function resetVoiceForm() {
             input.value = '';
         }
     });
+
+    // Reset name input field state
+    const nameInput = document.getElementById('voice-api-name');
+    if (nameInput) {
+        nameInput.readOnly = false;  // Remove readonly for new API form
+        nameInput.classList.remove('read-only');
+        nameInput.value = '';
+    }
 
     // Clear voice entries
     const voicesContainer = document.getElementById('voice-entries-container');
