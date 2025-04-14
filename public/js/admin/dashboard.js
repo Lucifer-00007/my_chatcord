@@ -6,10 +6,10 @@ async function initDashboard() {
 
 async function loadStats() {
     try {
-        console.log('Loading dashboard stats...');
+        //console.log('Loading dashboard stats...');
         const stats = await window.adminUtils.makeApiRequest('/api/admin/stats');
         
-        console.log('Received stats:', stats);
+        //console.log('Received stats:', stats);
         
         // Match the property names from the API response
         const statMappings = {

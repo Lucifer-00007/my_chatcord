@@ -5,7 +5,6 @@ const VoiceApi = require('../../models/VoiceApi');
 const fetch = require('node-fetch');
 const { parseCurlCommand } = require('../../utils/apiHelpers');
 const { voice } = require('../../config/constants');
-const { VOICE_API_CONFIG } = require('../../config/constants');
 
 // Get all voice APIs
 router.get('/', auth, async (req, res) => {
@@ -21,12 +20,11 @@ router.get('/', auth, async (req, res) => {
 // Create new voice API
 router.post('/', auth, async (req, res) => {
     try {
-        const { name, apiType, responseType, curlCommand, requestPath, responsePath } = req.body;
-        
-        // Check for duplicate name
+        const { name, apiType, responseType, curlCommand, requestPath, responsePath, supportedVoices } = req.body;
+
         const existingApi = await VoiceApi.findOne({ name });
         if (existingApi) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
                 message: voice.messages.DUPLICATE_NAME(name)
             });
@@ -39,7 +37,8 @@ router.post('/', auth, async (req, res) => {
             curlCommand,
             requestPath,
             responsePath,
-            method: voice.methods.POST
+            method: voice.methods.POST,
+            supportedVoices: supportedVoices || []
         });
 
         const savedApi = await voiceApi.save();
@@ -51,9 +50,78 @@ router.post('/', auth, async (req, res) => {
 
     } catch (err) {
         console.error('Error saving voice API:', err);
-        res.status(400).json({ 
+        res.status(400).json({
             success: false,
-            message: err.message 
+            message: err.message
+        });
+    }
+});
+
+// Add GET single voice API endpoint
+router.get('/:id', auth, async (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({
+            success: false,
+            message: 'Admin access required'
+        });
+    }
+
+    try {
+        const api = await VoiceApi.findById(req.params.id);
+
+        if (!api) {
+            return res.status(404).json({
+                success: false,
+                message: voice.messages.NOT_FOUND
+            });
+        }
+
+        res.json(api);
+    } catch (err) {
+        console.error('Error fetching voice API:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch voice API details'
+        });
+    }
+});
+
+// Update voice API
+router.put('/:id', auth, async (req, res) => {
+if (!req.user.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    try {
+        const api = await VoiceApi.findById(req.params.id);
+        if (!api) {
+            return res.status(404).json({
+                success: false,
+                message: 'Voice API not found'
+            });
+        }
+
+        // Remove name from update data to prevent modification
+        const { name, ...updateData } = req.body;
+
+        // Update API without changing name
+        const updatedApi = await VoiceApi.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateData },
+            { new: true }
+        );
+
+        res.json({
+            success: true,
+            message: 'Voice API updated successfully',
+            api: updatedApi
+        });
+
+    } catch (err) {
+        console.error('Error updating voice API:', err);
+        res.status(400).json({
+            success: false,
+            message: err.message || 'Failed to update voice API'
         });
     }
 });
@@ -61,7 +129,7 @@ router.post('/', auth, async (req, res) => {
 // Delete voice API
 router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin) {
-        return res.status(403).json({ 
+        return res.status(403).json({
             success: false,
             message: 'Admin access required'
         });
@@ -69,7 +137,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     try {
         const api = await VoiceApi.findByIdAndDelete(req.params.id);
-        
+
         if (!api) {
             return res.status(404).json({
                 success: false,
@@ -94,11 +162,11 @@ router.delete('/:id', auth, async (req, res) => {
 router.post('/test', auth, async (req, res) => {
     try {
         const { curlCommand, requestPath, responsePath, apiType, responseType, auth: authData } = req.body;
-        
+
         if (!curlCommand || !requestPath) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'cURL command and request path are required' 
+            return res.status(400).json({
+                success: false,
+                message: 'cURL command and request path are required'
             });
         }
 

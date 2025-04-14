@@ -122,8 +122,11 @@ const VOICE_API_CONFIG = {
         TEST_FAILED: 'Failed to test voice API'
     },
     methods: {
-        DEFAULT: 'POST'
-    }
+        POST: 'POST',
+        PUT: 'PUT',
+        DELETE: 'DELETE'
+    },
+    defaultMethod: 'POST'
 };
 
 // Demo data configuration (can be useful for seeding/testing)

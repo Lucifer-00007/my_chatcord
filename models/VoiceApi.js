@@ -1,16 +1,22 @@
 const mongoose = require('mongoose');
 
 const voiceSchema = new mongoose.Schema({
-    id: String,
-    name: String,
+    id: {
+        type: String,
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
     gender: {
         type: String,
-        enum: ['male', 'female', 'neutral']
+        enum: ['male', 'female', 'neutral'],
+        default: 'neutral'
     },
-    language: String,
-    isActive: {
-        type: Boolean,
-        default: true
+    language: {
+        type: String,
+        required: true
     }
 }, { _id: false });
 
@@ -58,7 +64,10 @@ const VoiceApiSchema = new mongoose.Schema({
             message: 'Invalid response path format'
         }
     },
-    supportedVoices: [voiceSchema],
+    supportedVoices: {
+        type: [voiceSchema],
+        default: []
+    },
     isActive: {
         type: Boolean,
         default: true

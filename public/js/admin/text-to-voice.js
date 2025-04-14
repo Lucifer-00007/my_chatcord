@@ -137,23 +137,53 @@ async function handleVoiceFormSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
-    const isEditing = form.dataset.mode === 'edit';
-    const apiId = form.dataset.apiId;
-    
+
+    // Get form state from hidden inputs using getElementById instead of querySelector
+    const modeInput = document.getElementById('form-mode');
+    const apiIdInput = document.getElementById('form-api-id');
+    const isEditing = modeInput && modeInput.value === 'edit';
+    const apiId = apiIdInput?.value;
+
+    console.log('Form submission started:', {
+        isEditing,
+        apiId,
+        formState: {
+            mode: modeInput?.value,
+            apiId: apiIdInput?.value,
+            hasMode: !!modeInput,
+            hasId: !!apiIdInput
+        }
+    });
+
     try {
+        // Validate form state for editing
+        if (isEditing && !apiId) {
+            throw new Error('Invalid form state: missing API ID for edit mode');
+        }
+
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
+        // Build form data
         const formData = {
-            name: document.getElementById('voice-api-name').value.trim(),
             apiType: document.getElementById('voice-api-type').value,
             responseType: document.getElementById('voice-response-type').value,
             curlCommand: document.getElementById('voice-curl-command').value,
             requestPath: document.getElementById('voice-request-path').value,
             responsePath: document.getElementById('voice-response-path').value,
-            method: 'POST', // Force POST method
             supportedVoices: collectVoices()
         };
+
+        // Only include name for new APIs
+        if (!isEditing) {
+            const name = document.getElementById('voice-api-name').value.trim();
+            if (!name) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fas fa-save"></i> ${isEditing ? 'Update' : 'Save'} API`;
+                throw new Error('API name is required for new entries');
+            }
+            formData.name = name;
+        }
 
         // Add auth data if needed
         if (formData.apiType === 'hearing') {
@@ -165,33 +195,79 @@ async function handleVoiceFormSubmit(e) {
                     password: document.getElementById('auth-password').value
                 }
             };
+
+            // Validate auth fields
+            if (!formData.auth.loginEndpoint || !formData.auth.tokenPath || !formData.auth.credentials.username) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fas fa-save"></i> ${isEditing ? 'Update' : 'Save'} API`;
+                throw new Error('Authentication fields (Endpoint, Token Path, Username) are required for Hearing API type.');
+            }
         }
 
-        if (!formData.name || !formData.apiType || !formData.curlCommand || !formData.requestPath) {
-            throw new Error('Name, API type, cURL command, and request path are required');
-        }
+        // Determine endpoint and method based on form attributes
+        const endpoint = isEditing ? `/api/admin/voice/${apiId}` : '/api/admin/voice';
+        const method = isEditing ? 'PUT' : 'POST';
 
-        // Handle create vs update
-        const endpoint = isEditing ? 
-            `/api/admin/voice/${apiId}` : 
-            '/api/admin/voice';
+        console.log('Making API request:', {
+            endpoint,
+            method,
+            isEditing,
+            apiId,
+            formState: {
+                mode: modeInput?.value,
+                apiId: apiIdInput?.value
+            }
+        });
 
         const res = await window.adminUtils.makeApiRequest(endpoint, {
-            method: isEditing ? 'PUT' : 'POST',
+            method,
             body: formData
         });
 
-        showNotification(`Voice API ${isEditing ? 'updated' : 'saved'} successfully`, 'success');
+        console.log('API response:', {
+            success: true,
+            isEditing,
+            apiId: res?.api?._id || apiId
+        });
+
+        showNotification(`Voice API ${isEditing ? 'updated' : 'added'} successfully`, 'success');
         resetVoiceForm();
         await loadVoiceApiList();
 
     } catch (err) {
-        console.error('Error saving voice API:', err);
-        showNotification(err.message, 'error');
+        console.error('Error saving voice API:', {
+            error: err.message,
+            stack: err.stack,
+            isEditingAttempted: isEditing,
+            apiIdAttempted: apiId,
+            formState: {
+                mode: modeInput?.value,
+                apiId: apiIdInput?.value
+            }
+        });
+        showNotification(err.message || 'Failed to save voice API. Check console for details.', 'error');
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${isEditing ? 'Update' : 'Save'} API`;
+        const buttonTextMode = modeInput?.value === 'edit' ? 'Update' : 'Save';
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> ${buttonTextMode} API`;
     }
+}
+
+// Add this function to check form state
+function validateFormState(form) {
+    const isEditing = form.dataset.mode === 'edit';
+    const apiId = form.dataset.apiId;
+    
+    if (isEditing && !apiId) {
+        console.error('Invalid form state:', {
+            mode: form.dataset.mode,
+            apiId,
+            formDataset: { ...form.dataset }
+        });
+        throw new Error('Invalid form state: missing API ID');
+    }
+    
+    return { isEditing, apiId };
 }
 
 // Add API type change handler
@@ -337,35 +413,66 @@ async function testVoiceApi() {
 
 // Add edit API function
 async function editVoiceApi(id, name) {
+    console.log('Starting edit operation:', { id, name });
+    
     try {
-        const response = await window.adminUtils.makeApiRequest(`/api/admin/voice/${id}`);
-        
         const form = document.getElementById('voice-api-form');
+        
+        // Create or update hidden inputs with specific IDs
+        let modeInput = document.getElementById('form-mode');
+        let apiIdInput = document.getElementById('form-api-id');
+
+        if (!modeInput) {
+            modeInput = document.createElement('input');
+            modeInput.type = 'hidden';
+            modeInput.id = 'form-mode';  // Use id instead of name
+            modeInput.name = 'formMode';
+            form.appendChild(modeInput);
+        }
+        if (!apiIdInput) {
+            apiIdInput = document.createElement('input');
+            apiIdInput.type = 'hidden';
+            apiIdInput.id = 'form-api-id';  // Use id instead of name
+            apiIdInput.name = 'apiId';
+            form.appendChild(apiIdInput);
+        }
+
+        modeInput.value = 'edit';
+        apiIdInput.value = id;
+        
+        console.log('Form state set:', {
+            mode: modeInput.value,
+            apiId: apiIdInput.value,
+            hasMode: !!document.getElementById('form-mode'),
+            hasId: !!document.getElementById('form-api-id')
+        });
+
+        const response = await window.adminUtils.makeApiRequest(`/api/admin/voice/${id}`);
+        console.log('Received API data for editing:', {
+            id: response._id,
+            name: response.name,
+            hasVoices: response.supportedVoices?.length || 0
+        });
+        
         const addButton = document.getElementById('add-voice-api-btn');
         const formHeader = form.querySelector('.form-header h3');
         const submitBtn = form.querySelector('button[type="submit"]');
+        const nameInput = document.getElementById('voice-api-name');
         
         // Update form header and submit button
         formHeader.innerHTML = '<i class="fas fa-edit"></i> Update Voice API';
         submitBtn.innerHTML = '<i class="fas fa-save"></i> Update API';
         
-        // Fill form fields
-        document.getElementById('voice-api-name').value = response.name;
+        // Make name field read-only and add visual indication
+        nameInput.value = response.name;
+        nameInput.readOnly = true;
+        nameInput.classList.add('read-only');
+        
         document.getElementById('voice-api-type').value = response.apiType || 'direct';
         document.getElementById('voice-response-type').value = response.responseType || 'binary';
         document.getElementById('voice-curl-command').value = response.curlCommand;
         document.getElementById('voice-request-path').value = response.requestPath;
         document.getElementById('voice-response-path').value = response.responsePath || '';
-        
-        // Set method and handle parameter section
-        const methodSelect = document.getElementById('voice-api-method');
-        methodSelect.value = response.method || 'POST';
-        const paramSection = document.getElementById('voice-param-section');
-        paramSection.style.display = response.method === 'GET' ? 'block' : 'none';
-
-        if (response.method === 'GET') {
-            document.getElementById('voice-param').value = response.responsePath || '';
-        }
         
         // Handle auth section
         const authSection = document.getElementById('auth-section');
@@ -388,12 +495,25 @@ async function editVoiceApi(id, name) {
             addVoiceEntry(voice);
         });
         
-        form.dataset.mode = 'edit';
-        form.dataset.apiId = id;
+        // Add final state check before displaying form
+        console.log('Form state before display:', {
+            mode: modeInput.value,
+            apiId: apiIdInput.value,
+            formInputs: form.elements
+        });
+        
         form.style.display = 'block';
         addButton.style.display = 'none';
         
+        console.log('Form prepared for editing:', {
+            formMode: modeInput.value,
+            apiId: apiIdInput.value,
+            nameReadOnly: nameInput.readOnly,
+            submitButtonText: submitBtn.innerHTML
+        });
+        
     } catch (err) {
+        console.error('Error in edit operation:', err);
         showNotification(err.message, 'error');
     }
 }
@@ -433,26 +553,69 @@ async function toggleVoiceApi(id, isActive) {
     }
 }
 
-// Add form reset handler
+// Update form reset handler
 function resetVoiceForm() {
+    console.trace('resetVoiceForm called');
     const form = document.getElementById('voice-api-form');
+    if (!form) {
+        console.error('Voice API form not found');
+        return;
+    }
+
     const formHeader = form.querySelector('.form-header h3');
     const submitBtn = form.querySelector('button[type="submit"]');
     
-    formHeader.innerHTML = '<i class="fas fa-plus"></i> Add New Voice API';
-    submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
-    form.dataset.mode = 'add';
-    delete form.dataset.apiId;
-    form.reset();
-    
+    // Update UI elements
+    if (formHeader) {
+        formHeader.innerHTML = '<i class="fas fa-plus"></i> Add New Voice API';
+    }
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+    }
+
+    // Remove state inputs using getElementById
+    document.getElementById('form-mode')?.remove();
+    document.getElementById('form-api-id')?.remove();
+
+    console.log('Form state cleared:', {
+        hasMode: !!document.getElementById('form-mode'),
+        hasId: !!document.getElementById('form-api-id')
+    });
+
+    // Reset form inputs manually
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+            input.checked = false;
+        } else {
+            input.value = '';
+        }
+    });
+
     // Clear voice entries
-    document.getElementById('voice-entries-container').innerHTML = '';
+    const voicesContainer = document.getElementById('voice-entries-container');
+    if (voicesContainer) {
+        voicesContainer.innerHTML = '';
+    }
     
     // Reset auth section
-    document.getElementById('auth-section').style.display = 'none';
+    const authSection = document.getElementById('auth-section');
+    if (authSection) {
+        authSection.style.display = 'none';
+    }
     
+    // Hide form and show add button
     form.style.display = 'none';
-    document.getElementById('add-voice-api-btn').style.display = 'block';
+    const addButton = document.getElementById('add-voice-api-btn');
+    if (addButton) {
+        addButton.style.display = 'block';
+    }
+
+    // Log state after reset
+    console.log('Form state after reset:', {
+        mode: document.getElementById('form-mode')?.value,
+        apiId: document.getElementById('form-api-id')?.value
+    });
 }
 
 // Add saveVoiceSettings function
