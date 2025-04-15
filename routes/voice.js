@@ -3,10 +3,17 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const VoiceApi = require('../models/VoiceApi');
 const fetch = require('node-fetch');
+const { parseCurlCommand } = require('../utils/apiHelpers');  // Add this line
 
 router.post('/generate', auth, async (req, res) => {
+    console.log('Voice generation request:', {
+        body: req.body,
+        user: req.user._id,
+        timestamp: new Date().toISOString()
+    });
+
     try {
-        const { apiId, voice, text, speed, pitch, preview } = req.body;
+        const { apiId, voice, text, speed, pitch } = req.body;
 
         // Validate inputs
         if (!apiId || !voice || !text) {
@@ -19,41 +26,108 @@ router.post('/generate', auth, async (req, res) => {
             return res.status(404).json({ message: 'Voice API not found or inactive' });
         }
 
-        // Construct request body
-        let requestBody = {
-            text: text,
-            voice: voice,
-            speed: speed || 1.0,
-            pitch: pitch || 1.0,
-            preview: preview || false
-        };
+        // Parse the curl command and get request info
+        const { endpoint, headers, method } = parseCurlCommand(api.curlCommand);
 
-        // Make request to voice API
-        const response = await fetch(api.endpoint, {
-            method: 'POST',
-            headers: api.headers,
-            body: JSON.stringify(requestBody)
-        });
+        // Create base request body
+        let requestBody = {};
+        const pathParts = api.requestPath.split('.');
+        let current = requestBody;
 
-        if (!response.ok) {
-            throw new Error(`API responded with status ${response.status}`);
+        // Handle array notation in path
+        for (let i = 0; i < pathParts.length - 1; i++) {
+            const part = pathParts[i];
+            const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
+            
+            if (arrayMatch) {
+                const [_, prop, index] = arrayMatch;
+                if (!current[prop]) current[prop] = [];
+                if (!current[prop][parseInt(index)]) current[prop][parseInt(index)] = {};
+                current = current[prop][parseInt(index)];
+            } else {
+                if (!current[part]) current[part] = {};
+                current = current[part];
+            }
         }
 
-        // Handle response based on API type
-        const data = await response.json();
-        res.json(data);
+        // Set the text at the final path
+        const lastPart = pathParts[pathParts.length - 1];
+        const lastMatch = lastPart.match(/(\w+)\[(\d+)\]/);
+        if (lastMatch) {
+            const [_, prop, index] = lastMatch;
+            if (!current[prop]) current[prop] = [];
+            current[prop][parseInt(index)] = text;
+        } else {
+            current[lastPart] = text;
+        }
+
+        // Add voice settings
+        requestBody.voice = voice;
+        requestBody.speed = speed;
+        requestBody.pitch = pitch;
+
+        console.log('Making voice request:', {
+            url: endpoint,
+            method,
+            bodyLength: JSON.stringify(requestBody).length,
+            voice,
+            textLength: text.length
+        });
+
+        // Make the request with proper error handling
+        try {
+            const response = await fetch(endpoint, {
+                method,
+                headers,
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => 'No error details available');
+                throw new Error(`Voice API responded with status ${response.status}: ${errorText}`);
+            }
+
+            // Check content type for proper response handling
+            const contentType = response.headers.get('content-type');
+            
+            if (!contentType?.includes('audio/')) {
+                throw new Error(`Invalid response type: ${contentType}`);
+            }
+
+            const buffer = await response.buffer();
+            if (!buffer.length) {
+                throw new Error('No audio data received');
+            }
+
+            // Send the audio data
+            res.set('Content-Type', contentType);
+            res.send(buffer);
+
+        } catch (fetchError) {
+            console.error('Fetch error:', {
+                error: fetchError.message,
+                status: fetchError.status,
+                type: fetchError.type
+            });
+            throw new Error(`Failed to get voice response: ${fetchError.message}`);
+        }
+
     } catch (err) {
-        console.error('Voice generation error:', err);
-        res.status(500).json({ message: err.message || 'Failed to generate voice' });
+        console.error('Voice generation error:', {
+            error: err.message,
+            stack: err.stack
+        });
+        res.status(500).json({ 
+            message: err.message || 'Failed to generate voice audio' 
+        });
     }
 });
 
-// Test voice API endpoint
 router.post('/test', auth, async (req, res) => {
     console.log('Test endpoint called');
     try {
         const { curlCommand, requestPath, responsePath, apiType, responseType, auth } = req.body;
-        
+
         console.log('Received test request:', {
             hasCurlCommand: !!curlCommand,
             requestPath,
@@ -64,9 +138,9 @@ router.post('/test', auth, async (req, res) => {
         });
 
         if (!curlCommand || !requestPath) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'cURL command and request path are required' 
+            return res.status(400).json({
+                success: false,
+                message: 'cURL command and request path are required'
             });
         }
 
@@ -131,7 +205,7 @@ router.post('/test', auth, async (req, res) => {
                 status: testResponse.status,
                 contentType,
                 responseType,
-                dataPreview: typeof responseData === 'string' ? 
+                dataPreview: typeof responseData === 'string' ?
                     responseData.substring(0, 100) : 'Binary data'
             });
 
@@ -157,7 +231,7 @@ router.post('/test', auth, async (req, res) => {
             message: err.message,
             stack: err.stack
         });
-        
+
         res.status(400).json({
             success: false,
             message: err.message || 'Failed to test voice API',

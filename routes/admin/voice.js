@@ -18,6 +18,26 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+// Add config route BEFORE the :id route to prevent path conflicts
+router.get('/config', (req, res) => {
+    try {
+        if (!voice) {
+            throw new Error('Voice configuration not found');
+        }
+        
+        res.json({
+            defaultVoiceTypes: voice.defaultVoiceTypes || [],
+            voiceProviders: voice.voiceProviders || {}
+        });
+    } catch (err) {
+        console.error('Error loading voice config:', err);
+        res.status(500).json({ 
+            message: 'Failed to load voice configuration',
+            error: err.message 
+        });
+    }
+});
+
 // Create new voice API
 router.post('/', auth, async (req, res) => {
     try {
@@ -70,6 +90,14 @@ router.get('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
         
+        // Check if id is 'config' to prevent ObjectId cast error
+        if (id === 'config') {
+            return res.status(400).json({ 
+                message: 'Invalid voice API ID',
+                code: 'INVALID_ID'
+            });
+        }
+
         // Check if id is a valid ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ 
