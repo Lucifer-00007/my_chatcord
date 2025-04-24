@@ -165,6 +165,42 @@ if (!req.user.isAdmin) {
     }
 });
 
+// Add toggle endpoint for voice APIs
+router.patch('/:id/toggle', auth, async (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({
+            success: false,
+            message: 'Admin access required'
+        });
+    }
+
+    try {
+        const api = await VoiceApi.findById(req.params.id);
+        if (!api) {
+            return res.status(404).json({
+                success: false,
+                message: 'Voice API not found'
+            });
+        }
+
+        // Toggle the isActive status
+        api.isActive = !api.isActive;
+        await api.save();
+
+        res.json({
+            success: true,
+            message: `Voice API ${api.isActive ? 'activated' : 'deactivated'} successfully`,
+            api
+        });
+    } catch (err) {
+        console.error('Error toggling voice API:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update voice API status'
+        });
+    }
+});
+
 // Delete voice API
 router.delete('/:id', auth, async (req, res) => {
     if (!req.user.isAdmin) {
