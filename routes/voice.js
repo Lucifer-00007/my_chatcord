@@ -87,21 +87,79 @@ router.post('/generate', auth, async (req, res) => {
                 throw new Error(`Voice API responded with status ${response.status}: ${errorText}`);
             }
 
-            // Check content type for proper response handling
+            // Get response type and handle accordingly
             const contentType = response.headers.get('content-type');
-            
-            if (!contentType?.includes('audio/')) {
-                throw new Error(`Invalid response type: ${contentType}`);
+            console.log('Response content type:', contentType);
+
+            let audioData;
+            let audioContentType = 'audio/mpeg';
+
+            switch (api.responseType) {
+                case 'binary':
+                    audioData = await response.buffer();
+                    audioContentType = contentType?.includes('audio/') ? contentType : 'audio/mpeg';
+                    break;
+
+                case 'base64':
+                    const jsonData = await response.json();
+                    let base64Content = jsonData;
+                    
+                    // Extract base64 data using response path if specified
+                    if (api.responsePath) {
+                        for (const part of api.responsePath.split('.')) {
+                            base64Content = base64Content[part];
+                        }
+                    }
+
+                    if (!base64Content) {
+                        throw new Error('No base64 audio data found in response');
+                    }
+
+                    // Remove data URI prefix if present
+                    const base64Data = base64Content.replace(/^data:audio\/[^;]+;base64,/, '');
+                    audioData = Buffer.from(base64Data, 'base64');
+                    break;
+
+                case 'url':
+                    const urlData = await response.json();
+                    let audioUrl = urlData;
+                    
+                    // Extract URL using response path if specified
+                    if (api.responsePath) {
+                        for (const part of api.responsePath.split('.')) {
+                            audioUrl = audioUrl[part];
+                        }
+                    }
+
+                    if (!audioUrl) {
+                        throw new Error('No audio URL found in response');
+                    }
+
+                    // Fetch audio from URL
+                    const audioResponse = await fetch(audioUrl);
+                    if (!audioResponse.ok) {
+                        throw new Error(`Failed to fetch audio from URL: ${audioResponse.status}`);
+                    }
+
+                    audioData = await audioResponse.buffer();
+                    audioContentType = audioResponse.headers.get('content-type') || 'audio/mpeg';
+                    break;
+
+                default:
+                    throw new Error(`Unsupported response type: ${api.responseType}`);
             }
 
-            const buffer = await response.buffer();
-            if (!buffer.length) {
+            // Validate audio data
+            if (!audioData || audioData.length === 0) {
                 throw new Error('No audio data received');
             }
 
-            // Send the audio data
-            res.set('Content-Type', contentType);
-            res.send(buffer);
+            // Set appropriate headers and send response
+            res.set('Content-Type', audioContentType);
+            res.set('Content-Length', audioData.length);
+            res.set('Accept-Ranges', 'bytes');
+            res.set('Cache-Control', 'no-cache');
+            return res.send(audioData);
 
         } catch (fetchError) {
             console.error('Fetch error:', {
@@ -111,7 +169,6 @@ router.post('/generate', auth, async (req, res) => {
             });
             throw new Error(`Failed to get voice response: ${fetchError.message}`);
         }
-
     } catch (err) {
         console.error('Voice generation error:', {
             error: err.message,

@@ -20,31 +20,62 @@ function showNotification(message, type = 'info') {
 
 function validateAudioBlob(blob) {
     return new Promise((resolve, reject) => {
-        const audio = new Audio();
-        const objectUrl = URL.createObjectURL(blob);
-        
-        audio.onloadedmetadata = () => {
-            URL.revokeObjectURL(objectUrl);
-            if (audio.duration === Infinity || isNaN(audio.duration)) {
-                reject(new Error('Invalid audio duration'));
-                return;
+        // First try with AudioContext for more reliable decoding
+        const reader = new FileReader();
+        reader.onload = async () => {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const arrayBuffer = reader.result;
+                
+                // Attempt to decode the audio data
+                await audioContext.decodeAudioData(arrayBuffer);
+                audioContext.close();
+                resolve(true);
+            } catch (decodeError) {
+                console.warn('AudioContext decode failed, falling back to Audio element:', decodeError);
+                
+                // Fallback to Audio element if decoding fails
+                const audio = new Audio();
+                const objectUrl = URL.createObjectURL(blob);
+                
+                const loadTimeout = setTimeout(() => {
+                    URL.revokeObjectURL(objectUrl);
+                    audio.remove();
+                    reject(new Error('Audio loading timed out'));
+                }, 10000);
+
+                audio.onloadedmetadata = () => {
+                    clearTimeout(loadTimeout);
+                    URL.revokeObjectURL(objectUrl);
+                    
+                    // Additional validation for the loaded audio
+                    if (audio.duration === Infinity || isNaN(audio.duration) || audio.duration === 0) {
+                        audio.remove();
+                        reject(new Error('Invalid audio duration'));
+                        return;
+                    }
+                    
+                    audio.remove();
+                    resolve(true);
+                };
+
+                audio.onerror = () => {
+                    clearTimeout(loadTimeout);
+                    URL.revokeObjectURL(objectUrl);
+                    audio.remove();
+                    reject(new Error(`Audio loading failed: ${audio.error?.message || 'Unknown error'}`));
+                };
+
+                audio.preload = 'metadata';
+                audio.src = objectUrl;
             }
-            resolve(true);
         };
 
-        audio.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            reject(new Error(`Audio loading failed: ${audio.error?.message || 'Unknown error'}`));
+        reader.onerror = () => {
+            reject(new Error('Failed to read audio data'));
         };
 
-        audio.preload = 'metadata';
-        audio.src = objectUrl;
-
-        // Add timeout for loading
-        setTimeout(() => {
-            URL.revokeObjectURL(objectUrl);
-            reject(new Error('Audio loading timed out'));
-        }, 10000);
+        reader.readAsArrayBuffer(blob);
     });
 }
 
