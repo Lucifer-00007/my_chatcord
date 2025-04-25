@@ -2,6 +2,7 @@
 
 A secure, real-time chat application built with Node.js and Express, featuring user authentication, room-based messaging, and integrated AI capabilities (Chat, Text-to-Image, Text-to-Voice).
 
+
 ## Features
 
 - JWT-based authentication
@@ -17,6 +18,7 @@ A secure, real-time chat application built with Node.js and Express, featuring u
 - Password visibility toggle
 - Security features (CSP, Rate Limiting - needs verification based on implementation)
 - Environment-based configuration
+
 
 ## Project Structure
 
@@ -120,12 +122,14 @@ my_chatcord/
 └── server.js               # Main application entry point
 ```
 
+
 ## Prerequisites
 
 - Node.js (v14 or higher recommended)
 - MongoDB server (local or cloud instance)
 - npm (comes with Node.js)
 - Potentially API keys for desired AI services (e.g., OpenAI, Stability AI, etc.)
+
 
 ## Environment Setup
 
@@ -155,7 +159,6 @@ LOG_LEVEL=debug
     *   **AI API Keys**: Add environment variables for the API keys of the AI services you intend to use (e.g., `OPENAI_API_KEY`). These keys are typically configured via the Admin Settings panel in the application itself, but the backend needs them in the environment to function. Check `models/AiApi.js`, `models/ImageApi.js`, `models/VoiceApi.js` and the admin settings implementation for specifics.
 
 
-
 ## Installation
 
 1. Clone the repository:
@@ -169,14 +172,15 @@ cd chatcord
 npm install
 ```
 
+
 ## Running the Application
 
-### Development Mode
+#### Development Mode
 ```bash
 npm run dev
 ```
 
-### Production Mode
+#### Production Mode
 ```bash
 npm start
 ```
@@ -185,51 +189,53 @@ The application will be available at `http://localhost:3000` (or your configured
 
 
 ## Config Setup
-The config folder contains crucial application settings. Update the following files based on your requirements:
+The `config` folder contains crucial application settings. Update the following files based on your requirements:
 
-#### 1. config/constants.js
-#### 2. config/db.js
-#### 3. config/init.js
-
-## Todo List
-- Create a postman collection of all the apis in categorized way.
-- Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure    
-- Batch generation
-- Message queue implementation
-- Performance monitoring
+#### 1. `config/constants.js`
+#### 2. `config/db.js`
+#### 3. `config/init.js`
 
 
-## Feature Details
+## Feature Details:
 
-### Authentication (`routes/auth.js`, `public/js/auth.js`)
+#### 1. Authentication (`routes/auth.js`, `public/js/auth.js`)
 - User registration and login using email/password.
 - JWT tokens are used for session management, likely stored in HTTP-only cookies for security.
 - Frontend routes are protected using `public/js/auth-guard.js`.
 
-### Chat Channels (`routes/channels.js`, `public/js/main.js`, `public/js/selectRoom.js`)
+#### 2. Chat Channels (`routes/channels.js`, `public/js/main.js`, `public/js/selectRoom.js`)
 - Users can select or potentially create chat rooms/channels.
 - Real-time messaging within channels (implementation likely uses WebSockets, e.g., Socket.IO, but needs verification).
 - Message history is stored in MongoDB (`models/Message.js`).
 
-### AI Chat (`routes/ai.js`, `public/js/ai-chat.js`)
+#### 3. AI Chat (`routes/ai.js`, `public/js/ai-chat.js`)
 - Interface (`ai-chat.html`) to interact with configured AI chat models.
 - Backend (`routes/ai.js`) likely proxies requests to the selected AI API (e.g., OpenAI).
 - Configuration stored in `models/AiApi.js`.
 
-### Text-to-Image (`routes/images.js`, `public/js/text-to-image.js`)
+#### 4. Text-to-Image (`routes/images.js`, `public/js/text-to-image.js`)
 - Interface (`text-to-image.html`) to generate images from text prompts.
 - Backend (`routes/images.js`) interacts with configured image generation APIs (e.g., Stability AI, DALL-E).
 - Configuration stored in `models/ImageApi.js`.
 
-### Text-to-Voice (`routes/voice.js`, `public/js/text-to-voice.js` - assumed)
+#### 5. Text-to-Voice (`routes/voice.js`, `public/js/text-to-voice.js` - assumed)
 - Interface (`text-to-voice.html`) to synthesize speech from text.
 - Backend (`routes/voice.js`) interacts with configured text-to-speech APIs.
 - Configuration stored in `models/VoiceApi.js`.
 
-### Admin Settings (`routes/admin.js`, `public/js/admin.js`)
+#### 6. Admin Settings (`routes/admin.js`, `public/js/admin.js`)
 - Interface (`admin-settings.html`) for administrators.
 - Allows configuration of AI API providers and keys (`AiApi`, `ImageApi`, `VoiceApi` models).
 - May include other administrative functions.
+
+
+## Todo List
+- Create a postman collection of all the apis in categorized way.
+- Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure.    
+- Batch generation.
+- Message queue implementation.
+- Performance monitoring.
+
 
 ## License
 
