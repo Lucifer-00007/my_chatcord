@@ -16,6 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Handle logout
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            AuthGuard.logout();
+        });
+    }
+
     // Load dashboard by default
     const dashboardItem = document.querySelector('.admin-menu-item[data-section="dashboard"]');
     if (dashboardItem) {
