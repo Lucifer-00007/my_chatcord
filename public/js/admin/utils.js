@@ -116,7 +116,10 @@ function showApiError(err) {
 // Initialize admin utils with constants from backend
 async function initAdminUtils() {
     try {
+        console.log('Initializing adminUtils...');
         const constants = await makeApiRequest('/api/admin/room-management/constants');
+        console.log('Fetched room management constants:', constants);
+        
         window.adminUtils = {
             makeApiRequest,
             getFormData,
@@ -127,6 +130,8 @@ async function initAdminUtils() {
                 ROOM_MANAGEMENT: constants
             }
         };
+        
+        console.log('adminUtils initialized successfully');
     } catch (err) {
         console.error('Failed to initialize admin utils:', err);
         // Fallback to default values if API fails
@@ -141,7 +146,8 @@ async function initAdminUtils() {
                     BLOCK_REASONS: ['Inappropriate behavior', 'Spam', 'Harassment', 'Other'],
                     BLOCK_DURATIONS: [
                         { value: 1, label: '1 day' },
-                        { value: 7, label: '1 week' }
+                        { value: 7, label: '1 week' },
+                        { value: 30, label: '1 month' }
                     ]
                 }
             }
@@ -150,4 +156,9 @@ async function initAdminUtils() {
 }
 
 // Initialize when the script loads
-initAdminUtils();
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing adminUtils...');
+    initAdminUtils().catch(err => {
+        console.error('Error during adminUtils initialization:', err);
+    });
+});

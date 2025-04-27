@@ -8,6 +8,7 @@
     --success-color: #5cb85c;
     --warning-color: #ffe942;
     --error-color: #d9534f;
+    --border-color: #cbcbcb;
 }
     
 * {
@@ -2074,6 +2075,7 @@ input:checked+.toggle-slider:before {
     overflow:hidden;
     text-overflow: ellipsis;
     font-family: monospace;
+    font-size: medium;
 }
 
 .item-controls {
@@ -2971,3 +2973,30 @@ input:checked+.toggle-slider:before {
 }
 
 /* Existing modal and form styles... */
+
+/* Searchable Select Styles */
+.searchable-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+    cursor: text;
+    margin-bottom: 15px;
+}
+
+.searchable-select:focus {
+    outline: none;
+    border-color: var(--dark-color-a);
+    box-shadow: 0 0 0 2px rgba(102, 122, 255, 0.1);
+}
+
+.searchable-select option {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.searchable-select option:hover {
+    background-color: var(--light-color);
+}

@@ -5,7 +5,8 @@ const auth = require('../../middleware/auth');
 const { adminAuth } = require('../../middleware/admin');
 
 // Add authentication to all routes
-router.use(auth, adminAuth);
+router.use(auth);
+router.use(adminAuth);
 
 // Get all users
 router.get('/', async (req, res) => {
@@ -13,8 +14,15 @@ router.get('/', async (req, res) => {
         const users = await User.find()
             .select('username email isAdmin')
             .sort('username');
+        
+        if (!users) {
+            return res.status(404).json({ message: 'No users found' });
+        }
+        
+        console.log('Found users:', users.length);
         res.json(users);
     } catch (err) {
+        console.error('Error fetching users:', err);
         res.status(500).json({ message: 'Server error' });
     }
 });

@@ -22,6 +22,7 @@ async function initUserManagement() {
 
 async function loadUsers() {
     const userList = document.getElementById('user-list');
+    if (!userList) return; // Prevent error if not on user management page
     
     try {
         const users = await window.adminUtils.makeApiRequest('/api/admin/users');

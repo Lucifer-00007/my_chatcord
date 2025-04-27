@@ -1,4 +1,38 @@
+// Wait for adminUtils to be initialized
+async function waitForAdminUtils() {
+    console.log('Waiting for adminUtils to initialize...');
+    return new Promise(resolve => {
+        if (window.adminUtils) {
+            console.log('adminUtils already initialized');
+            resolve();
+            return;
+        }
+
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds total
+        const checkInterval = setInterval(() => {
+            attempts++;
+            if (window.adminUtils) {
+                console.log('adminUtils initialized');
+                clearInterval(checkInterval);
+                resolve();
+            } else if (attempts >= maxAttempts) {
+                console.error('Timeout waiting for adminUtils');
+                clearInterval(checkInterval);
+                window.showNotification('Error: Failed to initialize admin utilities', 'error');
+                resolve(); // Resolve anyway to prevent hanging
+            }
+        }, 100);
+    });
+}
+
 async function initRoomManagement() {
+    console.log('Initializing room management...');
+    
+    // Wait for adminUtils to be initialized first
+    await waitForAdminUtils();
+    console.log('adminUtils ready, continuing initialization');
+
     const elements = {
         roomsContainer: document.getElementById('rooms-container'),
         blocksContainer: document.getElementById('blocks-container'),
@@ -10,6 +44,16 @@ async function initRoomManagement() {
         roomForm: document.getElementById('room-form'),
         blockForm: document.getElementById('block-user-form')
     };
+
+    // Verify all required elements exist
+    const missingElements = Object.entries(elements)
+        .filter(([key, element]) => !element)
+        .map(([key]) => key);
+
+    if (missingElements.length > 0) {
+        console.error('Missing required elements:', missingElements);
+        return;
+    }
 
     let selectedRoom = null;
 
@@ -44,12 +88,17 @@ async function initRoomManagement() {
     });
 
     // Block user button click handler
-    elements.blockUserButton.addEventListener('click', () => {
+    elements.blockUserButton.addEventListener('click', async () => {
         if (!selectedRoom) {
             showNotification('Please select a room first', 'error');
             return;
         }
-        showBlockModal();
+        try {
+            await showBlockModal();
+        } catch (err) {
+            console.error('Error in showBlockModal:', err);
+            showNotification('Failed to open block user modal', 'error');
+        }
     });
 
     // Room form submit handler
@@ -173,6 +222,59 @@ async function loadBlocks(roomId) {
     }
 }
 
+async function showBlockModal() {
+    console.log('Opening block user modal...');
+    const modal = document.getElementById('block-user-modal');
+    const userSelect = document.getElementById('user-select');
+    const reasonSelect = document.getElementById('block-reason');
+    const durationSelect = document.getElementById('block-duration');
+
+    console.log('Modal elements:', {
+        modal: !!modal,
+        userSelect: !!userSelect,
+        reasonSelect: !!reasonSelect,
+        durationSelect: !!durationSelect
+    });
+
+    if (!modal || !userSelect || !reasonSelect || !durationSelect) {
+        console.error('Required modal elements not found');
+        window.showNotification('Error: Modal elements not found', 'error');
+        return;
+    }
+
+    try {
+        // Wait for adminUtils to be initialized
+        await waitForAdminUtils();
+        console.log('adminUtils initialized, proceeding with modal setup');
+
+        // Load initial users list
+        console.log('Loading initial users...');
+        await loadUsersForModal();  // This now includes populating the select
+
+        // Populate dropdowns
+        console.log('Populating reason and duration dropdowns...');
+        if (!window.adminUtils.constants?.ROOM_MANAGEMENT) {
+            throw new Error('Room management constants not found');
+        }
+
+        reasonSelect.innerHTML = window.adminUtils.constants.ROOM_MANAGEMENT.BLOCK_REASONS
+            .map(reason => `<option value="${reason}">${reason}</option>`)
+            .join('');
+
+        durationSelect.innerHTML = window.adminUtils.constants.ROOM_MANAGEMENT.BLOCK_DURATIONS
+            .map(duration => `<option value="${duration.value}">${duration.label}</option>`)
+            .join('');
+
+        // Show the modal
+        modal.style.display = 'block';
+        console.log('Block user modal opened and initialized');
+
+    } catch (err) {
+        console.error('Error initializing block modal:', err);
+        window.showNotification('Failed to initialize block user modal: ' + err.message, 'error');
+    }
+}
+
 function showRoomModal(mode, roomData = null) {
     const modal = document.getElementById('room-modal');
     const form = document.getElementById('room-form');
@@ -203,66 +305,54 @@ function hideRoomModal() {
     modal.style.display = 'none';
 }
 
-function showBlockModal() {
+function hideBlockModal() {
     const modal = document.getElementById('block-user-modal');
-    const userSelect = document.getElementById('user-select');
-    const reasonSelect = document.getElementById('block-reason');
-    const durationSelect = document.getElementById('block-duration');
-
-    // Create and add search input
-    if (!document.getElementById('user-search')) {
-        const searchDiv = document.createElement('div');
-        searchDiv.className = 'form-group';
-        searchDiv.innerHTML = `
-            <input type="text" id="user-search" class="form-input" placeholder="Search users...">
-        `;
-        userSelect.parentNode.insertBefore(searchDiv, userSelect);
-
-        // Add search functionality
-        const searchInput = document.getElementById('user-search');
-        searchInput.addEventListener('input', debounce(async (e) => {
-            const searchTerm = e.target.value;
-            try {
-                const users = await window.adminUtils.makeApiRequest(`/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`);
-                populateUserSelect(users);
-            } catch (err) {
-                showNotification(err.message, 'error');
-            }
-        }, 300));
-    }
-
-    // Load initial users list
-    loadUsers();
-    
-    // Populate reason options
-    reasonSelect.innerHTML = window.adminUtils.constants.ROOM_MANAGEMENT.BLOCK_REASONS
-        .map(reason => `<option value="${reason}">${reason}</option>`)
-        .join('');
-
-    // Populate duration options
-    durationSelect.innerHTML = window.adminUtils.constants.ROOM_MANAGEMENT.BLOCK_DURATIONS
-        .map(duration => `<option value="${duration.value}">${duration.label}</option>`)
-        .join('');
-
-    modal.style.display = 'block';
+    modal.style.display = 'none';
 }
 
 async function loadUsers() {
+    console.log('loadUsers: Starting to load users...');
     const userSelect = document.getElementById('user-select');
-    try {
-        const users = await window.adminUtils.makeApiRequest('/api/admin/users');
-        populateUserSelect(users);
-    } catch (err) {
-        showNotification(err.message, 'error');
+    
+    if (!userSelect) {
+        console.error('loadUsers: userSelect element not found in DOM');
+        window.showNotification('Error: Could not find user selection element', 'error');
+        return;
     }
-}
+    
+    try {
+        // Wait for adminUtils to be initialized
+        await waitForAdminUtils();
+        
+        console.log('loadUsers: Making API request to fetch users...');
+        const users = await window.adminUtils.makeApiRequest('/api/admin/users');
+        console.log('loadUsers: Raw API response:', users);
+        
+        if (!Array.isArray(users)) {
+            console.error('loadUsers: Invalid response format:', users);
+            throw new Error('Invalid response from server');
+        }
 
-function populateUserSelect(users) {
-    const userSelect = document.getElementById('user-select');
-    userSelect.innerHTML = `
-        <option value="">Select a user...</option>
-        ${users.map(user => `<option value="${user._id}">${user.username} (${user.email})</option>`).join('')}
-    `;
+        if (users.length === 0) {
+            console.log('loadUsers: No users found');
+            userSelect.innerHTML = '<option value="">No users available</option>';
+            return;
+        }
+        
+        console.log('loadUsers: Building select options...');
+        userSelect.innerHTML = `
+            <option value="">Select a user...</option>
+            ${users.map(user => 
+                `<option value="${user._id}">${user.username}${user.email ? ` (${user.email})` : ''}</option>`
+            ).join('')}
+        `;
+        console.log('loadUsers: Successfully populated select with', users.length, 'users');
+        
+    } catch (err) {
+        console.error('loadUsers: Error fetching users:', err);
+        window.showNotification(err.message || 'Failed to load users', 'error');
+        userSelect.innerHTML = '<option value="">Error loading users</option>';
+    }
 }
 
 // Debounce helper function
@@ -276,11 +366,6 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
-}
-
-function hideBlockModal() {
-    const modal = document.getElementById('block-user-modal');
-    modal.style.display = 'none';
 }
 
 function initRoomActions() {
@@ -328,6 +413,44 @@ async function removeBlock(blockId) {
         await loadBlocks(roomId);
     } catch (err) {
         showNotification(err.message, 'error');
+    }
+}
+
+async function loadUsersForModal() {
+    console.log('loadUsersForModal: Starting to load users...');
+    const userSelect = document.getElementById('user-select');
+    if (!userSelect) {
+        console.error('userSelect element not found in DOM');
+        window.showNotification('Error: Could not find user selection element', 'error');
+        return;
+    }
+
+    try {
+        await waitForAdminUtils();
+        console.log('loadUsersForModal: Making API request to fetch users...');
+        const users = await window.adminUtils.makeApiRequest('/api/admin/users');
+        console.log('loadUsersForModal: Raw API response:', users);
+
+        if (!Array.isArray(users)) {
+            throw new Error('API did not return an array');
+        }
+
+        if (users.length === 0) {
+            userSelect.innerHTML = '<option value="">No users available</option>';
+            return;
+        }
+
+        userSelect.innerHTML = `
+            <option value="">Select a user...</option>
+            ${users.map(user => 
+                `<option value="${user._id}">${user.username} (${user.email || 'No email'})</option>`
+            ).join('')}
+        `;
+        console.log('loadUsersForModal: Successfully populated select with', users.length, 'users');
+    } catch (err) {
+        console.error('Error loading users for modal:', err);
+        window.showNotification(err.message || 'Failed to load users', 'error');
+        userSelect.innerHTML = '<option value="">Error loading users</option>';
     }
 }
 

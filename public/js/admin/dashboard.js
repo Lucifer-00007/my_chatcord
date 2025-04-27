@@ -1,12 +1,41 @@
 async function initDashboard() {
     console.log('Initializing dashboard...');
+    
+    // Wait for adminUtils to be initialized
+    await waitForAdminUtils();
+    
     await loadStats();
-    setInterval(loadStats, 30000);
+    // Update stats every 5 minutes
+    setInterval(loadStats, 5 * 60 * 1000);
 }
+
+// Helper function to wait for adminUtils initialization
+function waitForAdminUtils() {
+    return new Promise(resolve => {
+        if (window.adminUtils) {
+            resolve();
+            return;
+        }
+
+        const checkInterval = setInterval(() => {
+            if (window.adminUtils) {
+                clearInterval(checkInterval);
+                resolve();
+            }
+        }, 100);
+    });
+}
+
+let retryAttempt = 0;
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_RETRY_DELAY = 5000; // 5 seconds
 
 async function loadStats() {
     try {
         const stats = await window.adminUtils.makeApiRequest('/api/admin/stats');
+        
+        // Reset retry attempt on success
+        retryAttempt = 0;
         
         // Match the property names from the API response with HTML titles
         const statMappings = {
@@ -23,6 +52,23 @@ async function loadStats() {
 
     } catch (err) {
         console.error('Error loading stats:', err);
+        
+        // Handle rate limiting with exponential backoff
+        if (err.status === 429 && retryAttempt < MAX_RETRY_ATTEMPTS) {
+            retryAttempt++;
+            const retryDelay = BASE_RETRY_DELAY * Math.pow(2, retryAttempt - 1);
+            console.log(`Rate limited. Retrying in ${retryDelay/1000} seconds...`);
+            
+            setTimeout(() => {
+                loadStats();
+            }, retryDelay);
+        } else {
+            // Show error in UI only if we've exhausted retries or it's not a rate limit error
+            const errorMessage = err.status === 429 
+                ? 'Too many requests. Please try again later.' 
+                : 'Failed to load dashboard statistics';
+            showNotification(errorMessage, 'error');
+        }
     }
 }
 

@@ -201,6 +201,9 @@ function showNotification(message, type = 'info') {
     }, 100);
 }
 
+// Make showNotification globally available
+window.showNotification = showNotification;
+
 // Initialize all admin sections
 async function initAdminPanel() {
     const currentSection = localStorage.getItem('adminSection') || 'dashboard';

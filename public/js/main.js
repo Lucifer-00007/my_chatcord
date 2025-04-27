@@ -203,6 +203,7 @@ function outputRoomName(room) {
 
 // Add users to DOM
 function outputUsers(users) {
+  if (!userList) return; // Prevent error if not on chat page
   userList.innerHTML = '';
   users.forEach((user) => {
     const li = document.createElement('li');
