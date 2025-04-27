@@ -1,6 +1,4 @@
 async function initDashboard() {
-    console.log('Initializing dashboard...');
-    
     // Wait for adminUtils to be initialized
     await waitForAdminUtils();
     
@@ -51,8 +49,6 @@ async function loadStats() {
         }
 
     } catch (err) {
-        console.error('Error loading stats:', err);
-        
         // Handle rate limiting with exponential backoff
         if (err.status === 429 && retryAttempt < MAX_RETRY_ATTEMPTS) {
             retryAttempt++;

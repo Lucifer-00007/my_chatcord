@@ -51,10 +51,7 @@ const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
 
 try {
-    // Debug logs for token data
-    console.log('Room Token:', roomToken);
     const tokenData = JSON.parse(atob(roomToken.split('.')[1]));
-    console.log('Decoded Token Data:', tokenData);
     const { username, room } = tokenData;
 
     // Initialize socket with auth tokens
@@ -97,7 +94,6 @@ try {
 
     // Enhanced connection logging
     socket.on('connect', () => {
-        console.log('Socket connected with room:', room);
         socket.emit('joinRoom', { username, room });
     });
 
@@ -118,7 +114,6 @@ try {
 
     // Get room and users - moved outside joinRoom since room joining happens on authentication
     socket.on('roomUsers', ({ room, users }) => {
-        console.log('Room users update:', { room, users });
         outputRoomName(room);
         outputUsers(users);
     });

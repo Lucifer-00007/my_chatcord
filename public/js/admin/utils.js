@@ -116,9 +116,7 @@ function showApiError(err) {
 // Initialize admin utils with constants from backend
 async function initAdminUtils() {
     try {
-        console.log('Initializing adminUtils...');
         const constants = await makeApiRequest('/api/admin/room-management/constants');
-        console.log('Fetched room management constants:', constants);
         
         window.adminUtils = {
             makeApiRequest,
@@ -131,7 +129,6 @@ async function initAdminUtils() {
             }
         };
         
-        console.log('adminUtils initialized successfully');
     } catch (err) {
         console.error('Failed to initialize admin utils:', err);
         // Fallback to default values if API fails
@@ -157,7 +154,6 @@ async function initAdminUtils() {
 
 // Initialize when the script loads
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing adminUtils...');
     initAdminUtils().catch(err => {
         console.error('Error during adminUtils initialization:', err);
     });

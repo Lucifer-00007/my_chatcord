@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadSection(sectionName) {
     try {
-        console.log(`Loading section: ${sectionName}`);
         const sectionContainer = document.getElementById(sectionName);
         if (!sectionContainer) {
             console.error(`Section container not found: ${sectionName}`);
@@ -66,18 +65,15 @@ async function loadSection(sectionName) {
                 await initDashboard();
                 break;
             case 'text-to-image':
-                console.log('Initializing image section...');
                 await initImageApiSection();
                 break;
             case 'text-to-voice':
-                console.log('Initializing voice section...');
                 await initializeVoiceForm();
                 break;
             case 'ai-chat':
                 await initAiApiSection();
                 break;
             case 'room-management':
-                console.log('Initializing room management...');
                 await initRoomManagement();
                 break;
             case 'user-management':
@@ -91,7 +87,6 @@ async function loadSection(sectionName) {
                 break;
         }
         
-        console.log(`Section ${sectionName} loaded and initialized`);
     } catch (err) {
         console.error(`Error loading section ${sectionName}:`, err);
         showNotification(`Failed to load ${sectionName} section`, 'error');
@@ -99,7 +94,6 @@ async function loadSection(sectionName) {
 }
 
 function showSection(sectionName) {
-    console.log(`Showing section: ${sectionName}`);
     
     // Hide all sections
     document.querySelectorAll('.section-container').forEach(section => {
@@ -123,7 +117,6 @@ function showSection(sectionName) {
 
 // Initialize admin panel
 async function initAdminPanel() {
-    console.log('Initializing admin panel...');
     
     const currentSection = localStorage.getItem('adminSection') || 'dashboard';
     
@@ -131,7 +124,6 @@ async function initAdminPanel() {
     document.querySelectorAll('.admin-menu-item').forEach(item => {
         item.addEventListener('click', async () => {
             const sectionName = item.dataset.section;
-            console.log(`Menu item clicked: ${sectionName}`);
             await loadSection(sectionName);
             showSection(sectionName);
             localStorage.setItem('adminSection', sectionName);
@@ -254,7 +246,6 @@ async function initAdminPanel() {
 
 // Add showSection function
 function showSection(sectionName) {
-    console.log(`Showing section: ${sectionName}`);
     
     // Hide all sections
     document.querySelectorAll('.section-container').forEach(section => {

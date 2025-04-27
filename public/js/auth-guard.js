@@ -34,7 +34,6 @@ const AuthGuard = {
         // Check admin access
         if (isAdminPage) {
             if (!user || !user.isAdmin) {
-                console.log('Admin access denied:', { user, path: currentPage });
                 window.location.href = '/login';
                 return false;
             }
@@ -62,19 +61,11 @@ const AuthGuard = {
         const user = this.getUser();
         const adminElements = document.querySelectorAll('.nav-item.admin');
         
-        console.log('Checking admin status:', { 
-            user, 
-            isAdmin: user?.isAdmin,
-            elements: adminElements.length 
-        });
-        
         adminElements.forEach(element => {
             if (user?.isAdmin) {
                 element.style.display = 'inline-block';
-                console.log('Admin element shown');
             } else {
                 element.style.display = 'none';
-                console.log('Admin element hidden');
             }
         });
     },
