@@ -1,29 +1,33 @@
 async function initAiApiSection() {
     const elements = {
-        form: document.getElementById('api-form'),
+        formContainer: document.getElementById('api-form'),
+        form: document.getElementById('api-form-element'),
         list: document.getElementById('api-list'),
         addButton: document.getElementById('add-api-btn'),
         closeButton: document.getElementById('close-form'),
-        testButton: document.getElementById('test-api')  // Add test button
+        testButton: document.getElementById('test-api')
     };
 
     if (!elements.form || !elements.list || !elements.addButton) {
-        console.error('Required elements for AI API section not found');
+        console.error('Required elements for AI API section not found:', {
+            hasForm: !!elements.form,
+            hasList: !!elements.list,
+            hasAddButton: !!elements.addButton
+        });
         return;
     }
 
     // Show/Hide form handlers
     elements.addButton.addEventListener('click', () => {
-        elements.form.style.display = 'block';
+        elements.formContainer.style.display = 'block';
         elements.addButton.style.display = 'none';
     });
 
     if (elements.closeButton) {
         elements.closeButton.addEventListener('click', () => {
-            const form = document.getElementById('api-form');
-            resetForm(form);
-            form.style.display = 'none';
-            document.getElementById('add-api-btn').style.display = 'block';
+            resetForm(elements.form);
+            elements.formContainer.style.display = 'none';
+            elements.addButton.style.display = 'block';
         });
     }
 
@@ -252,7 +256,7 @@ async function editData(id, name) {
         const response = await window.adminUtils.makeApiRequest(`/api/admin/ai-apis/${id}`);
         
         // Get form elements
-        const form = document.getElementById('api-form');
+        const form = document.getElementById('api-form-element');
         const addButton = document.getElementById('add-api-btn');
         const formHeader = form.querySelector('.form-header h3');
         const submitBtn = form.querySelector('button[type="submit"]');
@@ -272,7 +276,7 @@ async function editData(id, name) {
         form.dataset.apiId = id;
         
         // Show form
-        form.style.display = 'block';
+        document.getElementById('api-form').style.display = 'block';
         addButton.style.display = 'none';
         
     } catch (err) {
@@ -333,11 +337,29 @@ function resetForm(form) {
     const formHeader = form.querySelector('.form-header h3');
     const submitBtn = form.querySelector('button[type="submit"]');
     
-    formHeader.innerHTML = '<i class="fas fa-plus"></i> Add New API';
-    submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+    if (formHeader) {
+        formHeader.innerHTML = '<i class="fas fa-plus"></i> Add New API';
+    }
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save API';
+    }
+    
     form.dataset.mode = 'add';
     delete form.dataset.apiId;
-    form.reset();
+    
+    // Reset form inputs manually
+    form.querySelectorAll('input, textarea').forEach(input => {
+        input.value = '';
+    });
+
+    // Try form.reset() if it's an HTMLFormElement
+    if (form instanceof HTMLFormElement) {
+        try {
+            form.reset();
+        } catch (err) {
+            console.warn('Form reset failed, inputs were cleared manually');
+        }
+    }
 }
 
 // Export required functions

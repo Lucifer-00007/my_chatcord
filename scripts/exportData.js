@@ -3,18 +3,23 @@ const mongoose = require('mongoose');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Import all models
-const models = {
-    User: require('../models/User'),
-    Channel: require('../models/Channel'),
-    Message: require('../models/Message'),
-    AiApi: require('../models/AiApi'),
-    AiChat: require('../models/AiChat'),
-    ImageApi: require('../models/ImageApi'),
-    ImageSettings: require('../models/ImageSettings'),
-    VoiceApi: require('../models/VoiceApi'),
-    VoiceSettings: require('../models/VoiceSettings')
-};
+async function loadModels() {
+    const modelsDir = path.join(__dirname, '..', 'models');
+    const files = await fs.readdir(modelsDir);
+    const models = {};
+
+    for (const file of files) {
+        if (file.endsWith('.js')) {
+            const modelName = path.basename(file, '.js');
+            try {
+                models[modelName] = require(path.join(modelsDir, file));
+            } catch (err) {
+                console.warn(`Warning: Could not load model ${modelName}:`, err.message);
+            }
+        }
+    }
+    return models;
+}
 
 async function exportData() {
     try {
@@ -26,6 +31,9 @@ async function exportData() {
         const dataDir = path.join(__dirname, 'data');
         await fs.mkdir(dataDir, { recursive: true });
 
+        // Load models dynamically
+        const models = await loadModels();
+        
         // Export each collection
         for (const [name, model] of Object.entries(models)) {
             console.log(`\nExporting ${name}...`);

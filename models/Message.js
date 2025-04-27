@@ -10,9 +10,9 @@ const messageSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  channel: {
+  room: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Channel',
+    ref: 'Room',
     required: true
   },
   createdAt: {
@@ -20,5 +20,9 @@ const messageSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Add index for better query performance
+messageSchema.index({ room: 1, createdAt: -1 });
+messageSchema.index({ user: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Message', messageSchema);

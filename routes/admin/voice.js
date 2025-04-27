@@ -18,6 +18,17 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+// Get active voice APIs
+router.get('/active', auth, async (req, res) => {
+    try {
+        const apis = await VoiceApi.find({ isActive: true });
+        res.json(apis);
+    } catch (err) {
+        console.error('Error fetching active voice APIs:', err);
+        res.status(500).json({ message: 'Error fetching active voice APIs' });
+    }
+});
+
 // Add config route BEFORE the :id route to prevent path conflicts
 router.get('/config', (req, res) => {
     try {

@@ -1,16 +1,25 @@
 const mongoose = require('mongoose');
 
-const channelSchema = new mongoose.Schema({
+const roomSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    trim: true
   },
   topic: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
-  description: String,
+  description: {
+    type: String,
+    trim: true
+  },
+  isDefault: {
+    type: Boolean,
+    default: false
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -26,4 +35,10 @@ const channelSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Channel', channelSchema);
+// Build indexes
+roomSchema.index({ createdAt: -1 });
+roomSchema.index({ name: 1 }, { unique: true });
+
+const Room = mongoose.model('Room', roomSchema);
+
+module.exports = Room;

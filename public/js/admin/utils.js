@@ -113,11 +113,41 @@ function showApiError(err) {
     }
 }
 
-// Export utilities
-window.adminUtils = {
-    makeApiRequest,
-    getFormData,
-    setLoadingState,
-    ApiError,
-    showApiError // Export the new function
-};
+// Initialize admin utils with constants from backend
+async function initAdminUtils() {
+    try {
+        const constants = await makeApiRequest('/api/admin/room-management/constants');
+        window.adminUtils = {
+            makeApiRequest,
+            getFormData,
+            setLoadingState,
+            ApiError,
+            showApiError,
+            constants: {
+                ROOM_MANAGEMENT: constants
+            }
+        };
+    } catch (err) {
+        console.error('Failed to initialize admin utils:', err);
+        // Fallback to default values if API fails
+        window.adminUtils = {
+            makeApiRequest,
+            getFormData,
+            setLoadingState,
+            ApiError,
+            showApiError,
+            constants: {
+                ROOM_MANAGEMENT: {
+                    BLOCK_REASONS: ['Inappropriate behavior', 'Spam', 'Harassment', 'Other'],
+                    BLOCK_DURATIONS: [
+                        { value: 1, label: '1 day' },
+                        { value: 7, label: '1 week' }
+                    ]
+                }
+            }
+        };
+    }
+}
+
+// Initialize when the script loads
+initAdminUtils();

@@ -1,14 +1,23 @@
 async function initUserManagement() {
     const elements = {
         addButton: document.getElementById('add-user-btn'),
-        userList: document.getElementById('user-list')
+        userList: document.getElementById('user-list'),
+        userForm: document.getElementById('user-form')
     };
 
-    if (!elements.userList) return;
+    if (!elements.addButton || !elements.userList || !elements.userForm) {
+        console.error('Required user management elements not found');
+        return;
+    }
 
+    // Load initial user list
     await loadUsers();
 
-    elements.addButton?.addEventListener('click', showAddUserForm);
+    // Add event listeners
+    elements.addButton.addEventListener('click', showAddUserForm);
+
+    // Initialize form submission handler
+    elements.userForm.addEventListener('submit', handleUserFormSubmit);
 }
 
 async function loadUsers() {
@@ -39,4 +48,18 @@ async function loadUsers() {
     }
 }
 
+function showAddUserForm() {
+    const form = document.getElementById('user-form');
+    const addButton = document.getElementById('add-user-btn');
+    
+    if (form && addButton) {
+        form.reset();
+        form.dataset.mode = 'add';
+        form.style.display = 'block';
+        addButton.style.display = 'none';
+    }
+}
+
+// Export functions for global use
 window.initUserManagement = initUserManagement;
+window.showAddUserForm = showAddUserForm;

@@ -61,7 +61,14 @@ async function loadImageApiList() {
     try {
         imageApiList.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading Image APIs...</div>';
         
-        const apis = await window.adminUtils.makeApiRequest('/api/admin/image-apis');
+        // First try to get active APIs, fallback to all APIs if there's an error
+        let apis = [];
+        try {
+            apis = await window.adminUtils.makeApiRequest('/api/admin/image-apis/active');
+        } catch (activeErr) {
+            console.warn('Failed to fetch active APIs, falling back to all APIs:', activeErr);
+            apis = await window.adminUtils.makeApiRequest('/api/admin/image-apis');
+        }
         
         apiCount.textContent = `${apis.length} API${apis.length !== 1 ? 's' : ''}`;
         

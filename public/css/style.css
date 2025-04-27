@@ -4,12 +4,12 @@
     --dark-color-a: #667aff;
     --dark-color-b: #7386ff;
     --light-color: #e6e9ff;
+    --light-color-a: #f8f9fa;
     --success-color: #5cb85c;
+    --warning-color: #ffe942;
     --error-color: #d9534f;
-    --primary-color: var(--dark-color-a);
-    /* Assuming primary color is dark-color-a based on usage */
 }
-
+    
 * {
     box-sizing: border-box;
     margin: 0;
@@ -552,7 +552,7 @@ chat-messages .message .meta span {
 
 .prompt-section textarea:focus {
     /* Merged properties */
-    border-color: var(--primary-color);
+    border-color: var(--dark-color-a);
     outline: none;
     box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
@@ -624,7 +624,7 @@ chat-messages .message .meta span {
 .results-section {
     /* Merged properties */
     flex: 1;
-    background: var(--light-color);
+    background: var(--light-color-a);
     /* From later definition */
     padding: 25px;
     /* From later definition */
@@ -742,7 +742,7 @@ chat-messages .message .meta span {
 /* Loading indicator */
 #loading-indicator {
     /* Merged properties */
-    color: var(--primary-color);
+    color: var(--dark-color-a);
     font-size: 2rem;
     position: absolute;
     top: 50%;
@@ -794,7 +794,7 @@ chat-messages .message .meta span {
     content: '\f0ac';
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
-    color: var(--primary-color);
+    color: var(--dark-color-a);
 }
 
 /* text-to-voice Loading Indicator */
@@ -808,7 +808,7 @@ chat-messages .message .meta span {
 
 .loading-indicator .spinner {
     font-size: 2rem;
-    color: var(--primary-color);
+    color: var(--dark-color-a);
 }
 
 .loading-indicator .loading-text {
@@ -1148,6 +1148,7 @@ chat-messages .message .meta span {
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 2%;
 }
 
 .admin-form {
@@ -1155,7 +1156,7 @@ chat-messages .message .meta span {
     margin-bottom: 30px;
     padding: 25px;
     /* From later definition */
-    background: #f8f9fa;
+    background: var(--light-color-a);
     border-radius: 6px;
     border: 1px solid #e9ecef;
     /* From later definition */
@@ -1205,7 +1206,7 @@ chat-messages .message .meta span {
 }
 
 /* .api-item:hover {
-    background-color: #f8f9fa;
+    background-color: var(--light-color-a);
 } */
 
 .api-details {
@@ -1314,7 +1315,7 @@ input:checked+.toggle-slider:before {
 
 .btn-icon:hover {
     /* Merged properties */
-    background: #f8f9fa;
+    background: var(--light-color-a);
     /* From later definition */
     transform: translateY(-1px);
     color: var(--dark-color-a);
@@ -1382,7 +1383,7 @@ input:checked+.toggle-slider:before {
     /* margin-bottom: 25px; */
     padding-bottom: 20px;
     /* From first definition */
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #d7d7d7;
     /* From first definition */
 }
 
@@ -1512,7 +1513,7 @@ input:checked+.toggle-slider:before {
     font-family: monospace;
     font-size: 14px;
     resize: vertical;
-    background: #f8f9fa;
+    background: var(--light-color-a);
 }
 
 .btn-format {
@@ -1544,7 +1545,7 @@ input:checked+.toggle-slider:before {
 }
 
 .headers-preview pre {
-    background: #f8f9fa;
+    background: var(--light-color-a);
     padding: 10px;
     border-radius: 4px;
     margin-top: 5px;
@@ -1686,7 +1687,7 @@ input:checked+.toggle-slider:before {
     font-size: 14px;
     line-height: 1.4;
     resize: vertical;
-    background: #f8f9fa;
+    background: var(--light-color-a);
 }
 
 .preview-header {
@@ -1707,14 +1708,14 @@ input:checked+.toggle-slider:before {
 .preview-row code {
     display: inline-block;
     padding: 2px 6px;
-    background: #f8f9fa;
+    background: var(--light-color-a);
     border-radius: 3px;
     font-family: 'Courier New', monospace;
     font-size: 0.9em;
 }
 
 .preview-headers {
-    background: #f8f9fa;
+    background: var(--light-color-a);
     padding: 10px;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
@@ -1779,7 +1780,7 @@ input:checked+.toggle-slider:before {
 
 .api-paths small {
     font-family: monospace;
-    /* background: #f8f9fa; */
+    /* background: var(--light-color-a); */
     padding: 2px 4px;
     border-radius: 3px;
 }
@@ -1838,7 +1839,7 @@ input:checked+.toggle-slider:before {
     /* From later definition */
     outline: none;
     /* From later definitions */
-    border-color: var(--primary-color);
+    border-color: var(--dark-color-a);
     /* From later definitions */
 }
 
@@ -1961,7 +1962,7 @@ input:checked+.toggle-slider:before {
     align-items: center;
     gap: 8px;
     padding: 10px;
-    background: #f8f9fa;
+    background: var(--light-color-a);
     border-radius: 4px;
     border: 1px solid #dee2e6;
     margin-bottom: 8px;
@@ -1992,7 +1993,7 @@ input:checked+.toggle-slider:before {
 .image-preview {
     margin-top: 15px;
     padding: 15px;
-    background: #f8f9fa;
+    background: var(--light-color-a);
     border-radius: 4px;
     text-align: center;
 }
@@ -2025,6 +2026,7 @@ input:checked+.toggle-slider:before {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
+    margin-top: 2%;
 }
 
 .settings-group {
@@ -2450,31 +2452,87 @@ input:checked+.toggle-slider:before {
 
 /* System Settings Styles */
 .settings-form {
-    display: grid;
-    gap: 20px;
-    padding: 20px;
-    background: var(--light-color);
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: var(--bg-secondary);
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.settings-group {
-    background: white;
-    padding: 20px;
-    border-radius: 6px;
-    box-shadow: 0px 0px 15px rgba(34, 35, 58, 0.2);
+.settings-form .form-group {
+    margin-bottom: 1.5rem;
 }
 
-.settings-group h4 {
-    margin-bottom: 15px;
-    color: var(--dark-color-a);
-    font-size: 1.1em;
+.settings-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.settings-form .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.settings-form .help-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.settings-form .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.settings-form .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.settings-form .btn:hover {
+    transform: translateY(-1px);
+}
+
+.settings-form .btn:active {
+    transform: translateY(0);
+}
+
+.settings-form .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.settings-form .btn-primary:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.settings-form .btn-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.settings-form .btn-secondary:hover {
+    background-color: var(--bg-quaternary);
 }
 
 /* API Test Status Section Styles */
 .test-status-section {
     margin: 20px 0;
     padding: 15px;
-    background: #f8f9fa;
+    background: var(--light-color-a);
     border-radius: 6px;
     border: 1px solid #dee2e6;
 }
@@ -2540,3 +2598,376 @@ input:checked+.toggle-slider:before {
     overflow-y: auto;
     margin: 0;
 }
+
+/* Room Management Styles */
+.room-management-section {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.rooms-list {
+    flex: 1;
+    max-width: 400px;
+}
+
+.room-blocks-section {
+    flex: 2;
+}
+
+/* Nested section headers in room management */
+.rooms-list .section-header,
+.room-blocks-section .section-header {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.rooms-list .section-header .section-title h3,
+.room-blocks-section .section-header .section-title h3 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--dark-color-a);
+}
+
+.rooms-list .section-header .section-description,
+.room-blocks-section .section-header .section-description {
+    font-size: 0.85rem;
+    color: var(--gray-color);
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.rooms-list .section-header button,
+.room-blocks-section .section-header button {
+    margin-left: auto;
+    max-width: fit-content;
+}
+
+.room-item {
+    background: var(--dark-color-b);
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.room-item:hover {
+    background: var(--dark-color-a);
+}
+
+.room-item.active {
+    background: var(--success-color);
+}
+
+.room-info {
+    margin-bottom: 0.5rem;
+}
+
+.room-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    color: #fff;
+}
+
+.room-topic {
+    font-size: 0.9rem;
+    color: var(--light-color);
+    margin-bottom: 0.25rem;
+}
+
+.room-description {
+    font-size: 0.85rem;
+    color: var(--light-color);
+    opacity: 0.8;
+}
+
+.room-stats {
+    font-size: 0.85rem;
+    color: var(--light-color);
+}
+
+.room-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.room-item:hover .room-actions {
+    opacity: 1;
+}
+
+.section-actions {
+    margin-left: auto;
+}
+
+/* Room Blocks Styles */
+.blocks-list {
+    margin-top: 1rem;
+}
+
+.block-item {
+    background: var(--light-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.block-info {
+    flex: 1;
+}
+
+.block-user {
+    font-weight: bold;
+    color: var(--dark-color-a);
+    margin-bottom: 0.25rem;
+}
+
+.block-reason {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.block-duration {
+    font-size: 0.85rem;
+    color: var(--error-color);
+    margin-top: 0.25rem;
+}
+
+.block-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.block-actions button {
+    padding: 0.5rem;
+    border-radius: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.block-actions button:hover {
+    color: var(--error-color);
+    background: rgba(217, 83, 79, 0.1);
+}
+
+/* Empty state for blocks */
+.blocks-list:empty::after {
+    content: "No blocks for this room";
+    display: block;
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+    background: var(--light-color);
+    border-radius: 6px;
+}
+
+/* Room Modal Styles */
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-top: 0.25rem;
+}
+
+.checkbox-label .help-text {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--dark-color-a);
+    margin-top: 0.25rem;
+}
+
+#room-description {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    position: relative;
+    background: #fff;
+    width: 90%;
+    max-width: 500px;
+    margin: 50px auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--dark-color-a);
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s;
+}
+
+.close-modal:hover {
+    color: var(--dark-color-a);
+}
+
+#room-modal .modal-content,
+#block-user-modal .modal-content {
+    padding: 0;
+}
+
+#room-modal form,
+#block-user-modal form {
+    padding: 20px;
+}
+
+#room-modal .form-group,
+#block-user-modal .form-group {
+    margin-bottom: 20px;
+}
+
+#room-modal .form-group:last-child,
+#block-user-modal .form-group:last-child {
+    margin-bottom: 0;
+}
+
+#room-modal input[type="text"],
+#room-modal textarea,
+#block-user-modal select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+#room-modal input[type="text"]:focus,
+#room-modal textarea:focus,
+#block-user-modal select:focus {
+    border-color: var(--dark-color-a);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(102, 122, 255, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.form-actions button {
+    min-width: 100px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Block Modal Styles */
+#user-search {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#user-search:focus {
+    outline: none;
+    border-color: var(--dark-color-a);
+    box-shadow: 0 0 0 2px rgba(102, 122, 255, 0.1);
+}
+
+#block-user-modal select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    background-color: white;
+    cursor: pointer;
+}
+
+#block-user-modal select:focus {
+    outline: none;
+    border-color: var(--dark-color-a);
+    box-shadow: 0 0 0 2px rgba(102, 122, 255, 0.1);
+}
+
+#block-user-modal .form-group {
+    margin-bottom: 20px;
+}
+
+#block-user-modal label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+/* Existing modal and form styles... */

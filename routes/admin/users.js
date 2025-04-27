@@ -1,14 +1,43 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
+const auth = require('../../middleware/auth');
+const { adminAuth } = require('../../middleware/admin');
+
+// Add authentication to all routes
+router.use(auth, adminAuth);
 
 // Get all users
 router.get('/', async (req, res) => {
     try {
-        const users = await User.find().select('-password');
+        const users = await User.find()
+            .select('username email isAdmin')
+            .sort('username');
         res.json(users);
     } catch (err) {
         res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Search users
+router.get('/search', async (req, res) => {
+    try {
+        const searchQuery = req.query.q || '';
+        const searchRegex = new RegExp(searchQuery, 'i');
+
+        const users = await User.find({
+            $or: [
+                { username: searchRegex },
+                { email: searchRegex }
+            ]
+        })
+        .select('username email')
+        .sort('username')
+        .limit(10);
+
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: 'Error searching users' });
     }
 });
 

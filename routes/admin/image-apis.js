@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth'); // Add this line
+const auth = require('../../middleware/auth');
+const { adminAuth } = require('../../middleware/admin');
 const ImageApi = require('../../models/ImageApi');
-const ImageSettings = require('../../models/ImageSettings'); // Add this line if missing
+const ImageSettings = require('../../models/ImageSettings');
 const { parseCurlCommand } = require('../../utils/apiHelpers');
+const mongoose = require('mongoose');
 
 // Get all image APIs
-router.get('/', async (req, res) => {
+router.get('/', [auth, adminAuth], async (req, res) => {
     try {
         const apis = await ImageApi.find();
         res.json(apis);
@@ -15,10 +17,39 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get single image API
-router.get('/:id', async (req, res) => {
+// Get active image APIs
+router.get('/active', [auth, adminAuth], async (req, res) => {
     try {
-        const api = await ImageApi.findById(req.params.id);
+        const apis = await ImageApi.find({ isActive: true });
+        res.json(apis);
+    } catch (err) {
+        console.error('Error fetching active image APIs:', err);
+        res.status(500).json({ message: 'Error fetching active image APIs' });
+    }
+});
+
+// Get single image API
+router.get('/:id', [auth, adminAuth], async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Check if id is 'active' to prevent ObjectId cast error
+        if (id === 'active') {
+            return res.status(400).json({ 
+                message: 'Invalid image API ID',
+                code: 'INVALID_ID'
+            });
+        }
+
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ 
+                message: 'Invalid image API ID format',
+                code: 'INVALID_ID'
+            });
+        }
+
+        const api = await ImageApi.findById(id);
         if (!api) {
             return res.status(404).json({ message: 'Image API not found' });
         }
@@ -29,7 +60,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new image API
-router.post('/', async (req, res) => {
+router.post('/', [auth, adminAuth], async (req, res) => {
     try {
         const existingApi = await ImageApi.findOne({ name: req.body.name });
         if (existingApi) {
@@ -51,7 +82,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update image API
-router.put('/:id', async (req, res) => {
+router.put('/:id', [auth, adminAuth], async (req, res) => {
     try {
         const api = await ImageApi.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!api) {
@@ -64,7 +95,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete image API
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', [auth, adminAuth], async (req, res) => {
     try {
         const api = await ImageApi.findByIdAndDelete(req.params.id);
         if (!api) {
@@ -77,11 +108,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Toggle image API active status
-router.patch('/:id/toggle', auth, async (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ message: 'Admin access required' });
-    }
-
+router.patch('/:id/toggle', [auth, adminAuth], async (req, res) => {
     try {
         if (typeof req.body.isActive !== 'boolean') {
             return res.status(400).json({ message: 'isActive must be a boolean' });
@@ -120,7 +147,7 @@ router.patch('/:id/toggle', auth, async (req, res) => {
 });
 
 // Test image API endpoint
-router.post('/test', async (req, res) => {
+router.post('/test', [auth, adminAuth], async (req, res) => {
     try {
         const { curlCommand, requestPath, responsePath } = req.body;
         

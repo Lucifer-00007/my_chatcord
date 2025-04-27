@@ -19,13 +19,13 @@ function checkTokenExpiration() {
 
         if (timeUntilExp < REFRESH_THRESHOLD) {
             // Refresh room token
-            fetch('/api/channels/join', {
+            fetch('/api/rooms/join', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                 },
-                body: JSON.stringify({ room: payload.room })
+                body: JSON.stringify({ room: encodeURIComponent(payload.room) })
             })
             .then(res => res.json())
             .then(data => {
@@ -57,11 +57,11 @@ try {
     console.log('Decoded Token Data:', tokenData);
     const { username, room } = tokenData;
 
-    // Initialize socket first
+    // Initialize socket with auth tokens
     const socket = io({
         auth: {
             token: authToken,
-            roomToken: roomToken
+            roomToken
         },
         transports: ['websocket']
     });
@@ -69,7 +69,7 @@ try {
     // Load message history using async IIFE
     (async () => {
         try {
-            const res = await fetch(`/api/channels/${room}/messages`, {
+            const res = await fetch(`/api/rooms/${encodeURIComponent(room)}/messages`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -109,6 +109,10 @@ try {
             sessionStorage.removeItem('roomToken');
             alert('Session expired. Please login again.');
             window.location.href = '/login';
+        } else if (error.message.includes('blocked')) {
+            // Handle room block error
+            alert(error.message);
+            window.location.href = '/selectRoom';
         }
     });
 
@@ -132,7 +136,7 @@ try {
     });
 
     // Message submit
-    chatForm.addEventListener('submit', (e) => {
+    chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         // Get message text
@@ -144,26 +148,36 @@ try {
             return false;
         }
 
-        // Emit message to server
-        socket.emit('chatMessage', msg);
+        try {
+            // Emit message to server
+            socket.emit('chatMessage', msg);
 
-        // Clear input
-        e.target.elements.msg.value = '';
-        e.target.elements.msg.focus();
+            // Clear input and focus
+            e.target.elements.msg.value = '';
+            e.target.elements.msg.focus();
+        } catch (err) {
+            console.error('Error sending message:', err);
+            // Show error to user
+            const errorDiv = document.createElement('div');
+            errorDiv.classList.add('error-message');
+            errorDiv.textContent = 'Failed to send message. Please try again.';
+            chatMessages.appendChild(errorDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
     });
 
     // Clean up on leave
     document.getElementById('leave-btn').addEventListener('click', () => {
         const leaveRoom = confirm('Are you sure you want to leave the chatroom?');
         if (leaveRoom) {
-            socket.disconnect();
             sessionStorage.removeItem('roomToken');
             window.location.href = '/selectRoom';
         }
     });
 } catch (err) {
-    console.error('Chat initialization error:', err.message);
-    AuthGuard.logout();
+    console.error('Chat initialization error:', err);
+    alert('Failed to initialize chat. Returning to room selection.');
+    window.location.href = '/selectRoom';
 }
 
 // Output message to DOM

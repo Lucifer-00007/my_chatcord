@@ -9,12 +9,13 @@ const formatMessage = require("./utils/messages");
 const connectDB = require('./config/db');
 const cookieParser = require('cookie-parser');
 const authMiddleware = require('./middleware/auth');
-const adminMiddleware = require('./middleware/admin');  // Add this line
+const { adminAuth } = require('./middleware/admin'); // Fixed admin middleware import
 const { verifyToken } = require('./utils/jwt'); // Add this import
 const User = require('./models/User'); // Add this import
 const Message = require('./models/Message'); // Import Message model
-const Channel = require('./models/Channel'); // Add Channel model import
-const { initializeChannels } = require('./config/init'); // Add this import
+const Room = require('./models/Room'); // Changed from Channel
+const RoomBlock = require('./models/RoomBlock'); // Add RoomBlock model import
+const { initialize } = require('./config/init');
 const {
     env,
     security,
@@ -42,11 +43,16 @@ if (!process.env.REDIS_URL || !process.env.PORT) {
   process.exit(1);
 }
 
-// Connect to MongoDB
-connectDB();
-
-// Initialize database
-initializeChannels();
+// Connect to MongoDB and initialize the database
+(async () => {
+    try {
+        await connectDB();
+        await initialize();
+    } catch (err) {
+        console.error('Failed to initialize application:', err);
+        process.exit(1);
+    }
+})();
 
 // Create an Express application
 const app = express();
@@ -77,12 +83,33 @@ app.use(helmet({
     contentSecurityPolicy: cspConfig
 }));
 
-// Apply rate limiting
-const limiter = rateLimit({
-  windowMs: security.RATE_LIMIT_WINDOW,
-  max: security.RATE_LIMIT_MAX
+// Apply rate limiting with different rules for static and API routes
+const adminApiLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 1000 // 1000 requests per minute for admin routes
 });
-app.use(limiter);
+
+const apiLimiter = rateLimit({
+    windowMs: security.RATE_LIMIT_WINDOW,
+    max: security.RATE_LIMIT_MAX
+});
+
+const staticLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 300 // 300 requests per minute for static assets
+});
+
+// Apply rate limiting middleware
+app.use('/api/admin', adminApiLimiter); // More permissive rate limiting for admin routes
+app.use('/api', apiLimiter); // Standard rate limiting for other API routes
+
+// Apply more permissive rate limiting to static assets
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1d' // Cache static assets for 1 day
+}));
+
+// Apply default rate limiting to other routes
+app.use(staticLimiter);
 
 // Add JSON and cookie parsing middleware
 app.use(express.json());
@@ -127,27 +154,19 @@ app.get('/admin-settings', (req, res) => {
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/channels', require('./routes/channels'));
-app.use('/api/admin', authMiddleware, adminMiddleware, require('./routes/admin'));
+app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/ai', authMiddleware, require('./routes/ai'));
 app.use('/api/images', authMiddleware, require('./routes/images'));
 app.use('/api/voice', authMiddleware, require('./routes/voice'));
-app.use('/api/admin/users', authMiddleware, adminMiddleware, require('./routes/admin/users'));
-app.use('/api/admin/logs', authMiddleware, adminMiddleware, require('./routes/admin/logs'));
-app.use('/api/admin/settings', authMiddleware, adminMiddleware, require('./routes/admin/settings'));
-app.use('/api/admin/voice', authMiddleware, adminMiddleware, require('./routes/admin/voice')); // Add this line
 
-// Admin routes
-app.use('/api/admin/stats', require('./routes/admin/stats'));
-app.use('/api/admin/ai-apis', require('./routes/admin/ai-apis'));
-app.use('/api/admin/voice', require('./routes/admin/voice'));
-app.use('/api/admin/image-apis', require('./routes/admin/image-apis'));
-app.use('/api/admin/users', require('./routes/admin/users'));
-app.use('/api/admin/logs', require('./routes/admin/logs'));
-app.use('/api/admin/settings', require('./routes/admin/settings'));
+// Admin routes with auth middleware
+app.use('/api/admin', [authMiddleware, adminAuth], require('./routes/admin'));
 
-// Apply admin middleware to all admin routes
-app.use('/api/admin', require('./middleware/admin'));
+// Serve admin HTML files
+app.get('/admin/:section/:page', [authMiddleware, adminAuth], (req, res) => {
+    const { section, page } = req.params;
+    res.sendFile(path.join(__dirname, 'public', 'admin', section, `${page}.html`));
+});
 
 const botName = chat.BOT_NAME;
 
@@ -174,45 +193,57 @@ const botName = chat.BOT_NAME;
 
 // Update socket connection handling
 io.use(async (socket, next) => {
-  try {
-    const token = socket.handshake.auth.token;
-    const roomToken = socket.handshake.auth.roomToken;
-
-    if (!token || !roomToken) {
-      return next(new Error('Authentication required'));
-    }
-
     try {
-      const decoded = verifyToken(token);
-      const roomData = verifyToken(roomToken);
-      
-      if (!decoded || !roomData) {
-        return next(new Error('Invalid tokens'));
-      }
+        const token = socket.handshake.auth.token;
+        const roomToken = socket.handshake.auth.roomToken;
 
-      const user = await User.findById(decoded.userId).select('-password');
-      if (!user) {
-        return next(new Error('User not found'));
-      }
+        if (!token || !roomToken) {
+            return next(new Error('Authentication required'));
+        }
 
-      // Attach all necessary data to socket
-      socket.userId = decoded.userId;
-      socket.username = user.username;
-      socket.room = roomData.room;
-      
-      // Join the room immediately
-      socket.join(roomData.room);
-      
-      // Add user to users array
-      userJoin(socket.id, user.username, roomData.room);
-      
-      next();
+        try {
+            const decoded = verifyToken(token);
+            const roomData = verifyToken(roomToken);
+            
+            if (!decoded || !roomData) {
+                return next(new Error('Invalid tokens'));
+            }
+
+            const user = await User.findById(decoded.userId).select('-password');
+            if (!user) {
+                return next(new Error('User not found'));
+            }
+
+            // Check for active room block
+            const activeBlock = await RoomBlock.findOne({
+                user: decoded.userId,
+                room: roomData.room,
+                isActive: true,
+                endDate: { $gt: new Date() }
+            });
+
+            if (activeBlock) {
+                return next(new Error(`You are blocked from this room until ${activeBlock.endDate.toLocaleDateString()}`));
+            }
+
+            // Attach all necessary data to socket
+            socket.userId = decoded.userId;
+            socket.username = user.username;
+            socket.room = roomData.room;
+            
+            // Join the room immediately
+            socket.join(roomData.room);
+            
+            // Add user to users array
+            userJoin(socket.id, user.username, roomData.room);
+            
+            next();
+        } catch (err) {
+            return next(new Error('Token verification failed'));
+        }
     } catch (err) {
-      return next(new Error('Token verification failed'));
+        next(new Error('Socket authentication failed'));
     }
-  } catch (err) {
-    next(new Error('Socket authentication failed'));
-  }
 });
 
 io.on("connection", (socket) => {
@@ -239,22 +270,22 @@ io.on("connection", (socket) => {
       try {
         const user = getCurrentUser(socket.id);
         if (user) {
-          // Find or create channel
-          let channel = await Channel.findOne({ name: socket.room });
-          if (!channel) {
-            channel = new Channel({
+          // Find or create room
+          let room = await Room.findOne({ name: socket.room });
+          if (!room) {
+            room = new Room({
               name: socket.room,
               topic: socket.room,
               createdBy: socket.userId
             });
-            await channel.save();
+            await room.save();
           }
 
-          // Create and save message with channel reference
+          // Create and save message with room reference
           const message = new Message({
             content: msg,
             user: socket.userId,
-            channel: channel._id  // Use channel ObjectId
+            room: room._id  // Use room ObjectId
           });
           await message.save();
 

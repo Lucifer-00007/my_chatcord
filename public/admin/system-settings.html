@@ -1,12 +1,67 @@
-<div class="section-header">
-    <div class="section-title">
-        <h2><i class="fas fa-cog"></i> System Settings</h2>
-        <span class="section-description">Configure global system settings</span>
-    </div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - ChatCord Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <nav class="admin-nav"></nav>
+        
+        <main class="admin-content">
+            <h1>System Settings</h1>
+            <div id="message" style="display: none;" class="alert"></div>
+            
+            <form id="systemSettingsForm" class="settings-form">
+                <div class="form-group">
+                    <h2>Chat Room Settings</h2>
+                    <label for="maxUsersPerRoom">Maximum Users per Room:</label>
+                    <input type="number" id="maxUsersPerRoom" name="maxUsersPerRoom" min="1" required>
+                    
+                    <label for="maxRoomsPerUser">Maximum Rooms per User:</label>
+                    <input type="number" id="maxRoomsPerUser" name="maxRoomsPerUser" min="1" required>
+                </div>
 
-<div class="settings-section">
-    <form id="system-settings-form" class="settings-form">
-        <!-- Settings form content will be added here -->
-    </form>
-</div>
+                <div class="form-group">
+                    <h2>Message Settings</h2>
+                    <label for="maxMessageLength">Maximum Message Length:</label>
+                    <input type="number" id="maxMessageLength" name="maxMessageLength" min="1" required>
+                    
+                    <label for="messageRateLimit">Message Rate Limit (seconds):</label>
+                    <input type="number" id="messageRateLimit" name="messageRateLimit" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <h2>Security Settings</h2>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="requireEmailVerification" name="requireEmailVerification">
+                        <label for="requireEmailVerification">Require Email Verification</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="allowGuestAccess" name="allowGuestAccess">
+                        <label for="allowGuestAccess">Allow Guest Access</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableProfanityFilter" name="enableProfanityFilter">
+                        <label for="enableProfanityFilter">Enable Profanity Filter</label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" id="resetButton" class="btn btn-secondary">Reset to Defaults</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="/js/nav.js"></script>
+    <script src="/js/auth-guard.js"></script>
+    <script src="/js/admin/system-settings.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = AuthGuard.getUser();
     const usernameInput = document.getElementById('username');
+    const roomSelect = document.getElementById('room');
     
     console.log('SelectRoom init:', { user, usernameInput: !!usernameInput });
 
@@ -14,7 +15,27 @@ document.addEventListener('DOMContentLoaded', () => {
         usernameInput.setAttribute('readonly', true);
     }
 
-    // Remove section handling since it's now handled by separate pages
+    // Load rooms from server
+    if (roomSelect) {
+        try {
+            const response = await fetch('/api/rooms', {
+                headers: {
+                    'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
+                }
+            });
+            const rooms = await response.json();
+            
+            roomSelect.innerHTML = rooms.map(room => `
+                <option value="${room.name}">${room.name} - ${room.topic}</option>
+            `).join('');
+        } catch (err) {
+            console.error('Error loading rooms:', err);
+            // Add a default option if loading fails
+            roomSelect.innerHTML = '<option value="">Failed to load rooms</option>';
+        }
+    }
+
+    // Handle admin link visibility
     const adminLink = document.querySelector('a[href="/admin-settings"]');
     if (adminLink && !user?.isAdmin) {
         adminLink.classList.add('disabled');
@@ -25,21 +46,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (joinForm) {
         joinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitButton = joinForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
             
-            const room = document.getElementById('room')?.value;
+            const room = roomSelect?.value;
             if (!room) {
                 console.error('Room not selected');
+                submitButton.disabled = false;
                 return;
             }
             
             try {
-                const res = await fetch('/api/channels/join', {
+                const res = await fetch('/api/rooms/join', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${document.cookie.split('=')[1]}`
+                        'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                     },
-                    body: JSON.stringify({ room })
+                    body: JSON.stringify({ room: encodeURIComponent(room) })
                 });
 
                 const data = await res.json();
@@ -47,11 +71,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.setItem('roomToken', data.roomToken);
                     window.location.href = '/chat';
                 } else {
-                    alert(data.message);
+                    // Show error message
+                    const infoMsg = document.querySelector('.info-msg');
+                    if (infoMsg) {
+                        if (res.status === 403 && data.blockEndDate) {
+                            const endDate = new Date(data.blockEndDate).toLocaleDateString();
+                            infoMsg.textContent = `${data.message} until ${endDate} !`;
+                        } else {
+                            infoMsg.textContent = data.message || 'Failed to join room';
+                        }
+                        infoMsg.style.color = 'var(--warning-color)';
+                    }
                 }
             } catch (err) {
                 console.error('Error joining room:', err);
-                alert('Failed to join room');
+                const infoMsg = document.querySelector('.info-msg');
+                if (infoMsg) {
+                    infoMsg.textContent = 'Failed to join room. Please try again.';
+                    infoMsg.style.color = 'var(--warning-color)';
+                }
+            } finally {
+                submitButton.disabled = false;
             }
         });
     }

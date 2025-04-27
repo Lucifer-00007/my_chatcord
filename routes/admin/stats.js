@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
 const Message = require('../../models/Message');
-const Channel = require('../../models/Channel');
+const Room = require('../../models/Room');
 const AiApi = require('../../models/AiApi');
 const VoiceApi = require('../../models/VoiceApi');
 const ImageApi = require('../../models/ImageApi');
@@ -11,14 +11,14 @@ router.get('/', async (req, res) => {
     try {
         const [
             users,
-            channels,
+            rooms,
             messages,
             aiApis,
             voiceApis,
             imageApis
         ] = await Promise.all([
             User.countDocuments().exec(),
-            Channel.countDocuments({ isActive: true }).exec(),
+            Room.countDocuments().exec(), // Remove isActive filter since Room model doesn't have this field
             Message.countDocuments().exec(),
             AiApi.countDocuments({ isActive: true }).exec(),
             VoiceApi.countDocuments({ isActive: true }).exec(),
@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
         // Match the response format expected by the dashboard
         const stats = {
             users: Number(users) || 0,
-            channels: Number(channels) || 0,
+            rooms: Number(rooms) || 0,
             messages: Number(messages) || 0,
             apis: Number(aiApis + voiceApis + imageApis) || 0,
             lastUpdated: new Date().toISOString()

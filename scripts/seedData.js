@@ -2,7 +2,7 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') }
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Message = require('../models/Message');
-const Channel = require('../models/Channel');
+const Room = require('../models/Room');
 const { demo, chat } = require('../config/constants');
 
 async function createCollectionsIfNotExist() {
@@ -17,10 +17,10 @@ async function createCollectionsIfNotExist() {
             console.log('Created users collection');
         }
 
-        // Check and create Channel collection
-        if (!collectionNames.includes('channels')) {
-            await mongoose.connection.createCollection('channels');
-            console.log('Created channels collection');
+        // Check and create Room collection
+        if (!collectionNames.includes('rooms')) {
+            await mongoose.connection.createCollection('rooms');
+            console.log('Created rooms collection');
         }
 
         // Check and create Message collection
@@ -57,22 +57,22 @@ async function seedDatabase() {
             console.log(`Created user: ${user.username}`);
         }
 
-        // Create all default channels
-        const channels = [];
-        for (const channelData of chat.DEFAULT_CHANNELS) {
-            const channel = new Channel({
-                ...channelData,
-                description: `Channel for ${channelData.name} developers`,
-                createdBy: users[0]._id // Admin creates all channels
+        // Create all default rooms
+        const rooms = [];
+        for (const roomData of chat.DEFAULT_ROOMS) {
+            const room = new Room({
+                ...roomData,
+                description: `Room for ${roomData.name} developers`,
+                createdBy: users[0]._id // Admin creates all rooms
             });
-            await channel.save();
-            channels.push(channel);
-            console.log(`Created channel: ${channel.name}`);
+            await room.save();
+            rooms.push(room);
+            console.log(`Created room: ${room.name}`);
         }
 
-        // Create demo messages in JavaScript channel
-        const jsChannel = channels.find(ch => ch.name === 'JavaScript');
-        if (jsChannel) {
+        // Create demo messages in JavaScript room
+        const jsRoom = rooms.find(r => r.name === 'JavaScript');
+        if (jsRoom) {
             const messagePromises = demo.messages.map((content, index) => {
                 const user = users[index % users.length];
                 const timeOffset = index * demo.messageInterval;
@@ -80,13 +80,13 @@ async function seedDatabase() {
                 return new Message({
                     content,
                     user: user._id,
-                    channel: jsChannel._id,
+                    room: jsRoom._id,
                     createdAt: new Date(Date.now() - timeOffset)
                 }).save();
             });
 
             await Promise.all(messagePromises);
-            console.log('Created demo messages in JavaScript channel');
+            console.log('Created demo messages in JavaScript room');
         }
 
         console.log('Database seeded successfully!');

@@ -2,102 +2,83 @@ const express = require('express');
 const router = express.Router();
 const VoiceSettings = require('../../models/VoiceSettings');
 const auth = require('../../middleware/auth');
+const { adminAuth } = require('../../middleware/admin');
 
-// Get voice settings
-router.get('/:type', auth, async (req, res) => {
-    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
-
+// Get pitch settings
+router.get('/pitch', [auth, adminAuth], async (req, res) => {
     try {
-        const { type } = req.params;
-        if (!['speed', 'pitch'].includes(type)) {
-            return res.status(400).json({ message: 'Invalid settings type' });
-        }
-
-        let settings = await VoiceSettings.findOne({ type });
+        let settings = await VoiceSettings.findOne({ type: 'pitch' });
         if (!settings) {
             settings = new VoiceSettings({
-                type,
-                range: {
-                    min: type === 'speed' ? 0.5 : 0.5,
-                    max: type === 'speed' ? 2.0 : 2.0,
-                    step: 0.1,
-                    default: 1.0
-                }
+                type: 'pitch',
+                values: [
+                    { id: 'low', label: 'Low', value: -2, isActive: true },
+                    { id: 'normal', label: 'Normal', value: 0, isActive: true },
+                    { id: 'high', label: 'High', value: 2, isActive: true }
+                ]
             });
             await settings.save();
         }
         res.json(settings);
     } catch (err) {
-        console.error('Error fetching voice settings:', err);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error loading pitch settings:', err);
+        res.status(500).json({ message: 'Error loading pitch settings' });
     }
 });
 
-// Update voice settings
-router.put('/:type', auth, async (req, res) => {
-    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
-
+// Get speed settings
+router.get('/speed', [auth, adminAuth], async (req, res) => {
     try {
-        const { type } = req.params;
-        if (!['speed', 'pitch'].includes(type)) {
-            return res.status(400).json({ message: 'Invalid settings type' });
-        }
-
-        const { range } = req.body;
-
-        // Validate input
-        if (!range || typeof range !== 'object') {
-            return res.status(400).json({ message: 'Invalid range data' });
-        }
-
-        // Validate required fields
-        const requiredFields = ['min', 'max', 'default', 'step'];
-        for (const field of requiredFields) {
-            if (typeof range[field] !== 'number') {
-                return res.status(400).json({ 
-                    message: `Invalid ${field} value. Must be a number.`
-                });
-            }
-        }
-
-        // Validate ranges
-        if (range.min >= range.max) {
-            return res.status(400).json({ 
-                message: 'Minimum value must be less than maximum value'
+        let settings = await VoiceSettings.findOne({ type: 'speed' });
+        if (!settings) {
+            settings = new VoiceSettings({
+                type: 'speed',
+                values: [
+                    { id: 'slow', label: 'Slow', value: 0.75, isActive: true },
+                    { id: 'normal', label: 'Normal', value: 1.0, isActive: true },
+                    { id: 'fast', label: 'Fast', value: 1.25, isActive: true }
+                ]
             });
+            await settings.save();
         }
-
-        if (range.default < range.min || range.default > range.max) {
-            return res.status(400).json({ 
-                message: 'Default value must be between min and max values'
-            });
-        }
-
-        if (range.step <= 0) {
-            return res.status(400).json({ 
-                message: 'Step must be greater than 0'
-            });
-        }
-
-        // Update or create settings
-        const settings = await VoiceSettings.findOneAndUpdate(
-            { type },
-            { 
-                $set: { 
-                    range,
-                    updatedAt: new Date()
-                }
-            },
-            { 
-                new: true,
-                upsert: true
-            }
-        );
-
         res.json(settings);
     } catch (err) {
-        console.error('Error saving voice settings:', err);
-        res.status(500).json({ message: err.message || 'Failed to save settings' });
+        console.error('Error loading speed settings:', err);
+        res.status(500).json({ message: 'Error loading speed settings' });
+    }
+});
+
+// Update pitch settings
+router.put('/pitch', [auth, adminAuth], async (req, res) => {
+    try {
+        const { values } = req.body;
+        let settings = await VoiceSettings.findOne({ type: 'pitch' });
+        if (!settings) {
+            settings = new VoiceSettings({ type: 'pitch' });
+        }
+        settings.values = values;
+        await settings.save();
+        res.json(settings);
+    } catch (err) {
+        console.error('Error updating pitch settings:', err);
+        res.status(500).json({ message: 'Error updating pitch settings' });
+    }
+});
+
+// Update speed settings
+router.put('/speed', [auth, adminAuth], async (req, res) => {
+    try {
+        const { values } = req.body;
+        let settings = await VoiceSettings.findOne({ type: 'speed' });
+        if (!settings) {
+            settings = new VoiceSettings({ type: 'speed' });
+        }
+        settings.values = values;
+        await settings.save();
+        res.json(settings);
+    } catch (err) {
+        console.error('Error updating speed settings:', err);
+        res.status(500).json({ message: 'Error updating speed settings' });
     }
 });
 

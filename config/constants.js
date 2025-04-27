@@ -1,15 +1,34 @@
 require('dotenv').config();
 
-
-// Default channel list for chat
-const DEFAULT_CHANNELS = [
+// Default rooms list for chat
+const DEFAULT_ROOMS = [
     { name: 'JavaScript', topic: 'JavaScript Discussion' },
     { name: 'Python', topic: 'Python Discussion' },
     { name: 'PHP', topic: 'PHP Discussion' },
-    { name: 'C#', topic: 'C# Discussion' },
     { name: 'Ruby', topic: 'Ruby Discussion' },
     { name: 'Java', topic: 'Java Discussion' }
 ];
+
+// Room management constants
+const ROOM_MANAGEMENT = {
+    BLOCK_REASONS: [
+        'Inappropriate behavior',
+        'Spam',
+        'Harassment',
+        'Other'
+    ],
+    MAX_BLOCK_DURATION: 365, // days (1 year)
+    BLOCK_DURATIONS: [
+        { value: 0.0417, label: '1 hour' },
+        { value: 0.25, label: '6 hours' },
+        { value: 0.5, label: '12 hours' },
+        { value: 1, label: '1 day' },
+        { value: 7, label: '1 week' },
+        { value: 30, label: '1 month' },
+        { value: 365, label: '1 year' },
+        { value: -1, label: 'Lifetime' }
+    ]
+};
 
 // Standard chat messages
 const MESSAGES = {
@@ -201,9 +220,9 @@ module.exports = {
         JWT_SECRET: process.env.JWT_SECRET,
         JWT_EXPIRE: process.env.JWT_EXPIRE || '1d',
         ROOM_TOKEN_EXPIRE: process.env.ROOM_TOKEN_EXPIRE || '1h',
-        // Rate Limiting (values in milliseconds and counts)
+        // Rate Limiting for API endpoints (values in milliseconds and counts)
         RATE_LIMIT_WINDOW: parseInt(process.env.RATE_LIMIT_WINDOW || '900000'), // 15 minutes
-        RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || '100'),
+        RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || '300'), // Increased from 100 to 300
     },
 
     // CORS Configuration (using the object defined above)
@@ -216,8 +235,9 @@ module.exports = {
     chat: {
         BOT_NAME: process.env.BOT_NAME || 'ChatCord Bot', // Slightly more descriptive default
         MAX_MESSAGES: parseInt(process.env.MAX_MESSAGES || '50'),
-        DEFAULT_CHANNELS: DEFAULT_CHANNELS, // Use the constant defined above
-        MESSAGES: MESSAGES                 // Use the constant defined above
+        DEFAULT_ROOMS: DEFAULT_ROOMS, // Use the constant defined above
+        MESSAGES: MESSAGES,           // Use the constant defined above
+        ROOM_MANAGEMENT: ROOM_MANAGEMENT // Add room management constants
     },
 
     // Feature-Specific Configurations

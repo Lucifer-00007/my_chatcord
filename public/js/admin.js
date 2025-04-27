@@ -41,9 +41,21 @@ async function loadSection(sectionName) {
             return;
         }
 
-        // Load the HTML content
-        const response = await fetch(`/admin/${sectionName}.html`);
-        if (!response.ok) throw new Error(`Failed to load section: ${response.statusText}`);
+        // Include auth token in the request with correct path
+        const token = AuthGuard.getAuthToken();
+        const response = await fetch(`/admin/${sectionName}.html`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                AuthGuard.logout(); // Redirect to login if unauthorized
+                return;
+            }
+            throw new Error(`Failed to load section: ${response.statusText}`);
+        }
         
         const content = await response.text();
         sectionContainer.innerHTML = content;
@@ -64,7 +76,19 @@ async function loadSection(sectionName) {
             case 'ai-chat':
                 await initAiApiSection();
                 break;
-            // ...other cases...
+            case 'room-management':
+                console.log('Initializing room management...');
+                await initRoomManagement();
+                break;
+            case 'user-management':
+                await initUserManagement();
+                break;
+            case 'system-logs':
+                await initSystemLogs();
+                break;
+            case 'system-settings':
+                await initSystemSettings();
+                break;
         }
         
         console.log(`Section ${sectionName} loaded and initialized`);
@@ -204,6 +228,7 @@ async function initAdminPanel() {
             };
         },
         'text-to-voice': initializeVoiceForm,
+        'room-management': initRoomManagement,
         'user-management': initUserManagement,
         'system-logs': initSystemLogs,
         'system-settings': initSystemSettings
@@ -258,4 +283,16 @@ document.addEventListener('DOMContentLoaded', initAdminPanel);
 
 // Export necessary functions
 window.showNotification = showNotification;
+
+// Add initialization function for system settings
+async function initSystemSettings() {
+    const script = document.createElement('script');
+    script.src = '/js/admin/system-settings.js';
+    document.head.appendChild(script);
+    
+    // Wait for the script to load
+    await new Promise((resolve) => {
+        script.onload = resolve;
+    });
+}
 

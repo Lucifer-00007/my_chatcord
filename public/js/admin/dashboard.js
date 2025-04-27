@@ -6,15 +6,12 @@ async function initDashboard() {
 
 async function loadStats() {
     try {
-        //console.log('Loading dashboard stats...');
         const stats = await window.adminUtils.makeApiRequest('/api/admin/stats');
         
-        //console.log('Received stats:', stats);
-        
-        // Match the property names from the API response
+        // Match the property names from the API response with HTML titles
         const statMappings = {
             'Total Users': stats?.users || 0,
-            'Active Channels': stats?.channels || 0,
+            'Active Rooms': stats?.rooms || 0,
             'Total Messages': stats?.messages || 0,
             'Active APIs': stats?.apis || 0
         };

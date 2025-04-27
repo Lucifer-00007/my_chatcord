@@ -24,8 +24,21 @@ const AuthGuard = {
     checkAuth() {
         const user = this.getUser();
         const publicPages = ['/login', '/register'];
+        const adminPages = ['/admin-settings', '/admin/dashboard', '/admin/user-management', '/admin/room-management', 
+                           '/admin/system-settings', '/admin/system-logs', '/admin/ai-chat', '/admin/text-to-voice', 
+                           '/admin/text-to-image'];
         const currentPage = window.location.pathname;
         const isChatPage = currentPage === '/chat';
+        const isAdminPage = adminPages.some(page => currentPage.startsWith(page));
+
+        // Check admin access
+        if (isAdminPage) {
+            if (!user || !user.isAdmin) {
+                console.log('Admin access denied:', { user, path: currentPage });
+                window.location.href = '/login';
+                return false;
+            }
+        }
 
         if (isChatPage && (!user || !this.isInRoom())) {
             window.location.href = '/login';

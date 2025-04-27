@@ -24,3 +24,5 @@ migration.log
 .vscode/
 .idea/
 config/constant-old.js
+.github/copilot-instructions1.md
+.github/copilot-instructions.md

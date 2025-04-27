@@ -2,57 +2,83 @@ const express = require('express');
 const router = express.Router();
 const ImageSettings = require('../../models/ImageSettings');
 const auth = require('../../middleware/auth');
+const { adminAuth } = require('../../middleware/admin');
 
-// Get image settings
-router.get('/:type', auth, async (req, res) => {
-    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
-
+// Get size settings
+router.get('/sizes', [auth, adminAuth], async (req, res) => {
     try {
-        const { type } = req.params;
-        if (!['sizes', 'styles'].includes(type)) {
-            return res.status(400).json({ message: 'Invalid settings type' });
-        }
-
-        let settings = await ImageSettings.findOne({ type });
+        let settings = await ImageSettings.findOne({ type: 'sizes' });
         if (!settings) {
             settings = new ImageSettings({
-                type,
-                values: []
+                type: 'sizes',
+                values: [
+                    { id: '256x256', label: '256x256', isActive: true },
+                    { id: '512x512', label: '512x512', isActive: true },
+                    { id: '1024x1024', label: '1024x1024', isActive: true }
+                ]
             });
             await settings.save();
         }
         res.json(settings);
     } catch (err) {
-        console.error('Error fetching image settings:', err);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error loading size settings:', err);
+        res.status(500).json({ message: 'Error loading size settings' });
     }
 });
 
-// Update image settings
-router.put('/:type', auth, async (req, res) => {
-    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
-
+// Get style settings
+router.get('/styles', [auth, adminAuth], async (req, res) => {
     try {
-        const { type } = req.params;
-        if (!['sizes', 'styles'].includes(type)) {
-            return res.status(400).json({ message: 'Invalid settings type' });
+        let settings = await ImageSettings.findOne({ type: 'styles' });
+        if (!settings) {
+            settings = new ImageSettings({
+                type: 'styles',
+                values: [
+                    { id: 'realistic', name: 'Realistic', isActive: true },
+                    { id: 'artistic', name: 'Artistic', isActive: true },
+                    { id: 'cartoon', name: 'Cartoon', isActive: true }
+                ]
+            });
+            await settings.save();
         }
-
-        const { values } = req.body;
-        if (!Array.isArray(values)) {
-            return res.status(400).json({ message: 'Values must be an array' });
-        }
-
-        const settings = await ImageSettings.findOneAndUpdate(
-            { type },
-            { $set: { values } },
-            { new: true, upsert: true }
-        );
-
         res.json(settings);
     } catch (err) {
-        console.error('Error saving image settings:', err);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error loading style settings:', err);
+        res.status(500).json({ message: 'Error loading style settings' });
+    }
+});
+
+// Update size settings
+router.put('/sizes', [auth, adminAuth], async (req, res) => {
+    try {
+        const { values } = req.body;
+        let settings = await ImageSettings.findOne({ type: 'sizes' });
+        if (!settings) {
+            settings = new ImageSettings({ type: 'sizes' });
+        }
+        settings.values = values;
+        await settings.save();
+        res.json(settings);
+    } catch (err) {
+        console.error('Error updating size settings:', err);
+        res.status(500).json({ message: 'Error updating size settings' });
+    }
+});
+
+// Update style settings
+router.put('/styles', [auth, adminAuth], async (req, res) => {
+    try {
+        const { values } = req.body;
+        let settings = await ImageSettings.findOne({ type: 'styles' });
+        if (!settings) {
+            settings = new ImageSettings({ type: 'styles' });
+        }
+        settings.values = values;
+        await settings.save();
+        res.json(settings);
+    } catch (err) {
+        console.error('Error updating style settings:', err);
+        res.status(500).json({ message: 'Error updating style settings' });
     }
 });
 

@@ -1,4 +1,4 @@
-module.exports = async function(req, res, next) {
+const adminAuth = async function(req, res, next) {
     try {
         // Check if user exists and is authenticated (should be set by authMiddleware)
         if (!req.user) {
@@ -15,3 +15,5 @@ module.exports = async function(req, res, next) {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+module.exports = { adminAuth };
