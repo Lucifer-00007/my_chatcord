@@ -58,7 +58,16 @@ async function loadSection(sectionName) {
         
         const content = await response.text();
         sectionContainer.innerHTML = content;
-        
+
+        // Ensure adminUtils is ready before initializing section
+        if (typeof window.initAdminUtils === 'function') {
+            await window.initAdminUtils();
+        }
+        if (!window.adminUtils) {
+            window.location.href = '/login';
+            return;
+        }
+
         // Initialize section based on type
         switch (sectionName) {
             case 'dashboard':

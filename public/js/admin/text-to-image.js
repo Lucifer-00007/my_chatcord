@@ -714,11 +714,3 @@ window.editImageApi = editImageApi;
 window.deleteImageApi = deleteImageApi;
 window.toggleImageApi = toggleImageApi;
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await window.initAdminUtils?.();
-    if (!window.adminUtils) {
-        window.location.href = '/login';
-        return;
-    }
-    initImageApiSection();
-});
