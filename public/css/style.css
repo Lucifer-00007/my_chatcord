@@ -5,7 +5,8 @@
     --dark-color-b: #7386ff;
     --light-color: #e6e9ff;
     --light-color-a: #f8f9fa;
-    --success-color: #5cb85c;
+    /* --success-color: #5cb85c; */
+    --success-color: #00df00;
     --warning-color: #ffe942;
     --error-color: #d9534f;
     --border-color: #cbcbcb;
@@ -1323,18 +1324,22 @@ input:checked+.toggle-slider:before {
     /* From later definition */
 }
 
-.btn-icon.edit-api {
-    background: #fff;
-    border-color: var(--dark-color-a);
+.btn-icon.edit-api,
+.btn-icon.btn-edit {
+  background: #fff;                                    
+  border: 1px solid var(--dark-color-a);               
+  color: var(--dark-color-a);                         
 }
 
-.btn-icon.edit-api:hover {
-    background: var(--dark-color-a);
-    color: white;
+.btn-icon.edit-api:hover,
+.btn-icon.btn-edit:hover {
+  background: var(--dark-color-a);                     /* dark background on hover */  
+  color: #fff;                                         /* white text on hover */  
 }
 
-.btn-icon.edit-api:hover i {
-    color: white;
+.btn-icon.edit-api:hover i,
+.btn-icon.btn-edit:hover i {
+  color: #fff;                                         /* white icons on hover */  
 }
 
 .btn-icon.btn-danger {
@@ -2070,7 +2075,7 @@ input:checked+.toggle-slider:before {
 .style-item label {
     flex: 1;
     margin: 0;
-    max-width: 9ch;
+    max-width: 13ch;
     white-space:nowrap;
     overflow:hidden;
     text-overflow: ellipsis;
@@ -2648,7 +2653,7 @@ input:checked+.toggle-slider:before {
 }
 
 .room-item {
-    background: var(--dark-color-b);
+    background: var(--light-color);
     border-radius: 5px;
     padding: 1rem;
     margin-bottom: 1rem;
@@ -2658,7 +2663,7 @@ input:checked+.toggle-slider:before {
 }
 
 .room-item:hover {
-    background: var(--dark-color-a);
+    background: #cfd5ff;
 }
 
 .room-item.active {
@@ -2673,24 +2678,24 @@ input:checked+.toggle-slider:before {
     font-size: 1.1rem;
     font-weight: bold;
     margin-bottom: 0.25rem;
-    color: #fff;
+    color: black;
 }
 
 .room-topic {
     font-size: 0.9rem;
-    color: var(--light-color);
+    color: darkcyan;
     margin-bottom: 0.25rem;
 }
 
 .room-description {
     font-size: 0.85rem;
-    color: var(--light-color);
+    color: #737375;
     opacity: 0.8;
 }
 
 .room-stats {
     font-size: 0.85rem;
-    color: var(--light-color);
+    color: #00000091;
 }
 
 .room-actions {

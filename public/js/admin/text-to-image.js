@@ -1,15 +1,40 @@
 async function initImageApiSection() {
+    console.log('[initImageApiSection] Starting initialization...');
+    // Debug AuthGuard and adminUtils
+    console.log('[initImageApiSection] window.AuthGuard:', window.AuthGuard);
+    console.log('[initImageApiSection] AuthGuard.isAuthenticated:', window.AuthGuard && window.AuthGuard.isAuthenticated && window.AuthGuard.isAuthenticated());
+    console.log('[initImageApiSection] AuthGuard.isTokenValid:', window.AuthGuard && typeof window.AuthGuard.isTokenValid === 'function' ? window.AuthGuard.isTokenValid() : 'N/A');
+    console.log('[initImageApiSection] window.adminUtils:', window.adminUtils);
+
+    if (!window.AuthGuard || !AuthGuard.isAuthenticated() ||
+        (typeof AuthGuard.isTokenValid === 'function' && !AuthGuard.isTokenValid()) ||
+        !window.adminUtils) {
+        console.warn('[initImageApiSection] Redirecting to /login due to failed auth or missing adminUtils');
+        // window.location.href = '/login';
+        return;
+    }
+
     const elements = {
-        form: document.getElementById('image-api-form'),
+        formDiv: document.getElementById('image-api-form'),
         list: document.getElementById('image-api-list'),
         addButton: document.getElementById('add-image-api-btn'),
         closeButton: document.getElementById('close-image-form'),
         testButton: document.getElementById('test-image-api')
     };
+    const form = elements.formDiv ? elements.formDiv.querySelector('form') : null;
+    console.log('[initImageApiSection] Elements:', {
+        formDiv: elements.formDiv,
+        form: form,
+        list: elements.list,
+        addButton: elements.addButton,
+        closeButton: elements.closeButton,
+        testButton: elements.testButton
+    });
 
-    if (!elements.form || !elements.list || !elements.addButton) {
+    if (!elements.formDiv || !form || !elements.list || !elements.addButton) {
         console.error('Required elements for Image API section not found:', {
-            hasForm: !!elements.form,
+            hasFormDiv: !!elements.formDiv,
+            hasForm: !!form,
             hasList: !!elements.list,
             hasAddButton: !!elements.addButton
         });
@@ -18,18 +43,19 @@ async function initImageApiSection() {
 
     // Show/Hide form handlers
     elements.addButton.addEventListener('click', () => {
-        elements.form.style.display = 'block';
+        elements.formDiv.style.display = 'block';
         elements.addButton.style.display = 'none';
     });
 
     if (elements.closeButton) {
         elements.closeButton.addEventListener('click', () => {
             // Access the form element directly since it's an HTMLFormElement
-            const form = document.getElementById('image-api-form');
+            const formDiv = document.getElementById('image-api-form');
+            const form = formDiv ? formDiv.querySelector('form') : null;
             if (form instanceof HTMLFormElement) {
                 form.reset();
             }
-            elements.form.style.display = 'none';
+            elements.formDiv.style.display = 'none';
             elements.addButton.style.display = 'block';
         });
     }
@@ -44,7 +70,7 @@ async function initImageApiSection() {
     initToggleHandlers();
 
     // Form submission handling
-    elements.form.addEventListener('submit', handleImageFormSubmit);
+    form.addEventListener('submit', handleImageFormSubmit);
 
     // Add test button handler
     const testButton = document.getElementById('test-image-api');
@@ -55,6 +81,23 @@ async function initImageApiSection() {
 
 // Fix loadImageApiList function
 async function loadImageApiList() {
+    console.log('[loadImageApiList] Called. window.adminUtils:', window.adminUtils);
+    if (!window.adminUtils) {
+        if (
+            !window.AuthGuard ||
+            !AuthGuard.isAuthenticated() ||
+            (typeof AuthGuard.isTokenValid === 'function' && !AuthGuard.isTokenValid())
+        ) {
+            console.error('[text-to-image.js] adminUtils is undefined due to auth issue. Redirecting to login.');
+            // window.location.href = '/login';
+        } else {
+            console.error('[text-to-image.js] adminUtils is undefined, but user is authenticated. Possible server/network error.');
+            // Optionally show a user-friendly error message here
+            alert('Server unavailable or network error. Please try again later.');
+        }
+        return;
+    }
+
     const imageApiList = document.getElementById('image-api-list');
     const apiCount = document.querySelector('.image-api-count');
     
@@ -222,8 +265,9 @@ function handleImageApiToggle(e) {
 
 // Add helper functions
 function resetImageForm() {
-    const form = document.getElementById('image-api-form');
-    if (!(form instanceof HTMLFormElement)) {
+    const formDiv = document.getElementById('image-api-form');
+    const form = formDiv ? formDiv.querySelector('form') : null;
+    if (!form) {
         console.error('Form element not found or not an HTMLFormElement');
         return;
     }
@@ -252,7 +296,7 @@ function resetImageForm() {
         console.warn('Form reset failed, inputs were cleared manually');
     }
 
-    form.style.display = 'none';
+    formDiv.style.display = 'none';
     
     const addButton = document.getElementById('add-image-api-btn');
     if (addButton) {
@@ -262,6 +306,23 @@ function resetImageForm() {
 
 // Add the loadGlobalSettings function
 async function loadGlobalSettings() {
+    console.log('[loadGlobalSettings] Called. window.adminUtils:', window.adminUtils);
+    if (!window.adminUtils) {
+        if (
+            !window.AuthGuard ||
+            !AuthGuard.isAuthenticated() ||
+            (typeof AuthGuard.isTokenValid === 'function' && !AuthGuard.isTokenValid())
+        ) {
+            console.error('[text-to-image.js] adminUtils is undefined due to auth issue. Redirecting to login.');
+            // window.location.href = '/login';
+        } else {
+            console.error('[text-to-image.js] adminUtils is undefined, but user is authenticated. Possible server/network error.');
+            // Optionally show a user-friendly error message here
+            alert('Server unavailable or network error. Please try again later.');
+        }
+        return;
+    }
+
     try {
         console.log('Starting to load global settings...');
         const sizeContainer = document.getElementById('global-size-options');
@@ -294,7 +355,7 @@ async function loadGlobalSettings() {
                     <input type="checkbox" id="size-${sizeId}" ${size.isActive ? 'checked' : ''}>
                     <label for="size-${sizeId}">${size.label || sizeId}</label>
                     <div class="item-controls">
-                        <button type="button" class="btn-icon" onclick="editSize('${sizeId}')">
+                        <button type="button" class="btn-icon btn-edit" onclick="editSize('${sizeId}')">
                             <i class="fas fa-edit"></i>
                         </button>
                         <button type="button" class="btn-icon btn-danger" onclick="removeGlobalOption(this, 'sizes')">
@@ -321,7 +382,7 @@ async function loadGlobalSettings() {
                     <input type="checkbox" id="style-${styleId}" ${style.isActive ? 'checked' : ''}>
                     <label for="style-${styleId}">${style.name}</label>
                     <div class="item-controls">
-                        <button type="button" class="btn-icon" onclick="editStyle('${styleId}')">
+                        <button type="button" class="btn-icon btn-edit" onclick="editStyle('${styleId}')">
                             <i class="fas fa-edit"></i>
                         </button>
                         <button type="button" class="btn-icon btn-danger" onclick="removeGlobalOption(this, 'styles')">
@@ -435,7 +496,7 @@ function addGlobalOption(type) {
             <input type="checkbox" id="size-${sizeId}" checked>
             <label for="size-${sizeId}">${width}x${height}</label>
             <div class="item-controls">
-                <button type="button" class="btn-icon" onclick="editSize('${sizeId}')">
+                <button type="button" class="btn-icon btn-edit" onclick="editSize('${sizeId}')">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button type="button" class="btn-icon btn-danger" onclick="removeGlobalOption(this, 'sizes')">
@@ -458,7 +519,7 @@ function addGlobalOption(type) {
             <input type="checkbox" id="style-${styleId}" checked>
             <label for="style-${styleId}">${styleName}</label>
             <div class="item-controls">
-                <button type="button" class="btn-icon" onclick="editStyle('${styleId}')">
+                <button type="button" class="btn-icon btn-edit" onclick="editStyle('${styleId}')">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button type="button" class="btn-icon btn-danger" onclick="removeGlobalOption(this, 'styles')">
@@ -541,7 +602,8 @@ async function editImageApi(id, name) {
     try {
         const response = await window.adminUtils.makeApiRequest(`/api/admin/image-apis/${id}`);
         
-        const form = document.getElementById('image-api-form');
+        const formDiv = document.getElementById('image-api-form');
+        const form = formDiv ? formDiv.querySelector('form') : null;
         const addButton = document.getElementById('add-image-api-btn');
         const formHeader = form.querySelector('.form-header h3');
         const submitBtn = form.querySelector('button[type="submit"]');
@@ -558,7 +620,7 @@ async function editImageApi(id, name) {
         
         form.dataset.mode = 'edit';
         form.dataset.apiId = id;
-        form.style.display = 'block';
+        formDiv.style.display = 'block';
         addButton.style.display = 'none';
         
     } catch (err) {
@@ -651,3 +713,12 @@ window.testImageApi = testImageApi;
 window.editImageApi = editImageApi;
 window.deleteImageApi = deleteImageApi;
 window.toggleImageApi = toggleImageApi;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await window.initAdminUtils?.();
+    if (!window.adminUtils) {
+        window.location.href = '/login';
+        return;
+    }
+    initImageApiSection();
+});

@@ -23,6 +23,16 @@ async function makeApiRequest(endpoint, options = {}) {
 
     try {
         const response = await fetch(endpoint, config);
+        // Handle global auth errors
+        if (response.status === 401 || response.status === 403) {
+            // Remove tokens and redirect to login
+            if (window.AuthGuard) {
+                window.AuthGuard.logout();
+            } else {
+                window.location.href = '/login';
+            }
+            return; // Prevent further processing
+        }
         const data = await response.json().catch(() => null);
         
         if (!response.ok) {

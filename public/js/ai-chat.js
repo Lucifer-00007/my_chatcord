@@ -4,6 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const modelSelect = document.getElementById('model-select');
     const submitBtn = chatForm ? chatForm.querySelector('button') : null; // Changed from button[type="submit"] to button
 
+    // Redirect to login if not authenticated or token is invalid
+    if (!window.AuthGuard || !AuthGuard.isAuthenticated() ||
+        (typeof AuthGuard.isTokenValid === 'function' && !AuthGuard.isTokenValid())) {
+        window.location.href = '/login';
+        return;
+    }
+
     // Ensure the form and button exist
     if (!chatForm || !submitBtn) {
         console.error('Required elements not found:', { 

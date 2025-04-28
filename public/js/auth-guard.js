@@ -21,6 +21,22 @@ const AuthGuard = {
         return !!this.getRoomToken();
     },
 
+    isTokenValid() {
+        const token = this.getAuthToken();
+        if (!token) return false;
+        const parts = token.split('.');
+        if (parts.length !== 3) return false;
+        try {
+            const payload = JSON.parse(atob(parts[1]));
+            if (!payload.exp) return false;
+            // Check expiration (exp is in seconds)
+            if (Date.now() >= payload.exp * 1000) return false;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    },
+
     checkAuth() {
         const user = this.getUser();
         const publicPages = ['/login', '/register'];
@@ -33,19 +49,19 @@ const AuthGuard = {
 
         // Check admin access
         if (isAdminPage) {
-            if (!user || !user.isAdmin) {
-                window.location.href = '/login';
+            if (!user || !user.isAdmin || !this.isTokenValid()) {
+                this.logout();
                 return false;
             }
         }
 
-        if (isChatPage && (!user || !this.isInRoom())) {
-            window.location.href = '/login';
+        if (isChatPage && (!user || !this.isInRoom() || !this.isTokenValid())) {
+            this.logout();
             return false;
         }
 
-        if (!user && !publicPages.includes(currentPage)) {
-            window.location.href = '/login';
+        if ((!user || !this.isTokenValid()) && !publicPages.includes(currentPage)) {
+            this.logout();
             return false;
         }
 

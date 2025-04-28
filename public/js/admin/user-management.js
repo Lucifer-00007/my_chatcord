@@ -1,4 +1,10 @@
 async function initUserManagement() {
+    // Redirect to login if not authenticated
+    if (!window.AuthGuard || !AuthGuard.isAuthenticated()) {
+        window.location.href = '/login';
+        return;
+    }
+
     const elements = {
         addButton: document.getElementById('add-user-btn'),
         userList: document.getElementById('user-list'),

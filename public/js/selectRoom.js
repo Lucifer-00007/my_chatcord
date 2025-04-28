@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    if (!window.AuthGuard || !AuthGuard.isAuthenticated() || !AuthGuard.isTokenValid()) {
+        window.location.href = '/login';
+    }
+
     const user = AuthGuard.getUser();
     const usernameInput = document.getElementById('username');
     const roomSelect = document.getElementById('room');

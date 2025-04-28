@@ -174,7 +174,7 @@ async function loadRooms() {
                     </div>
                 </div>
                 <div class="room-actions">
-                    <button class="btn-icon edit-room" title="Edit Room">
+                    <button class="btn-icon btn-edit" title="Edit Room">
                         <i class="fas fa-edit"></i>
                     </button>
                     ${!room.isDefault ? `
