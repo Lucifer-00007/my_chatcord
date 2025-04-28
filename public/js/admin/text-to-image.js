@@ -1,18 +1,7 @@
 async function initImageApiSection() {
     console.log('[initImageApiSection] Starting initialization...');
-    // Debug AuthGuard and adminUtils
-    console.log('[initImageApiSection] window.AuthGuard:', window.AuthGuard);
-    console.log('[initImageApiSection] AuthGuard.isAuthenticated:', window.AuthGuard && window.AuthGuard.isAuthenticated && window.AuthGuard.isAuthenticated());
-    console.log('[initImageApiSection] AuthGuard.isTokenValid:', window.AuthGuard && typeof window.AuthGuard.isTokenValid === 'function' ? window.AuthGuard.isTokenValid() : 'N/A');
-    console.log('[initImageApiSection] window.adminUtils:', window.adminUtils);
-
-    if (!window.AuthGuard || !AuthGuard.isAuthenticated() ||
-        (typeof AuthGuard.isTokenValid === 'function' && !AuthGuard.isTokenValid()) ||
-        !window.adminUtils) {
-        console.warn('[initImageApiSection] Redirecting to /login due to failed auth or missing adminUtils');
-        // window.location.href = '/login';
-        return;
-    }
+    // Minimal guard for adminUtils, all auth handled in admin.js
+    if (!window.adminUtils) return;
 
     const elements = {
         formDiv: document.getElementById('image-api-form'),
@@ -22,15 +11,6 @@ async function initImageApiSection() {
         testButton: document.getElementById('test-image-api')
     };
     const form = elements.formDiv ? elements.formDiv.querySelector('form') : null;
-    console.log('[initImageApiSection] Elements:', {
-        formDiv: elements.formDiv,
-        form: form,
-        list: elements.list,
-        addButton: elements.addButton,
-        closeButton: elements.closeButton,
-        testButton: elements.testButton
-    });
-
     if (!elements.formDiv || !form || !elements.list || !elements.addButton) {
         console.error('Required elements for Image API section not found:', {
             hasFormDiv: !!elements.formDiv,
@@ -81,20 +61,10 @@ async function initImageApiSection() {
 
 // Fix loadImageApiList function
 async function loadImageApiList() {
-    console.log('[loadImageApiList] Called. window.adminUtils:', window.adminUtils);
     if (!window.adminUtils) {
-        if (
-            !window.AuthGuard ||
-            !AuthGuard.isAuthenticated() ||
-            (typeof AuthGuard.isTokenValid === 'function' && !AuthGuard.isTokenValid())
-        ) {
-            console.error('[text-to-image.js] adminUtils is undefined due to auth issue. Redirecting to login.');
-            // window.location.href = '/login';
-        } else {
-            console.error('[text-to-image.js] adminUtils is undefined, but user is authenticated. Possible server/network error.');
-            // Optionally show a user-friendly error message here
-            alert('Server unavailable or network error. Please try again later.');
-        }
+        console.error('[text-to-image.js] adminUtils is undefined, but user is authenticated. Possible server/network error.');
+        // Optionally show a user-friendly error message here
+        alert('Server unavailable or network error. Please try again later.');
         return;
     }
 
@@ -306,20 +276,10 @@ function resetImageForm() {
 
 // Add the loadGlobalSettings function
 async function loadGlobalSettings() {
-    console.log('[loadGlobalSettings] Called. window.adminUtils:', window.adminUtils);
     if (!window.adminUtils) {
-        if (
-            !window.AuthGuard ||
-            !AuthGuard.isAuthenticated() ||
-            (typeof AuthGuard.isTokenValid === 'function' && !AuthGuard.isTokenValid())
-        ) {
-            console.error('[text-to-image.js] adminUtils is undefined due to auth issue. Redirecting to login.');
-            // window.location.href = '/login';
-        } else {
-            console.error('[text-to-image.js] adminUtils is undefined, but user is authenticated. Possible server/network error.');
-            // Optionally show a user-friendly error message here
-            alert('Server unavailable or network error. Please try again later.');
-        }
+        console.error('[text-to-image.js] adminUtils is undefined, but user is authenticated. Possible server/network error.');
+        // Optionally show a user-friendly error message here
+        alert('Server unavailable or network error. Please try again later.');
         return;
     }
 
