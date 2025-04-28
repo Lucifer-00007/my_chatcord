@@ -22,8 +22,8 @@ const RoomBlockSchema = new mongoose.Schema({
     duration: {
         type: Number,
         required: true,
-        min: 1,
-        max: 30 // max 30 days
+        min: 1/48, // min 30 minutes
+        max: Number.MAX_SAFE_INTEGER // effectively unlimited
     },
     startDate: {
         type: Date,
