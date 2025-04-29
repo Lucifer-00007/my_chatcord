@@ -128,7 +128,7 @@ async function initRoomManagement() {
         const formData = {
             userId: document.getElementById('user-select').value,
             reason: document.getElementById('block-reason').value,
-            duration: parseInt(document.getElementById('block-duration').value),
+            duration: parseFloat(document.getElementById('block-duration').value),
             roomId: selectedRoom
         };
 
@@ -170,7 +170,7 @@ async function loadRooms() {
                     <div class="room-topic">${room.topic}</div>
                     ${room.description ? `<div class="room-description">${room.description}</div>` : ''}
                     <div class="room-stats">
-                        <i class="fas fa-users"></i> ${room.userCount || 0} users
+                        <i class="fas fa-users"></i> ${room.blockedCount || 0} Blocked Users
                     </div>
                 </div>
                 <div class="room-actions">
@@ -194,21 +194,25 @@ async function loadBlocks(roomId) {
     const container = document.querySelector('.blocks-list');
     try {
         const blocks = await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/blocks`);
-        
-        container.innerHTML = blocks.map(block => `
-            <div class="block-item" data-id="${block._id}">
-                <div class="block-info">
-                    <div class="block-user">${block.user.username}</div>
-                    <div class="block-reason">${block.reason}</div>
-                    <div class="block-duration">Blocked until ${new Date(block.endDate).toLocaleDateString()}</div>
+        container.innerHTML = blocks.map(block => {
+            const endDate = new Date(block.endDate);
+            const time = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const date = `${endDate.getDate()}/${endDate.getMonth() + 1}/${endDate.getFullYear()}`;
+            return `
+                <div class="block-item" data-id="${block._id}">
+                    <div class="block-info">
+                        <div class="block-user"> ${block.user.username}</div>
+                        <div class="block-reason">${block.reason}</div>
+                        <div class="block-duration">Blocked until ${time}, ${date}</div>
+                    </div>
+                    <div class="block-actions">
+                        <button class="btn-icon btn-danger" onclick="removeBlock('${block._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="block-actions">
-                    <button class="btn-icon btn-danger" onclick="removeBlock('${block._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('') || '<div class="empty-state">No blocks for this room</div>';
+            `;
+        }).join('') || '<div class="empty-state">No blocks for this room</div>';
     } catch (err) {
         showNotification(err.message, 'error');
     }
@@ -227,11 +231,8 @@ async function showBlockModal() {
 
     try {
         await waitForAdminUtils();
+        await loadUsersForModal();
 
-        // Load initial users list
-        await loadUsersForModal();  // This now includes populating the select
-
-        // Populate dropdowns
         if (!window.adminUtils.constants?.ROOM_MANAGEMENT) {
             throw new Error('Room management constants not found');
         }
@@ -240,13 +241,13 @@ async function showBlockModal() {
             .map(reason => `<option value="${reason}">${reason}</option>`)
             .join('');
 
-        durationSelect.innerHTML = window.adminUtils.constants.ROOM_MANAGEMENT.BLOCK_DURATIONS
+        const durations = window.adminUtils.constants.ROOM_MANAGEMENT.BLOCK_DURATIONS;
+        console.log('User Block Durations:', durations);
+        durationSelect.innerHTML = durations
             .map(duration => `<option value="${duration.value}">${duration.label}</option>`)
             .join('');
 
-        // Show the modal
         modal.style.display = 'block';
-
     } catch (err) {
         window.showNotification('Failed to initialize block user modal: ' + err.message, 'error');
     }

@@ -19,18 +19,27 @@ router.get('/constants', [auth, adminAuth], async (req, res) => {
 // Get all rooms
 router.get('/rooms', [auth, adminAuth], async (req, res) => {
     try {
-        const rooms = await Room.find()
-            .select('name topic description isDefault')
-            .lean();
+        const rooms = await Room.find().lean();
+        // Get all room IDs
+        const roomIds = rooms.map(room => room._id);
 
-        // Add user count for each room
-        for (let room of rooms) {
-            room.userCount = await User.countDocuments({
-                'activeRooms': room.name
-            });
-        }
+        // Get block counts for each room
+        const blocks = await RoomBlock.aggregate([
+            { $match: { room: { $in: roomIds.map(id => id.toString()) }, isActive: true } },
+            { $group: { _id: '$room', count: { $sum: 1 } } }
+        ]);
 
-        res.json(rooms);
+        // Map roomId to count
+        const blockMap = {};
+        blocks.forEach(b => { blockMap[b._id] = b.count; });
+
+        // Attach blockedCount to each room
+        const roomsWithBlocked = rooms.map(room => ({
+            ...room,
+            blockedCount: blockMap[room._id.toString()] || 0
+        }));
+
+        res.json(roomsWithBlocked);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

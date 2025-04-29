@@ -67,15 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             sizeSelect.innerHTML = sizesData.values
                 .filter(size => size.isActive)
-                .map(size => `
-                    <option value="${size.value.width}">${size.name}</option>
-                `).join('');
+                .map(size => {
+                    // Fallback if size.value is missing
+                    const value = size.id  ? size.id : '';
+                    const label = size.label  ? size.label : '';
+                    return `<option value="${value}">${label}</option>`;
+                }).join('');
 
             // Enable/disable generate button based on available options
             generateBtn.disabled = !styleSelect.options.length || !sizeSelect.options.length;
         } catch (err) {
             console.error('Error loading settings:', err);
-            showNotification('Failed to load image settings', 'error');
+            (typeof showNotification === 'function' ? showNotification : function(msg, type) { alert(msg); })('Failed to load image settings', 'error');
         }
     }
 
@@ -195,4 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadGlobalSettings();
 });
 
-// Move showNotification to admin.js to be globally accessible
+// Ensure showNotification is defined for this file
+if (typeof showNotification !== 'function') {
+    function showNotification(message, type = 'info') {
+        alert(message);
+    }
+}

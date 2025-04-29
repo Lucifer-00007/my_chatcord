@@ -11,7 +11,7 @@
     --error-color: #d9534f;
     --border-color: #cbcbcb;
 }
-    
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -184,7 +184,7 @@ a {
     width: 100%;
     padding: 12px 15px;
     height: 50px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 0;
     border-radius: 5px;
     font-size: 16px;
     color: #333;
@@ -483,7 +483,8 @@ chat-messages .message .meta span {
     width: 100%;
     background: #fff;
     color: #333;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 0;
+    border-radius: 5px;
 }
 
 .join-main .btn {
@@ -593,8 +594,8 @@ chat-messages .message .meta span {
     /* Merged properties */
     padding: 12px;
     /* From later definition */
-    border-radius: 4px;
-    border: 1px solid #ddd;
+    border-radius: 5px;
+    border: 0;
     min-width: 200px;
     width: 100%;
     background-color: #cad1ff;
@@ -704,7 +705,7 @@ chat-messages .message .meta span {
     margin-top: 20px;
     transition: all 0.3s ease;
     border-radius: 8px;
-    background-color: #cad1ff  !important;
+    background-color: #cad1ff !important;
     color: #667aff;
     border: none;
     cursor: pointer;
@@ -714,7 +715,8 @@ chat-messages .message .meta span {
     gap: 10px;
 }
 
-#generate-btn:hover, #generate-voice-btn:hover {
+#generate-btn:hover,
+#generate-voice-btn:hover {
     /* Merged properties - identical definitions */
     background-color: #7386ffe8 !important;
     transform: translateY(-1px);
@@ -778,7 +780,7 @@ chat-messages .message .meta span {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding:5%;
+    padding: 5%;
 }
 
 .language-display::before {
@@ -1315,20 +1317,23 @@ input:checked+.toggle-slider:before {
 
 .btn-icon.edit-api,
 .btn-icon.btn-edit {
-  background: #fff;                                    
-  border: 1px solid var(--dark-color-a);               
-  color: var(--dark-color-a);                         
+    background: #fff;
+    border: 1px solid var(--dark-color-a);
+    color: var(--dark-color-a);
 }
 
 .btn-icon.edit-api:hover,
 .btn-icon.btn-edit:hover {
-  background: var(--dark-color-a);                     /* dark background on hover */  
-  color: #fff;                                         /* white text on hover */  
+    background: var(--dark-color-a);
+    /* dark background on hover */
+    color: #fff;
+    /* white text on hover */
 }
 
 .btn-icon.edit-api:hover i,
 .btn-icon.btn-edit:hover i {
-  color: #fff;                                         /* white icons on hover */  
+    color: #fff;
+    /* white icons on hover */
 }
 
 .btn-icon.btn-danger {
@@ -1425,13 +1430,11 @@ input:checked+.toggle-slider:before {
     /* From later definition */
 }
 
-.btn-wide:hover {
-    /* Merged properties */
+.btn-wide:hover,.btn-user-block:hover {
     background: var(--dark-color-b) !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     color: #fff !important;
-    /* From later definition */
 }
 
 .form-input {
@@ -2065,8 +2068,8 @@ input:checked+.toggle-slider:before {
     flex: 1;
     margin: 0;
     max-width: 13ch;
-    white-space:nowrap;
-    overflow:hidden;
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
     font-family: monospace;
     font-size: medium;
@@ -2673,13 +2676,14 @@ input:checked+.toggle-slider:before {
 .room-topic {
     font-size: 0.9rem;
     color: darkcyan;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
 }
 
 .room-description {
     font-size: 0.85rem;
     color: #737375;
     opacity: 0.8;
+    margin-bottom: 0.2rem;
 }
 
 .room-stats {
@@ -2907,8 +2911,13 @@ input:checked+.toggle-slider:before {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideIn {
@@ -2916,6 +2925,7 @@ input:checked+.toggle-slider:before {
         transform: translateY(-20px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
