@@ -3,9 +3,9 @@
 :root {
     --dark-color-a: #667aff;
     --dark-color-b: #7386ff;
+    --dark-color-c: #8c9cff;
     --light-color: #e6e9ff;
     --light-color-a: #f8f9fa;
-    /* --success-color: #5cb85c; */
     --success-color: #00df00;
     --warning-color: #ffe942;
     --error-color: #d9534f;
@@ -86,13 +86,13 @@ a {
 }
 
 .nav-item:hover {
-    background-color: var(--dark-color-b);
+    background-color: var(--dark-color-c);
     color: #fff;
     /* Added from .nav-item.admin:hover */
 }
 
 .nav-item.active {
-    background-color: var(--dark-color-b);
+    background-color: var(--dark-color-c);
 }
 
 .nav-item.admin {
@@ -134,7 +134,7 @@ a {
 }
 
 .btn:hover {
-    background: #712cf9;
+    background: #aebaff;
     color: #fff;
 }
 
@@ -700,32 +700,21 @@ chat-messages .message .meta span {
     /* Merged properties */
     width: 100%;
     padding: 15px;
-    /* From later definition */
     font-size: 1.1rem;
     margin-top: 20px;
-    /* From later definition */
     transition: all 0.3s ease;
     border-radius: 8px;
-    /* From later definition */
-    background-color: #bcc3ff !important;
-    /* From later definition */
+    background-color: #cad1ff  !important;
     color: #667aff;
-    /* From later definition */
     border: none;
-    /* From later definition */
     cursor: pointer;
-    /* From later definition */
     display: flex;
-    /* From later definition */
     align-items: center;
-    /* From later definition */
     justify-content: center;
-    /* From later definition */
     gap: 10px;
-    /* From later definition */
 }
 
-#generate-btn:hover {
+#generate-btn:hover, #generate-voice-btn:hover {
     /* Merged properties - identical definitions */
     background-color: #7386ffe8 !important;
     transform: translateY(-1px);
@@ -782,14 +771,14 @@ chat-messages .message .meta span {
 
 /* Voice UI Styles */
 .language-display {
-    background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
+    background-color: white;
     border-radius: 4px;
-    font-size: 0.9rem;
-    color: var(--text-color);
+    font-size: 0.85rem;
+    color: black;
     display: flex;
     align-items: center;
     gap: 8px;
+    padding:5%;
 }
 
 .language-display::before {
@@ -966,7 +955,7 @@ chat-messages .message .meta span {
 .voice-select,
 .language-select {
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 0px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
     color: #333;

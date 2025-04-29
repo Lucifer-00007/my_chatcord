@@ -225,7 +225,7 @@ function updateVoiceSelectionForModel(modelId) {
     voiceSelection.innerHTML = '';
 
     if (!modelId) {
-        voiceSelection.innerHTML = '<option value="">Select a model first</option>';
+        voiceSelection.innerHTML = '<option value="">Select a model first!</option>';
         return;
     }
 
@@ -258,6 +258,7 @@ function updateLanguageDisplay() {
     if (!voiceSelection || !languageDisplay) return;
 
     const selectedOption = voiceSelection.options[voiceSelection.selectedIndex];
+    console.log('Selected voice option:', selectedOption);
     if (!selectedOption || !selectedOption.value) {
         languageDisplay.textContent = 'Select a voice';
         return;

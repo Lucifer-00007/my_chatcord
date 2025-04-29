@@ -28,10 +28,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
             const rooms = await response.json();
-            
-            roomSelect.innerHTML = rooms.map(room => `
-                <option value="${room.name}">${room.name} - ${room.topic}</option>
-            `).join('');
+            roomSelect.innerHTML = rooms.map(room => {
+                const name = truncateText(room.name);
+                const topic = truncateText(room.topic, 42);
+                return `<option value="${room.name}">${name} - ${topic}</option>`;
+            }).join('');
         } catch (err) {
             console.error('Error loading rooms:', err);
             // Add a default option if loading fails
@@ -106,5 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         logoutBtn.addEventListener('click', () => {
             AuthGuard.logout();
         });
+    }
+
+    function truncateText(text, maxChars = 13) {
+        return text.length > maxChars ? text.slice(0, maxChars) + '…' : text;
     }
 });
