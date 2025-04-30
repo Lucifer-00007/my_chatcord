@@ -25,7 +25,7 @@ router.get('/rooms', [auth, adminAuth], async (req, res) => {
 
         // Get block counts for each room
         const blocks = await RoomBlock.aggregate([
-            { $match: { room: { $in: roomIds.map(id => id.toString()) }, isActive: true } },
+            { $match: { room: { $in: roomIds.map(id => id) }, isActive: true } },
             { $group: { _id: '$room', count: { $sum: 1 } } }
         ]);
 

@@ -182,7 +182,7 @@ async function loadRooms() {
     const container = document.getElementById('rooms-container');
     try {
         const rooms = await window.adminUtils.makeApiRequest('/api/admin/room-management/rooms');
-
+        console.log('Rooms:', rooms);    
         container.innerHTML = rooms.map(room => `
             <div class="room-item" data-id="${room._id}" data-name="${room.name}">
                 <div class="room-info">

@@ -7,7 +7,8 @@ const RoomBlockSchema = new mongoose.Schema({
         required: true
     },
     room: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId, // Use ObjectId for room
+        ref: 'Room',
         required: true
     },
     reason: {

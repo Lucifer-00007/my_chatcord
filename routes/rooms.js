@@ -61,14 +61,14 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // Get messages for a room
-router.get('/:roomName/messages', auth, async (req, res) => {
+router.get('/:roomId/messages', auth, async (req, res) => {
   try {
-    const roomName = decodeURIComponent(req.params.roomName);
+    const roomId = req.params.roomId;
 
     // Check for active block
     const activeBlock = await RoomBlock.findOne({
       user: req.user._id,
-      room: roomName,
+      room: roomId,
       isActive: true,
       endDate: { $gt: new Date() }
     });
@@ -80,15 +80,10 @@ router.get('/:roomName/messages', auth, async (req, res) => {
       });
     }
 
-    // Find or create room
-    let room = await Room.findOne({ name: roomName });
+    // Find room by _id
+    let room = await Room.findById(roomId);
     if (!room) {
-      room = new Room({
-        name: roomName,
-        topic: roomName,
-        createdBy: req.user._id
-      });
-      await room.save();
+      return res.status(404).json({ message: 'Room not found' });
     }
 
     // Then fetch messages using room's ObjectId
@@ -107,22 +102,30 @@ router.get('/:roomName/messages', auth, async (req, res) => {
 // Join room
 router.post('/join', auth, async (req, res) => {
   try {
-    const room = decodeURIComponent(req.body.room);
+    const roomId = req.body.room;
     const user = req.user;
 
     // Check if user is blocked from this room
     const activeBlock = await RoomBlock.findOne({
       user: user._id,
-      room,
+      room: roomId,
       isActive: true,
       endDate: { $gt: new Date() }
-    });
+    }).populate('blockedBy', 'username');
 
     if (activeBlock) {
-      return res.status(403).json({ 
-        message: 'You are blocked from this room',
-        blockEndDate: activeBlock.endDate
+      return res.status(403).json({
+        message: `You are blocked from this room until ${new Date(activeBlock.endDate).toLocaleString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, day: 'numeric', month: 'numeric', year: 'numeric'})}`,
+        blockEndDate: activeBlock.endDate,
+        blockReason: activeBlock.reason,
+        blockedBy: activeBlock.blockedBy && activeBlock.blockedBy.username ? activeBlock.blockedBy.username : undefined
       });
+    }
+
+    // Find room by _id
+    const room = await Room.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
     }
 
     // Generate a room token
@@ -130,7 +133,7 @@ router.post('/join', auth, async (req, res) => {
       {
         userId: user._id,
         username: user.username,
-        room
+        room: room._id.toString()
       },
       security.JWT_SECRET,
       { expiresIn: security.ROOM_TOKEN_EXPIRE }

@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             roomSelect.innerHTML = rooms.map(room => {
                 const name = truncateText(room.name);
                 const topic = truncateText(room.topic, 42);
-                return `<option value="${room.name}">${name} - ${topic}</option>`;
+                // Use room._id as value
+                return `<option value="${room._id}">${name} - ${topic}</option>`;
             }).join('');
         } catch (err) {
             console.error('Error loading rooms:', err);
@@ -68,7 +69,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                     },
-                    body: JSON.stringify({ room: encodeURIComponent(room) })
+                    // Send roomId (ObjectId as string) directly, no encodeURIComponent
+                    body: JSON.stringify({ room: room })
                 });
 
                 const data = await res.json();
@@ -80,8 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const infoMsg = document.querySelector('.info-msg');
                     if (infoMsg) {
                         if (res.status === 403 && data.blockEndDate) {
-                            const endDate = new Date(data.blockEndDate).toLocaleDateString();
-                            infoMsg.textContent = `${data.message} until ${endDate} !`;
+                            // Show full block message, reason, and blocked by if available
+                            infoMsg.textContent = `${data.message} !!` || 'You are blocked from this room.';;
                         } else {
                             infoMsg.textContent = data.message || 'Failed to join room';
                         }

@@ -54,6 +54,29 @@ try {
     const tokenData = JSON.parse(atob(roomToken.split('.')[1]));
     const { username, room } = tokenData;
 
+    // Fetch and display the actual room name
+    (async () => {
+        try {
+            const res = await fetch(`/api/rooms/${room}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            if (res.ok) {
+                const roomObj = await res.json();
+                if (roomObj && roomObj.name) {
+                    outputRoomName(roomObj.name);
+                } else {
+                    outputRoomName('Unknown Room');
+                }
+            } else {
+                outputRoomName('Unknown Room');
+            }
+        } catch (err) {
+            outputRoomName('Unknown Room');
+        }
+    })();
+
     // Initialize socket with auth tokens
     const socket = io({
         auth: {
@@ -114,7 +137,6 @@ try {
 
     // Get room and users - moved outside joinRoom since room joining happens on authentication
     socket.on('roomUsers', ({ room, users }) => {
-        outputRoomName(room);
         outputUsers(users);
     });
 
