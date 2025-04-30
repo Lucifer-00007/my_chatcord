@@ -47,8 +47,17 @@ const AuthGuard = {
         const isChatPage = currentPage === '/chat';
         const isAdminPage = adminPages.some(page => currentPage.startsWith(page));
 
-        // Check admin access
-        if (isAdminPage) {
+        // Allow non-admins to access admin pages if only using public GET endpoints
+        const publicAdminPages = [
+            '/admin-settings', '/admin/ai-chat', '/admin/text-to-image', '/admin/text-to-voice'
+        ];
+        if (isAdminPage && publicAdminPages.includes(currentPage)) {
+            if (!user || !this.isTokenValid()) {
+                this.logout();
+                return false;
+            }
+            // Do not require isAdmin for these pages
+        } else if (isAdminPage) {
             if (!user || !user.isAdmin || !this.isTokenValid()) {
                 this.logout();
                 return false;

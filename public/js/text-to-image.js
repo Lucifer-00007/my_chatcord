@@ -16,11 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadActiveImageApis() {
         try {
-            const res = await fetch('/api/admin/image-apis', {
+            const res = await fetch('/api/image-apis', {
                 headers: {
                     'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                 }
             });
+            if (res.status === 403) {
+                modelSelect.innerHTML = '<option value="">No Active APIs (access denied)</option>';
+                generateBtn.disabled = true;
+                return;
+            }
             const apis = await res.json();
             
             // Filter active APIs
@@ -47,16 +52,26 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadGlobalSettings() {
         try {
             // Load sizes
-            const sizesRes = await fetch('/api/admin/image-settings/sizes', {
+            const sizesRes = await fetch('/api/image-settings/sizes', {
                 headers: { 'Authorization': `Bearer ${AuthGuard.getAuthToken()}` }
             });
-            const sizesData = await sizesRes.json();
+            let sizesData = { values: [] };
+            if (sizesRes.status === 403) {
+                showNotification('Image sizes are not available for your account', 'warning');
+            } else {
+                sizesData = await sizesRes.json();
+            }
             
             // Load styles
-            const stylesRes = await fetch('/api/admin/image-settings/styles', {
+            const stylesRes = await fetch('/api/image-settings/styles', {
                 headers: { 'Authorization': `Bearer ${AuthGuard.getAuthToken()}` }
             });
-            const stylesData = await stylesRes.json();
+            let stylesData = { values: [] };
+            if (stylesRes.status === 403) {
+                showNotification('Image styles are not available for your account', 'warning');
+            } else {
+                stylesData = await stylesRes.json();
+            }
 
             // Update dropdowns
             styleSelect.innerHTML = stylesData.values

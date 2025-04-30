@@ -5,7 +5,7 @@ const auth = require('../../middleware/auth');
 const { adminAuth } = require('../../middleware/admin');
 
 // Get size settings
-router.get('/sizes', [auth, adminAuth], async (req, res) => {
+router.get('/sizes', auth, async (req, res) => {
     try {
         let settings = await ImageSettings.findOne({ type: 'sizes' });
         if (!settings) {
@@ -27,7 +27,7 @@ router.get('/sizes', [auth, adminAuth], async (req, res) => {
 });
 
 // Get style settings
-router.get('/styles', [auth, adminAuth], async (req, res) => {
+router.get('/styles', auth, async (req, res) => {
     try {
         let settings = await ImageSettings.findOne({ type: 'styles' });
         if (!settings) {

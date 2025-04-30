@@ -8,7 +8,7 @@ const { parseCurlCommand } = require('../../utils/apiHelpers');
 const mongoose = require('mongoose');
 
 // Get all image APIs
-router.get('/', [auth, adminAuth], async (req, res) => {
+router.get('/', auth, async (req, res) => {
     try {
         const apis = await ImageApi.find();
         res.json(apis);

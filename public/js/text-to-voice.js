@@ -93,11 +93,17 @@ let VOICE_APIS = [];
 
 async function loadVoiceConfig() {
     try {
-        const response = await fetch('/api/admin/voice/config', {
+        const response = await fetch('/api/voice/config', {
             headers: {
                 'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
             }
         });
+        // If forbidden but endpoint is public, do not show admin error
+        if (response.status === 403) {
+            VOICE_API_CONFIG = null;
+            showNotification('Voice configuration is not available for your account', 'warning');
+            return;
+        }
         VOICE_API_CONFIG = await response.json();
     } catch (err) {
         console.error('Failed to load voice config:', err);
@@ -107,15 +113,18 @@ async function loadVoiceConfig() {
 
 async function loadVoiceApis() {
     try {
-        // Get all voice APIs from the server
-        const response = await fetch('/api/admin/voice', {
+        const response = await fetch('/api/voice', {
             headers: {
                 'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
             }
         });
+        // If forbidden but endpoint is public, do not show admin error
+        if (response.status === 403) {
+            VOICE_APIS = [];
+            showNotification('Voice APIs are not available for your account', 'warning');
+            return;
+        }
         const apis = await response.json();
-
-        // Filter active APIs
         VOICE_APIS = apis.filter(api => api.isActive);
         console.log('Loaded voice APIs:', VOICE_APIS);
     } catch (err) {

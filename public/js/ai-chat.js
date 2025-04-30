@@ -25,11 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadAvailableModels() {
         try {
             console.log('Fetching available AI models');
-            const res = await fetch('/api/admin/ai-apis/active', {
+            const res = await fetch('/api/ai-apis/active', {
                 headers: {
                     'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                 }
             });
+            if (res.status === 403) {
+                modelSelect.innerHTML = '<option value="">No AI models available (access denied)</option>';
+                submitBtn.disabled = true;
+                return;
+            }
 
             const apis = await res.json();
             console.log('Available APIs:', apis);

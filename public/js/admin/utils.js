@@ -25,13 +25,31 @@ async function makeApiRequest(endpoint, options = {}) {
         const response = await fetch(endpoint, config);
         // Handle global auth errors
         if (response.status === 401 || response.status === 403) {
-            // Remove tokens and redirect to login
+            // Allow 403 for specific GET endpoints (do not logout)
+            const allowedGetEndpoints = [
+                '/api/ai-apis/active',
+                '/api/image-apis',
+                '/api/image-settings/sizes',
+                '/api/image-settings/styles',
+                '/api/voice',
+                '/api/voice/config'
+            ];
+            if (
+                config.method === undefined || config.method === 'GET'
+            ) {
+                const url = endpoint.split('?')[0];
+                if (allowedGetEndpoints.some(api => url.endsWith(api))) {
+                    // Just return the response, do not logout
+                    return response;
+                }
+            }
+            // Remove tokens and redirect to login for all other cases
             if (window.AuthGuard) {
                 window.AuthGuard.logout();
             } else {
                 window.location.href = '/login';
             }
-            return; // Prevent further processing
+            return;
         }
         const data = await response.json().catch(() => null);
         

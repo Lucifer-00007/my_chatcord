@@ -159,6 +159,20 @@ app.use('/api/ai', authMiddleware, require('./routes/ai'));
 app.use('/api/images', authMiddleware, require('./routes/images'));
 app.use('/api/voice', authMiddleware, require('./routes/voice'));
 
+// Public or authenticated GET endpoints for APIs (no admin required)
+const aiApisRouter = require('./routes/admin/ai-apis');
+const imageApisRouter = require('./routes/admin/image-apis');
+const imageSettingsRouter = require('./routes/admin/image-settings');
+const voiceRouter = require('./routes/admin/voice');
+
+// AI APIs
+app.use('/api/ai-apis', aiApisRouter);
+// Image APIs
+app.use('/api/image-apis', imageApisRouter);
+app.use('/api/image-settings', imageSettingsRouter);
+// Voice APIs
+app.use('/api/voice', voiceRouter);
+
 // Admin routes with auth middleware
 app.use('/api/admin', [authMiddleware, adminAuth], require('./routes/admin'));
 
