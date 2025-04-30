@@ -26,7 +26,7 @@ const ROOM_MANAGEMENT = {
         { value: 7, label: '1 week' },
         { value: 30, label: '1 month' },
         { value: 365, label: '1 year' },
-        { value: -1, label: 'Lifetime' }
+        { value: 9999999, label: 'Lifetime' }
     ]
 };
 

@@ -105,7 +105,7 @@ async function initRoomManagement() {
 
         try {
             const method = elements.roomForm.dataset.mode === 'edit' ? 'PUT' : 'POST';
-            const endpoint = method === 'PUT' 
+            const endpoint = method === 'PUT'
                 ? `/api/admin/room-management/rooms/${elements.roomForm.dataset.roomId}`
                 : '/api/admin/room-management/rooms';
 
@@ -125,11 +125,31 @@ async function initRoomManagement() {
     // Block form submit handler
     elements.blockForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const userId = document.getElementById('user-select').value;
+        const reason = document.getElementById('block-reason').value;
+        const duration = parseFloat(document.getElementById('block-duration').value);
+        const roomId = selectedRoom;
+
+        // Check if user is already blocked in this room
+        try {
+            const blocks = await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/blocks`);
+            const userBlock = blocks.find(block => block.user && block.user._id === userId && block.isActive);
+            if (userBlock) {
+                const username = userBlock.user && userBlock.user.username ? userBlock.user.username : 'User';
+                const roomName = elements.selectedRoomName ? elements.selectedRoomName.textContent : 'this';
+                showNotification(`${username} is already blocked in the ${roomName} room!`, 'warning');
+                return;
+            }
+        } catch (err) {
+            showNotification('Could not verify existing blocks. Please try again.', 'error');
+            return;
+        }
+
         const formData = {
-            userId: document.getElementById('user-select').value,
-            reason: document.getElementById('block-reason').value,
-            duration: parseFloat(document.getElementById('block-duration').value),
-            roomId: selectedRoom
+            userId,
+            reason,
+            duration,
+            roomId
         };
 
         try {
@@ -162,7 +182,7 @@ async function loadRooms() {
     const container = document.getElementById('rooms-container');
     try {
         const rooms = await window.adminUtils.makeApiRequest('/api/admin/room-management/rooms');
-        
+
         container.innerHTML = rooms.map(room => `
             <div class="room-item" data-id="${room._id}" data-name="${room.name}">
                 <div class="room-info">
@@ -195,18 +215,42 @@ async function loadBlocks(roomId) {
     try {
         const blocks = await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/blocks`);
         container.innerHTML = blocks.map(block => {
-            const endDate = new Date(block.endDate);
-            const time = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            const date = `${endDate.getDate()}/${endDate.getMonth() + 1}/${endDate.getFullYear()}`;
+            // Defensive checks for block fields
+            const blockId = block && block._id ? block._id : '';
+            const username = block && block.user && block.user.username ? block.user.username : 'Unknown User';
+            const reason = block && block.reason ? block.reason : 'No reason provided';
+            // Show 'Blocked for lifetime' if duration is 9999999
+            let durationText;
+            if (block && block.duration === 9999999) {
+                durationText = '<span class="block-lifetime">Blocked for lifetime</span>';
+            } else {
+                const endDate = block && block.endDate ? new Date(block.endDate) : null;
+                const time = endDate ? endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '--';
+                const date = endDate ? `${endDate.getDate()}/${endDate.getMonth() + 1}/${endDate.getFullYear()}` : '--';
+                durationText = `<span class="block-until">Blocked until <b>${time}, ${date}</b></span>`;
+            }
+            // Blocked date
+            const startDate = block && block.startDate ? new Date(block.startDate) : null;
+            const blockedDate = startDate ? `${startDate.getDate()}/${startDate.getMonth() + 1}/${startDate.getFullYear()}` : '--';
+            // Blocked by (show username if available)
+            let blockedBy = (block && block.blockedBy && block.blockedBy.username)
+                ? block.blockedBy.username
+                : (block && block.blockedByName ? block.blockedByName : 'Unknown');
+
+            const durationsConstant = window.adminUtils.constants?.ROOM_MANAGEMENT?.BLOCK_DURATIONS || [];
+            const blockedDuration = durationsConstant.find(duration => duration.value === block?.duration)?.label || 'Unknown';
             return `
-                <div class="block-item" data-id="${block._id}">
+                <div class="block-item improved-block-item" data-id="${blockId}">
                     <div class="block-info">
-                        <div class="block-user"> ${block.user.username}</div>
-                        <div class="block-reason">${block.reason}</div>
-                        <div class="block-duration">Blocked until ${time}, ${date}</div>
+                        <div class="block-user"><span class="block-user-label">Name:</span> <span class="block-user-name">${username}</span></div>
+                        <div class="block-reason">Reason: <b>${reason}</b></div>
+                        <div class="block-by">Blocked-by: <b>${blockedBy}</b></div>
+                        <div class="block-date">Blocked-on: <b>${blockedDate}</b></div>
+                        <div class="block-duration">Blocked-span: <b>${blockedDuration}</b></div>
+                        <div class="block-duration-text">${durationText}</div>
                     </div>
                     <div class="block-actions">
-                        <button class="btn-icon btn-danger" onclick="removeBlock('${block._id}')">
+                        <button class="btn-icon btn-danger" title="Remove block" onclick="removeBlock('${blockId}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -290,17 +334,17 @@ function hideBlockModal() {
 
 async function loadUsers() {
     const userSelect = document.getElementById('user-select');
-    
+
     if (!userSelect) {
         window.showNotification('Error: Could not find user selection element', 'error');
         return;
     }
-    
+
     try {
         await waitForAdminUtils();
-        
+
         const users = await window.adminUtils.makeApiRequest('/api/admin/users');
-        
+
         if (!Array.isArray(users)) {
             throw new Error('Invalid response from server');
         }
@@ -309,14 +353,14 @@ async function loadUsers() {
             userSelect.innerHTML = '<option value="">No users available</option>';
             return;
         }
-        
+
         userSelect.innerHTML = `
             <option value="">Select a user...</option>
-            ${users.map(user => 
-                `<option value="${user._id}">${user.username}${user.email ? ` (${user.email})` : ''}</option>`
-            ).join('')}
+            ${users.map(user =>
+            `<option value="${user._id}">${user.username}${user.email ? ` (${user.email})` : ''}</option>`
+        ).join('')}
         `;
-        
+
     } catch (err) {
         window.showNotification(err.message || 'Failed to load users', 'error');
         userSelect.innerHTML = '<option value="">Error loading users</option>';
@@ -406,9 +450,9 @@ async function loadUsersForModal() {
 
         userSelect.innerHTML = `
             <option value="">Select a user...</option>
-            ${users.map(user => 
-                `<option value="${user._id}">${user.username} (${user.email || 'No email'})</option>`
-            ).join('')}
+            ${users.map(user =>
+            `<option value="${user._id}">${user.username} (${user.email || 'No email'})</option>`
+        ).join('')}
         `;
     } catch (err) {
         window.showNotification(err.message || 'Failed to load users', 'error');

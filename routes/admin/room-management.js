@@ -119,6 +119,7 @@ router.get('/rooms/:roomId/blocks', [auth, adminAuth], async (req, res) => {
     try {
         const blocks = await RoomBlock.find({ room: req.params.roomId })
             .populate('user', 'username')
+            .populate('blockedBy', 'username')
             .sort('-createdAt');
         res.json(blocks);
     } catch (err) {
@@ -145,7 +146,7 @@ router.post('/blocks', [auth, adminAuth], async (req, res) => {
 
         // Calculate block end date
         const endDate = new Date();
-        endDate.setDate(endDate.getDate() + duration);
+        endDate.setTime(endDate.getTime() + duration * 24 * 60 * 60 * 1000); // duration in days, convert to ms
 
         const block = new RoomBlock({
             user: userId,

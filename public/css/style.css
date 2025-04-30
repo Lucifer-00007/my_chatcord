@@ -1430,7 +1430,8 @@ input:checked+.toggle-slider:before {
     /* From later definition */
 }
 
-.btn-wide:hover,.btn-user-block:hover {
+.btn-wide:hover,
+.btn-user-block:hover {
     background: var(--dark-color-b) !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -2734,12 +2735,15 @@ input:checked+.toggle-slider:before {
     margin-bottom: 0.25rem;
 }
 
-.block-reason {
+.block-reason,
+.block-date,
+.block-by, 
+.block-duration {
     font-size: 0.9rem;
     color: #666;
 }
 
-.block-duration {
+.block-duration-text {
     font-size: 0.85rem;
     color: var(--error-color);
     margin-top: 0.25rem;
