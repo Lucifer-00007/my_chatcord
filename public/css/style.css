@@ -3008,3 +3008,57 @@ input:checked+.toggle-slider:before {
 .searchable-select option:hover {
     background-color: var(--light-color);
 }
+
+/* AI Markdown Styles */
+.ai-markdown {
+  font-family: inherit;
+  font-size: 1em;
+  color: #222;
+  background: none;
+  padding: 0;
+  margin: 0;
+  word-break: break-word;
+}
+
+.ai-markdown pre, .ai-markdown code {
+  background: #f4f4f4;
+  color: #333;
+  border-radius: 4px;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.95em;
+  padding: 2px 6px;
+}
+
+.ai-markdown pre {
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.ai-markdown h1, .ai-markdown h2, .ai-markdown h3 {
+  margin: 12px 0 6px 0;
+  font-weight: 600;
+}
+
+.ai-markdown ul, .ai-markdown ol {
+  margin: 8px 0 8px 20px;
+  padding: 0 0 0 20px;
+}
+
+.ai-markdown blockquote {
+  border-left: 4px solid #b3b3b3;
+  margin: 8px 0;
+  padding: 8px 16px;
+  color: #555;
+  background: #f9f9f9;
+}
+
+.ai-markdown table {
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.ai-markdown th, .ai-markdown td {
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+}

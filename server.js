@@ -68,7 +68,7 @@ app.use(express.static(path.join(__dirname, "public")));
 const cspConfig = {
     directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "cdn.jsdelivr.net"],
         scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
         fontSrc: ["'self'", "cdnjs.cloudflare.com", "fonts.gstatic.com"],

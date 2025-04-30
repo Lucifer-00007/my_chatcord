@@ -248,6 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function addMessageToChat(sender, text, model = null) {
+        console.log('Adding message to chat:', {
+            sender,
+            text,
+            model
+        });
         const div = document.createElement('div');
         div.classList.add('message');
         if (sender === 'AI') div.classList.add('ai-message');
@@ -257,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         div.innerHTML = `
             <p class="meta">${sender}${modelDisplay} <span>${new Date().toLocaleTimeString()}</span></p>
-            <p class="text">${text}</p>
+            <p class="text">${sender === 'AI' && window.marked ? `<div class="ai-markdown">${marked.parse(text)}</div>` : text}</p>
         `;
         chatMessages.appendChild(div);
         chatMessages.scrollTop = chatMessages.scrollHeight;
