@@ -139,14 +139,27 @@ router.post('/blocks', [auth, adminAuth], async (req, res) => {
         ]);
 
         if (!user || !room) {
-            return res.status(404).json({ 
-                message: 'User or room not found'
+            return res.status(404).json({ message: 'User or room not found' });
+        }
+
+        // Check for existing active block for this user in this room
+        const now = new Date();
+        const existingBlock = await RoomBlock.findOne({
+            user: userId,
+            room: roomId,
+            isActive: true,
+            endDate: { $gt: now }
+        });
+
+        if (existingBlock) {
+            return res.status(400).json({
+                message: `${user.username} is already blocked in the ${room.name} room!`
             });
         }
 
         // Calculate block end date
         const endDate = new Date();
-        endDate.setTime(endDate.getTime() + duration * 24 * 60 * 60 * 1000); // duration in days, convert to ms
+        endDate.setTime(endDate.getTime() + duration * 24 * 60 * 60 * 1000); // duration in days
 
         const block = new RoomBlock({
             user: userId,
