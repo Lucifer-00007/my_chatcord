@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load available AI models
     async function loadAvailableModels() {
         try {
-            console.log('Fetching available AI models');
             const res = await fetch('/api/ai-apis/active', {
                 headers: {
                     'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
@@ -248,11 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function addMessageToChat(sender, text, model = null) {
-        console.log('Adding message to chat:', {
-            sender,
-            text,
-            model
-        });
         const div = document.createElement('div');
         div.classList.add('message');
         if (sender === 'AI') div.classList.add('ai-message');
@@ -260,12 +254,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Format the model name to be more user-friendly
         const modelDisplay = model ? ` (${model})` : '';
         
+        let renderedText = text;
+        if (sender === 'AI' && window.marked) {
+            renderedText = marked.parse(text);
+            console.log('[addMessageToChat] Marked parsed markdown:', renderedText);
+        }
+        
         div.innerHTML = `
             <p class="meta">${sender}${modelDisplay} <span>${new Date().toLocaleTimeString()}</span></p>
-            <p class="text">${sender === 'AI' && window.marked ? `<div class="ai-markdown">${marked.parse(text)}</div>` : text}</p>
+            <p class="text">${sender === 'AI' && window.marked ? `<div class="ai-markdown">${renderedText}</div>` : text}</p>
         `;
         chatMessages.appendChild(div);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Highlight.js debug
+        if (window.hljs) {
+            console.log('[addMessageToChat] hljs found, highlighting blocks...');
+            div.querySelectorAll('pre code').forEach((block, idx) => {
+                console.log(`[addMessageToChat] Highlighting code block #${idx + 1}:`, block.textContent);
+                hljs.highlightElement(block);
+            });
+        } else {
+            console.warn('[addMessageToChat] highlight.js (hljs) not found on window!');
+        }
+        
+        addCopyButtons();
     }
 
     function showNotification(message, type = 'info') {
@@ -291,6 +304,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
+    // Add new function to add copy buttons
+    function addCopyButtons() {
+        document.querySelectorAll('.ai-markdown pre code').forEach(block => {
+            // Avoid duplicate buttons
+            if (block.parentElement.querySelector('.copy-btn')) return;
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.innerHTML = '<i class="far fa-clipboard"></i> Copy';
+            btn.onclick = () => {
+                navigator.clipboard.writeText(block.textContent);
+                btn.innerHTML = '<i class="fa fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="far fa-clipboard"></i> Copy';
+                }, 1500);
+            };
+            block.parentElement.style.position = 'relative';
+            block.parentElement.appendChild(btn);
+        });
+    }
+
     // Load models when page loads
     loadAvailableModels();
 
@@ -313,4 +346,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial load
     loadChatHistory();
+    
+    if (window.marked && window.hljs) {
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+    }
 });

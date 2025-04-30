@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const navbar = document.querySelector('.navbar');
-    console.log('Nav init - Found navbar:', !!navbar);
     
     // Add logout handler
     const logoutBtn = document.getElementById('logout-btn');
@@ -33,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navbar) {
         // Insert hamburger button if not exists
         if (!navbar.querySelector('.hamburger')) {
-            console.log('Creating hamburger button');
             const hamburgerBtn = document.createElement('button');
             hamburgerBtn.className = 'hamburger';
             hamburgerBtn.innerHTML = `
@@ -48,11 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hamburger = navbar.querySelector('.hamburger');
         const navMenu = navbar.querySelector('.nav-menu');
-        console.log('Found elements:', { hamburger: !!hamburger, navMenu: !!navMenu });
         
         if (hamburger && navMenu) {
             const navLinks = document.querySelectorAll('.nav-item');
-            console.log('Found nav links:', navLinks.length);
 
             function toggleMenu(force = null) {
                 console.log('Toggle menu called with force:', force);

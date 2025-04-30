@@ -88,7 +88,6 @@ a {
 .nav-item:hover {
     background-color: var(--dark-color-c);
     color: #fff;
-    /* Added from .nav-item.admin:hover */
 }
 
 .nav-item.active {
@@ -97,18 +96,13 @@ a {
 
 .nav-item.admin {
     display: none;
-    /* Hide by default */
     background-color: transparent;
     border: 2px solid #fff;
-    /* Changed from error color to white */
     color: #fff;
-    /* Changed color to white */
 }
 
 .nav-item.admin:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    /* Subtle white background on hover */
-    /* color: #fff; - Already in nav-item:hover */
 }
 
 .nav-item.disabled {
@@ -130,7 +124,6 @@ a {
     background: var(--light-color);
     color: var(--dark-color-a);
     width: 100%;
-    /* From later definition */
 }
 
 .btn:hover {
@@ -167,7 +160,6 @@ a {
     background: #f0f0f0;
     /* From later definition (overrides #c9302c) */
     color: #000;
-    /* From later definition */
 }
 
 #logout-btn:hover {
@@ -193,7 +185,6 @@ a {
 
 .form-control input::placeholder {
     color: #666;
-    /* From later definition */
 }
 
 .form-control input:focus {
@@ -208,9 +199,7 @@ a {
     height: 50px;
     /* Added fixed height */
     display: flex;
-    /* From later definition */
     align-items: center;
-    /* From later definition */
 }
 
 .password-field input {
@@ -504,8 +493,7 @@ chat-messages .message .meta span {
 }
 
 /* Text to Image Styles / Generation Area */
-.generation-area {
-    /* Merged properties */
+.generation-area {    
     padding: 20px;
     background: #f4f4f4;
     /* Original */
@@ -514,63 +502,44 @@ chat-messages .message .meta span {
     display: flex;
     flex-direction: column;
     gap: 25px;
-    /* From later definition */
     width: 100%;
     max-width: 1200px;
-    /* From later definition */
     margin: 0 auto;
-    /* From later definition */
 }
 
-.prompt-section {
-    /* Merged properties */
+.prompt-section {    
     background: var(--light-color);
-    /* From later definition */
     padding: 25px;
-    /* From later definition */
     border-radius: 12px;
-    /* From later definition */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    /* From later definition */
 }
 
-.prompt-section textarea {
-    /* Merged properties */
+.prompt-section textarea {    
     width: 100%;
     padding: 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    /* From later definition */
     resize: vertical;
     font-size: 1rem;
-    /* From later definition */
     margin-bottom: 15px;
     min-height: 120px;
-    /* From later definition */
     font-family: inherit;
-    /* From later definition */
     transition: border-color 0.3s ease;
-    /* From later definition */
 }
 
-.prompt-section textarea:focus {
-    /* Merged properties */
+.prompt-section textarea:focus {    
     border-color: var(--dark-color-a);
     outline: none;
     box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
 
-.image-options {
-    /* Merged properties */
+.image-options {    
     display: flex;
     gap: 25px;
-    /* From later definition */
     margin: 20px 0;
-    /* From later definition */
 }
 
-.option-group {
-    /* Merged properties */
+.option-group {    
     display: flex;
     /* From first definition */
     flex-direction: column;
@@ -581,8 +550,7 @@ chat-messages .message .meta span {
     /* From later definitions */
 }
 
-.option-group label {
-    /* Merged properties */
+.option-group label {    
     font-weight: 600;
     color: var(--dark-color);
     display: block;
@@ -590,65 +558,43 @@ chat-messages .message .meta span {
     font-size: 0.95rem;
 }
 
-.image-options select {
-    /* Merged properties */
+.image-options select {    
     padding: 12px;
-    /* From later definition */
     border-radius: 5px;
     border: 0;
     min-width: 200px;
     width: 100%;
     background-color: #cad1ff;
-    /* From later definition */
     color: var(--dark-color);
-    /* From later definition */
     font-size: 0.95rem;
-    /* From later definition */
     cursor: pointer;
-    /* From later definition */
     appearance: none;
-    /* From later definition */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    /* From later definition */
     background-repeat: no-repeat;
-    /* From later definition */
     background-position: right 12px center;
-    /* From later definition */
     background-size: 16px;
-    /* From later definition */
 }
 
-.image-options select:focus {
-    /* Merged properties */
+.image-options select:focus {    
     outline: none;
     box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
 
-.results-section {
-    /* Merged properties */
+.results-section {    
     flex: 1;
     background: var(--light-color-a);
-    /* From later definition */
     padding: 25px;
-    /* From later definition */
     border-radius: 12px;
-    /* From later definition */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    /* From later definition */
     text-align: center;
     margin-top: 20px;
     width: 100%;
     display: flex;
     flex-direction: column;
-    /* From later definition */
     align-items: center;
-    /* From later definition */
     justify-content: center;
-    /* From later definition */
     position: relative;
-    /* From later definition */
     min-height: 630px;
-    /* From later definition */
 }
 
 .generated-image {
@@ -661,32 +607,24 @@ chat-messages .message .meta span {
     gap: 20px;
 }
 
-.generated-image img {
-    /* Merged properties */
+.generated-image img {    
     width: 750px;
-    /* From later definition */
     height: 500px;
-    /* From later definition */
     object-fit: contain;
     border-radius: 8px;
-    /* From later definition */
     margin-bottom: 10px;
     /* From first definition */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    /* From later definition */
 }
 
-.image-actions {
-    /* Merged properties */
+.image-actions {    
     width: 100%;
     /* From first definition */
     display: flex;
     justify-content: center;
     /* From first definition */
     gap: 15px;
-    /* From later definition */
     margin-top: 10px;
-    /* From later definition */
 }
 
 .image-actions button {
@@ -697,8 +635,7 @@ chat-messages .message .meta span {
     transition: all 0.3s ease;
 }
 
-#generate-btn {
-    /* Merged properties */
+#generate-btn {    
     width: 100%;
     padding: 15px;
     font-size: 1.1rem;
@@ -723,18 +660,14 @@ chat-messages .message .meta span {
     color: white;
 }
 
-#generate-btn:disabled {
-    /* Merged properties */
+#generate-btn:disabled {    
     background-color: var(--dark-color-a);
-    /* From later definition */
     cursor: not-allowed;
     transform: none;
-    /* From later definition */
 }
 
 /* Loading indicator */
-#loading-indicator {
-    /* Merged properties */
+#loading-indicator {    
     color: var(--dark-color-a);
     font-size: 2rem;
     position: absolute;
@@ -742,19 +675,15 @@ chat-messages .message .meta span {
     left: 50%;
     transform: translate(-50%, -50%);
     background: rgba(255, 255, 255, 0.95);
-    /* From later definition */
     padding: 30px;
     /* Updated from merge */
     border-radius: 12px;
-    /* From later definition */
     display: flex;
     align-items: center;
     gap: 15px;
-    /* From later definition */
     z-index: 10;
     flex-direction: column;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    /* From later definition */
 }
 
 .error-message {
@@ -810,8 +739,7 @@ chat-messages .message .meta span {
 }
 
 /* Text to Voice Styles / Voice Area */
-.voice-area {
-    /* Merged properties */
+.voice-area {    
     padding: 20px;
     background: #f4f4f4;
     height: 100%;
@@ -821,15 +749,11 @@ chat-messages .message .meta span {
     gap: 20px;
 }
 
-.text-input-section {
-    /* Merged properties */
+.text-input-section {    
     background: #fff;
     padding: 25px;
-    /* From later definition */
     border-radius: 8px;
-    /* From later definition */
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    /* From later definition */
 }
 
 .voice-options {
@@ -1135,8 +1059,7 @@ chat-messages .message .meta span {
 }
 
 /* Admin API Configuration Styles */
-.api-config-section {
-    /* Merged properties */
+.api-config-section {    
     padding: 20px;
     background: #fff;
     border-radius: 8px;
@@ -1144,21 +1067,16 @@ chat-messages .message .meta span {
     margin-top: 2%;
 }
 
-.admin-form {
-    /* Merged properties */
+.admin-form {    
     margin-bottom: 30px;
     padding: 25px;
-    /* From later definition */
     background: var(--light-color-a);
     border-radius: 6px;
     border: 1px solid #e9ecef;
-    /* From later definition */
 }
 
-.form-group {
-    /* Merged properties */
+.form-group {    
     margin-bottom: 25px;
-    /* From later definition */
 }
 
 .form-group label {
@@ -1183,19 +1101,15 @@ chat-messages .message .meta span {
     margin-top: 30px;
 } */
 
-.api-item {
-    /* Merged properties */
+.api-item {    
     display: flex;
     align-items: center;
     padding: 20px;
-    /* From later definition */
     border-radius: 4px;
     margin-bottom: 10px;
     background: var(--light-color);
     border-bottom: 1px solid #eee;
-    /* From later definition */
     transition: background-color 0.3s;
-    /* From later definition */
 }
 
 /* .api-item:hover {
@@ -1207,12 +1121,10 @@ chat-messages .message .meta span {
     flex: 1;
 }
 
-.api-name {
-    /* Merged properties */
+.api-name {    
     font-weight: 600;
     color: #333;
     margin-bottom: 5px;
-    /* From later definition */
 }
 
 .api-endpoint {
@@ -1222,11 +1134,9 @@ chat-messages .message .meta span {
     font-family: monospace;
 }
 
-.api-controls {
-    /* Merged properties */
+.api-controls {    
     display: flex;
     gap: 15px;
-    /* From later definition */
     align-items: center;
 }
 
@@ -1279,26 +1189,19 @@ input:checked+.toggle-slider:before {
 }
 
 /* Button Icons */
-.btn-icon {
-    /* Merged properties */
+.btn-icon {    
     width: 36px;
     height: 36px;
     padding: 8px;
-    /* From later definition */
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    /* From later definition */
     transition: all 0.3s ease;
     background: none;
-    /* From later definition */
     border: 1px solid #ddd;
-    /* From later definition */
     cursor: pointer;
-    /* From later definition */
     color: #666;
-    /* From later definition */
 }
 
 .btn-icon i {
@@ -1306,13 +1209,10 @@ input:checked+.toggle-slider:before {
     color: #495057;
 }
 
-.btn-icon:hover {
-    /* Merged properties */
+.btn-icon:hover {    
     background: var(--light-color-a);
-    /* From later definition */
     transform: translateY(-1px);
     color: var(--dark-color-a);
-    /* From later definition */
 }
 
 .btn-icon.edit-api,
@@ -1374,12 +1274,10 @@ input:checked+.toggle-slider:before {
 }
 
 /* Enhanced Admin API Configuration Styles */
-.section-header {
-    /* Merged properties */
+.section-header {    
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* From later definition */
     /* margin-bottom: 25px; */
     padding-bottom: 20px;
     /* From first definition */
@@ -1387,8 +1285,7 @@ input:checked+.toggle-slider:before {
     /* From first definition */
 }
 
-.section-header h2 {
-    /* Merged properties */
+.section-header h2 {    
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1407,13 +1304,10 @@ input:checked+.toggle-slider:before {
     font-size: 0.9em;
 }
 
-.btn-wide {
-    /* Merged properties */
+.btn-wide {    
     min-width: 150px;
-    /* From later definition */
     height: 45px !important;
     padding: 12px 24px;
-    /* From later definition */
     margin: 0 !important;
     font-size: 15px !important;
     display: flex;
@@ -1421,13 +1315,10 @@ input:checked+.toggle-slider:before {
     justify-content: center;
     gap: 8px;
     background: var(--light-color) !important;
-    /* From later definition */
     color: var(--dark-color-a) !important;
-    /* From later definition */
     border: none !important;
     transition: all 0.3s ease !important;
     max-width: 180px !important;
-    /* From later definition */
 }
 
 .btn-wide:hover,
@@ -1438,33 +1329,27 @@ input:checked+.toggle-slider:before {
     color: #fff !important;
 }
 
-.form-input {
-    /* Merged properties */
+.form-input {    
     width: 100%;
     height: 42px;
     padding: 10px 12px;
-    /* From later definition */
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
     transition: border-color 0.3s ease;
-    /* From later definition */
     background: #fff;
 }
 
-.form-input:focus {
-    /* Merged properties */
+.form-input:focus {    
     border-color: var(--dark-color-a);
     box-shadow: 0 0 0 2px rgba(102, 122, 255, 0.1);
     outline: none;
 }
 
-.form-select {
-    /* Merged properties */
+.form-select {    
     width: 100%;
     height: 42px;
     padding: 10px 12px;
-    /* From later definition */
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
@@ -1497,11 +1382,9 @@ input:checked+.toggle-slider:before {
     margin-top: 5px;
 }
 
-.code-input-container {
-    /* Merged properties */
+.code-input-container {    
     position: relative;
     margin-top: 8px;
-    /* From later definition */
 }
 
 .code-input-container textarea {
@@ -1538,8 +1421,7 @@ input:checked+.toggle-slider:before {
     margin-top: 10px;
 }
 
-.headers-preview {
-    /* Merged properties */
+.headers-preview {    
     margin-top: 10px;
 }
 
@@ -1785,8 +1667,7 @@ input:checked+.toggle-slider:before {
 }
 
 /* AI Chat Model Select Styles */
-.model-select-container {
-    /* Merged properties */
+.model-select-container {    
     position: relative;
     margin: 10px 0 15px 0;
     /* margin-bottom updated from 20px */
@@ -1812,61 +1693,45 @@ input:checked+.toggle-slider:before {
     /* Only in first block example */
 }
 
-.model-select-container::after {
-    /* Merged properties */
+.model-select-container::after {    
     content: '\f078';
-    /* From later definition */
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
     position: absolute;
     right: 12px;
-    /* From later definition */
     top: 45%;
     transform: translateY(-50%);
     pointer-events: none;
     color: var(--dark-color);
-    /* From later definition */
     transition: transform 0.3s ease;
     /* From first definition */
 }
 
 .model-select:focus {
-    /* Merged properties */
-    background: rgba(0, 0, 0, 0.25);
-    /* From first definition */
     box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
-    /* From later definition */
     outline: none;
-    /* From later definitions */
     border-color: var(--dark-color-a);
-    /* From later definitions */
 }
 
-.model-select option {
-    /* Merged properties */
+.model-select option {    
     background: var(--dark-color-b);
     color: #fff;
     padding: 12px;
-    /* From later definition */
     direction: ltr;
     /* From first definition */
     text-align: left;
     /* From first definition */
     font-size: 14px;
-    /* From later definition */
 }
 
 .model-select option:hover {
     background: var(--dark-color-a);
 }
 
-.model-select:disabled {
-    /* Merged properties */
+.model-select:disabled {    
     opacity: 0.7;
-    /* From later definition */
     cursor: not-allowed;
     background-color: var(--dark-color-a);
-    /* From later definition */
 }
 
 .model-select-container:hover::after {
@@ -1944,19 +1809,16 @@ input:checked+.toggle-slider:before {
 }
 
 /* Image API Configuration Styles */
-.options-grid {
-    /* Merged properties */
+.options-grid {    
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
     margin-top: 10px;
     margin-bottom: 15px;
-    /* From later definition */
 }
 
 .size-option,
-.style-option {
-    /* Merged properties */
+.style-option {    
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1965,7 +1827,6 @@ input:checked+.toggle-slider:before {
     border-radius: 4px;
     border: 1px solid #dee2e6;
     margin-bottom: 8px;
-    /* From later definition */
     /* cursor: pointer; Removed by later definition */
 }
 
@@ -3021,16 +2882,12 @@ input:checked+.toggle-slider:before {
 }
 
 .ai-markdown pre, .ai-markdown code {
-  background: #f4f4f4;
-  color: #333;
   border-radius: 4px;
   font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
   font-size: 0.95em;
-  padding: 2px 6px;
 }
 
 .ai-markdown pre {
-  padding: 12px;
   overflow-x: auto;
   margin: 8px 0;
 }
@@ -3061,4 +2918,23 @@ input:checked+.toggle-slider:before {
 .ai-markdown th, .ai-markdown td {
   border: 1px solid #ddd;
   padding: 6px 12px;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #272822;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+.copy-btn:hover {
+  opacity: 1;
 }
