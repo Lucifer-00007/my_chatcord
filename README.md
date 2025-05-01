@@ -232,9 +232,7 @@ The `config` folder contains crucial application settings. Update the following 
 ## Todo List
 - Create a postman collection of all the apis in categorized way.
 - Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure.    
-- Batch generation.
-- Message queue implementation.
-- Performance monitoring.
+- Add the logged in user details to the nav bar.
 
 
 ## License

@@ -13,8 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Ensure the form and button exist
     if (!chatForm || !submitBtn) {
-        console.error('Required elements not found:', { 
-            form: !!chatForm, 
+        console.error('Required elements not found:', {
+            form: !!chatForm,
             button: !!submitBtn,
             formButtons: chatForm ? chatForm.querySelectorAll('button').length : 0
         });
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load available AI models
     async function loadAvailableModels() {
         try {
-            const res = await fetch('/api/ai-apis/active', {
+            const res = await fetch('/api/ai-apis/public-active', {
                 headers: {
                     'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                 }
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             const sessions = await res.json();
-            
+
             const historyList = document.getElementById('chat-history');
             historyList.innerHTML = sessions.map(session => `
                 <li class="chat-session ${currentSession?._id === session._id ? 'active' : ''}" 
@@ -98,17 +98,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             const session = await res.json();
-            
+
             currentSession = session;
             chatMessages.innerHTML = '';
-            
+
             // Load messages
             session.messages.forEach(msg => {
                 if (msg.role !== 'system') {
                     addMessageToChat(
                         msg.role === 'user' ? 'You' : 'AI',
                         msg.content,
-                        msg.role === 'assistant' ? msg.model : null
+                        msg.role === 'assistant' ? msg.model : null,
+                        msg.createdAt
                     );
                 }
             });
@@ -143,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const startTime = Date.now();
-        
+
         const selectedApi = modelSelect.value;
         console.log('Form submitted:', {
             apiId: selectedApi,
@@ -164,9 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessageToChat('You', msg);
         msgInput.value = '';
         msgInput.disabled = true;
-        
+
         const thinkingMessage = addThinkingMessage();
-        
+
         try {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -184,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     message: msg,
                     apiId: selectedApi,
                     sessionId: currentSession?._id
@@ -233,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalElapsed: `${Date.now() - startTime}ms`
                 }
             });
-            
+
             thinkingMessage?.remove();
             showNotification(err.message || 'Failed to get AI response', 'error');
             addMessageToChat('System', 'Error: Failed to get AI response. Please try again.');
@@ -246,38 +247,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function addMessageToChat(sender, text, model = null) {
+    function addMessageToChat(sender, text, model = null, createdAt) {
         const div = document.createElement('div');
         div.classList.add('message');
         if (sender === 'AI') div.classList.add('ai-message');
-        
-        // Format the model name to be more user-friendly
-        const modelDisplay = model ? ` (${model})` : '';
-        
+
         let renderedText = text;
         if (sender === 'AI' && window.marked) {
             renderedText = marked.parse(text);
-            console.log('[addMessageToChat] Marked parsed markdown:', renderedText);
         }
-        
+
+        // Remove ":free" from model name if present
+        const cleanModelDisplay = model ? ` (${model.replace(/:free$/i, '')})` : '';
+
         div.innerHTML = `
-            <p class="meta">${sender}${modelDisplay} <span>${new Date().toLocaleTimeString()}</span></p>
+            <p class="meta">${sender}${cleanModelDisplay} <span>${formatDateTime(createdAt)}</span></p>
             <p class="text">${sender === 'AI' && window.marked ? `<div class="ai-markdown">${renderedText}</div>` : text}</p>
         `;
         chatMessages.appendChild(div);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
+
         // Highlight.js debug
         if (window.hljs) {
-            console.log('[addMessageToChat] hljs found, highlighting blocks...');
             div.querySelectorAll('pre code').forEach((block, idx) => {
-                console.log(`[addMessageToChat] Highlighting code block #${idx + 1}:`, block.textContent);
                 hljs.highlightElement(block);
             });
         } else {
             console.warn('[addMessageToChat] highlight.js (hljs) not found on window!');
         }
-        
+
         addCopyButtons();
     }
 
@@ -292,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
         div.className = 'message thinking';
         const selectedApi = document.querySelector('#model-select option:checked');
         const modelName = selectedApi ? selectedApi.textContent : 'AI';
-        
+
         div.innerHTML = `
             <p class="meta">AI (${modelName}) <span>${new Date().toLocaleTimeString()}</span></p>
             <p class="text">
@@ -324,6 +322,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Format date as "12:30pm, 27/04/2025"
+    function formatDateTime(date) {
+        let d;
+        if (date instanceof Date) {
+            d = date;
+        } else if (typeof date === 'string' && !isNaN(Date.parse(date))) {
+            d = new Date(date);
+        } else {
+            d = new Date();
+        }
+        let hours = d.getHours();
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        const am_pm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 => 12
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        return `${hours}:${minutes}${am_pm}, ${day}/${month}/${year}`;
+    }
+
     // Load models when page loads
     loadAvailableModels();
 
@@ -346,10 +365,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial load
     loadChatHistory();
-    
+
     if (window.marked && window.hljs) {
         marked.setOptions({
-            highlight: function(code, lang) {
+            highlight: function (code, lang) {
                 if (lang && hljs.getLanguage(lang)) {
                     return hljs.highlight(code, { language: lang }).value;
                 }

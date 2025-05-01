@@ -3,9 +3,11 @@ const router = express.Router();
 const AiApi = require('../../models/AiApi');
 const { ai } = require('../../config/constants');
 const { parseCurlCommand } = require('../../utils/apiHelpers');
+const auth = require('../../middleware/auth');
+const { adminAuth } = require('../../middleware/admin');
 
 // Get AI config
-router.get('/config', (req, res) => {
+router.get('/config', [auth, adminAuth], (req, res) => {
     try {
         if (!ai) {
             throw new Error('AI configuration not found');
@@ -22,19 +24,28 @@ router.get('/config', (req, res) => {
     }
 });
 
-// Get active AI APIs
-router.get('/active', async (req, res) => {
+// Admin-only active AI APIs (with secrets)
+router.get('/active', [auth, adminAuth], async (req, res) => {
     try {
         const apis = await AiApi.find({ isActive: true });
         res.json(apis);
     } catch (err) {
-        console.error('Error fetching active AI APIs:', err);
         res.status(500).json({ message: 'Error fetching active AI APIs' });
     }
 });
 
+// Public-safe active AI APIs (no secrets)
+router.get('/public-active', auth, async (req, res) => {
+    try {
+        const apis = await AiApi.find({ isActive: true }).select('_id name description model');
+        res.json(apis);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching public active AI APIs' });
+    }
+});
+
 // Get all AI APIs
-router.get('/', async (req, res) => {
+router.get('/', [auth, adminAuth], async (req, res) => {
     try {
         const apis = await AiApi.find();
         res.json(apis);
@@ -44,7 +55,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get single AI API by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', [auth, adminAuth], async (req, res) => {
     try {
         const api = await AiApi.findById(req.params.id);
         if (!api) {
@@ -57,7 +68,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new AI API
-router.post('/', async (req, res) => {
+router.post('/', [auth, adminAuth], async (req, res) => {
     try {
         const existingApi = await AiApi.findOne({ name: req.body.name });
         if (existingApi) {
@@ -79,7 +90,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update AI API
-router.put('/:id', async (req, res) => {
+router.put('/:id', [auth, adminAuth], async (req, res) => {
     try {
         const api = await AiApi.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!api) {
@@ -92,7 +103,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete AI API
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', [auth, adminAuth], async (req, res) => {
     try {
         const api = await AiApi.findByIdAndDelete(req.params.id);
         if (!api) {
@@ -105,7 +116,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Toggle AI API active status
-router.patch('/:id/toggle', async (req, res) => {
+router.patch('/:id/toggle', [auth, adminAuth], async (req, res) => {
     try {
         const api = await AiApi.findById(req.params.id);
         if (!api) {
@@ -120,7 +131,7 @@ router.patch('/:id/toggle', async (req, res) => {
 });
 
 // Test AI API endpoint
-router.post('/test', async (req, res) => {
+router.post('/test', [auth, adminAuth], async (req, res) => {
     try {
         const { curlCommand, requestPath } = req.body;
         
