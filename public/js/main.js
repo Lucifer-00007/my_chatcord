@@ -11,7 +11,6 @@ if (!user || !roomToken || !authToken) {
 const REFRESH_THRESHOLD = 50 * 60 * 1000; // 50 minutes
 
 function checkTokenExpiration() {
-    const roomToken = AuthGuard.getRoomToken();
     if (roomToken) {
         const payload = JSON.parse(atob(roomToken.split('.')[1]));
         const exp = payload.exp * 1000; // Convert to milliseconds
@@ -27,14 +26,14 @@ function checkTokenExpiration() {
                 },
                 body: JSON.stringify({ room: encodeURIComponent(payload.room) })
             })
-            .then(res => res.json())
-            .then(data => {
-                sessionStorage.setItem('roomToken', data.roomToken);
-            })
-            .catch(err => {
-                console.error('Failed to refresh token:', err);
-                alert('Your session will expire soon. Please rejoin the room.');
-            });
+                .then(res => res.json())
+                .then(data => {
+                    sessionStorage.setItem('roomToken', data.roomToken);
+                })
+                .catch(err => {
+                    console.error('Failed to refresh token:', err);
+                    alert('Your session will expire soon. Please rejoin the room.');
+                });
         }
     }
 }
@@ -49,6 +48,12 @@ const chatForm = document.getElementById('chat-form');
 const chatMessages = document.querySelector('.chat-messages');
 const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
+
+let roomId = null;
+if (roomToken) {
+    const payload = JSON.parse(atob(roomToken.split('.')[1]));
+    roomId = payload.room; // This is the ObjectId of the room
+}
 
 try {
     const tokenData = JSON.parse(atob(roomToken.split('.')[1]));
@@ -94,17 +99,17 @@ try {
                     'Authorization': `Bearer ${authToken}`
                 }
             });
-            
+
             if (res.ok) {
                 const messages = await res.json();
                 messages.reverse().forEach(msg => {
                     outputMessage({
-                        username: msg.user.username,
+                        username: msg.username,
                         text: msg.content,
-                        time: new Date(msg.createdAt).toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: 'numeric', 
-                            hour12: true 
+                        time: new Date(msg.createdAt).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true
                         })
                     });
                 });
@@ -167,7 +172,7 @@ try {
 
         try {
             // Emit message to server
-            socket.emit('chatMessage', msg);
+            socket.emit('chatMessage', { msg, roomId });
 
             // Clear input and focus
             e.target.elements.msg.value = '';
@@ -182,6 +187,27 @@ try {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     });
+
+    // Enable Shift+Enter for new line in input
+    const msgInput = chatForm.elements.msg;
+    if (msgInput) {
+        msgInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // Only submit if not Shift+Enter
+                e.preventDefault();
+                chatForm.requestSubmit();
+            } else if (e.key === 'Enter' && e.shiftKey) {
+                // Let browser insert newline (default)
+            }
+        });
+
+        // Auto-grow textarea height
+        msgInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 160) + 'px'; // 160px = ~6 lines
+            this.style.overflowY = this.scrollHeight > 160 ? 'auto' : 'hidden';
+        });
+    }
 
     // Clean up on leave
     document.getElementById('leave-btn').addEventListener('click', () => {
@@ -199,32 +225,32 @@ try {
 
 // Output message to DOM
 function outputMessage(message) {
-  const div = document.createElement('div');
-  div.classList.add('message');
-  const p = document.createElement('p');
-  p.classList.add('meta');
-  p.innerText = message.username;
-  p.innerHTML += `<span> ${message.time}</span>`;
-  div.appendChild(p);
-  const para = document.createElement('p');
-  para.classList.add('text');
-  para.innerText = message.text;
-  div.appendChild(para);
-  document.querySelector('.chat-messages').appendChild(div);
+    const div = document.createElement('div');
+    div.classList.add('message');
+    const p = document.createElement('p');
+    p.classList.add('meta');
+    p.innerText = message.username;
+    p.innerHTML += `<span> ${message.time}</span>`;
+    div.appendChild(p);
+    const para = document.createElement('p');
+    para.classList.add('text');
+    para.innerText = message.text;
+    div.appendChild(para);
+    document.querySelector('.chat-messages').appendChild(div);
 }
 
 // Add room name to DOM
 function outputRoomName(room) {
-  roomName.innerText = room;
+    roomName.innerText = room;
 }
 
 // Add users to DOM
 function outputUsers(users) {
-  if (!userList) return; // Prevent error if not on chat page
-  userList.innerHTML = '';
-  users.forEach((user) => {
-    const li = document.createElement('li');
-    li.innerText = user.username;
-    userList.appendChild(li);
-  });
+    if (!userList) return; // Prevent error if not on chat page
+    userList.innerHTML = '';
+    users.forEach((user) => {
+        const li = document.createElement('li');
+        li.innerText = user.username;
+        userList.appendChild(li);
+    });
 }

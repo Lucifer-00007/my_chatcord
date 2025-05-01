@@ -247,6 +247,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Enable Shift+Enter for new line in input
+    const msgInput = chatForm.elements.msg;
+    if (msgInput) {
+        msgInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // Only submit if not Shift+Enter
+                e.preventDefault();
+                chatForm.requestSubmit();
+            } else if (e.key === 'Enter' && e.shiftKey) {
+                // Let browser insert newline (default)
+            }
+        });
+
+        // Auto-grow textarea height
+        msgInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 160) + 'px'; // 160px = ~6 lines
+            this.style.overflowY = this.scrollHeight > 160 ? 'auto' : 'hidden';
+        });
+    }
+
     function addMessageToChat(sender, text, model = null, createdAt) {
         const div = document.createElement('div');
         div.classList.add('message');

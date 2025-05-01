@@ -374,7 +374,7 @@ chat-messages .message .meta span {
     gap: 10px;
 }
 
-.chat-form-container input[type='text'] {
+/* .chat-form-container input[type='text'] {
     font-size: 16px;
     padding: 10px 15px;
     height: 45px;
@@ -382,15 +382,12 @@ chat-messages .message .meta span {
     border-radius: 4px;
     border: none;
     outline: none;
-    /* Remove outline */
-}
+} */
 
-.chat-form-container input[type='text']:focus {
+/* .chat-form-container input[type='text']:focus {
     outline: none;
-    /* Remove outline on focus */
     box-shadow: 0 0 0 2px rgba(104, 122, 255, 0.2);
-    /* Optional: add subtle focus indicator */
-}
+} */
 
 .chat-form-container .btn {
     height: 45px;
@@ -420,6 +417,23 @@ chat-messages .message .meta span {
 .chat-form-container .btn i {
     color: #fff !important;
     /* Force icon to stay white */
+}
+
+.chat-form-container textarea#msg {
+    min-height: 40px;
+    max-height: 160px; /* ~6 lines */
+    overflow-y: auto;
+    resize: none;
+    width: 100%;
+    font-size: 1em;
+    padding: 10px;
+    border-radius: 4px;
+    border: 0;
+    box-sizing: border-box;
+    transition: border 0.2s;
+}
+.chat-form-container textarea#msg:focus {
+    outline: none;
 }
 
 /* Join Page */

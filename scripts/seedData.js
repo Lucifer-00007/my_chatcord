@@ -1,8 +1,8 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const mongoose = require('mongoose');
 const User = require('../models/User');
-const Message = require('../models/Message');
 const Room = require('../models/Room');
+const RoomChat = require('../models/RoomChat');
 const { demo, chat } = require('../config/constants');
 
 async function createCollectionsIfNotExist() {
@@ -73,19 +73,30 @@ async function seedDatabase() {
         // Create demo messages in JavaScript room
         const jsRoom = rooms.find(r => r.name === 'JavaScript');
         if (jsRoom) {
-            const messagePromises = demo.messages.map((content, index) => {
+            const messageObjs = demo.messages.map((content, index) => {
                 const user = users[index % users.length];
                 const timeOffset = index * demo.messageInterval;
-                
-                return new Message({
+                return {
                     content,
                     user: user._id,
-                    room: jsRoom._id,
-                    createdAt: new Date(Date.now() - timeOffset)
-                }).save();
+                    username: user.username,
+                    createdAt: new Date(Date.now() - timeOffset),
+                    roomId: jsRoom._id,
+                    roomName: jsRoom.name
+                };
             });
-
-            await Promise.all(messagePromises);
+            let roomChat = await RoomChat.findOne({ room: jsRoom._id });
+            if (!roomChat) {
+                roomChat = new RoomChat({
+                    room: jsRoom._id,
+                    messages: messageObjs,
+                    roomName: jsRoom.name
+                });
+            } else {
+                roomChat.messages.push(...messageObjs);
+                roomChat.roomName = jsRoom.name;
+            }
+            await roomChat.save();
             console.log('Created demo messages in JavaScript room');
         }
 

@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
-const Message = require('../../models/Message');
 const Room = require('../../models/Room');
 const AiApi = require('../../models/AiApi');
 const VoiceApi = require('../../models/VoiceApi');
 const ImageApi = require('../../models/ImageApi');
+const RoomChat = require('../../models/RoomChat');
 
 router.get('/', async (req, res) => {
     try {
@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
         ] = await Promise.all([
             User.countDocuments().exec(),
             Room.countDocuments().exec(), // Remove isActive filter since Room model doesn't have this field
-            Message.countDocuments().exec(),
+            RoomChat.countDocuments().exec(),
             AiApi.countDocuments({ isActive: true }).exec(),
             VoiceApi.countDocuments({ isActive: true }).exec(),
             ImageApi.countDocuments({ isActive: true }).exec()

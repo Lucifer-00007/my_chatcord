@@ -12,9 +12,9 @@ const authMiddleware = require('./middleware/auth');
 const { adminAuth } = require('./middleware/admin'); // Fixed admin middleware import
 const { verifyToken } = require('./utils/jwt'); // Add this import
 const User = require('./models/User'); // Add this import
-const Message = require('./models/Message'); // Import Message model
 const Room = require('./models/Room'); // Changed from Channel
 const RoomBlock = require('./models/RoomBlock'); // Add RoomBlock model import
+const RoomChat = require('./models/RoomChat'); // Add this import
 const { initialize } = require('./config/init');
 const {
     env,
@@ -280,31 +280,45 @@ io.on("connection", (socket) => {
     });
 
     // Handle chat messages
-    socket.on("chatMessage", async (msg) => {
+    socket.on("chatMessage", async (data) => {
       try {
         const user = getCurrentUser(socket.id);
         if (user) {
-          // Find or create room
-          let room = await Room.findOne({ name: socket.room });
+          // Support both old (string) and new (object) formats
+          const messageText = typeof data === "string" ? data : data.msg;
+          const roomId = typeof data === "string" ? socket.room : (data.roomId || socket.room);
+          const room = await Room.findById(roomId);
           if (!room) {
-            room = new Room({
-              name: socket.room,
-              topic: socket.room,
-              createdBy: socket.userId
-            });
-            await room.save();
+            // If room not found, do not create a new one
+            return;
           }
 
-          // Create and save message with room reference
-          const message = new Message({
-            content: msg,
+          // --- RoomChat logic ---
+          let roomChat = await RoomChat.findOne({ room: room._id });
+          const messageObj = {
+            content: messageText,
             user: socket.userId,
-            room: room._id  // Use room ObjectId
-          });
-          await message.save();
+            username: socket.username,
+            createdAt: new Date(),
+            roomId: room._id, // Add roomId to each message (optional, for clarity)
+            roomName: room.name // Add roomName to each message (optional, for clarity)
+          };
+          if (!roomChat) {
+            roomChat = new RoomChat({
+              room: room._id,
+              messages: [messageObj],
+              roomName: room.name // Add roomName to RoomChat document
+            });
+          } else {
+            roomChat.messages.push(messageObj);
+            // Optionally update roomName in case it changed
+            roomChat.roomName = room.name;
+          }
+          await roomChat.save();
+          // --- End RoomChat logic ---
 
           // Send message to room
-          io.to(user.room).emit("message", formatMessage(user.username, msg));
+          io.to(user.room).emit("message", formatMessage(user.username, messageText));
         }
       } catch (err) {
         console.error('Message error:', err);

@@ -5,7 +5,7 @@ const Room = require('../models/Room');
 const RoomBlock = require('../models/RoomBlock');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
-const Message = require('../models/Message');
+const RoomChat = require('../models/RoomChat');
 
 // Get all rooms
 router.get('/', auth, async (req, res) => {
@@ -86,12 +86,19 @@ router.get('/:roomId/messages', auth, async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    // Then fetch messages using room's ObjectId
-    const messages = await Message.find({ room: room._id })
-      .populate('user', 'username')
-      .sort({ createdAt: -1 })
-      .limit(chat.MAX_MESSAGES);
-
+    // Fetch messages from RoomChat
+    const roomChat = await RoomChat.findOne({ room: room._id });
+    let messages = [];
+    if (roomChat && Array.isArray(roomChat.messages)) {
+      messages = roomChat.messages
+        .slice(-chat.MAX_MESSAGES)
+        .map(msg => ({
+          content: msg.content,
+          user: msg.user,
+          username: msg.username,
+          createdAt: msg.createdAt
+        }));
+    }
     res.json(messages);
   } catch (err) {
     console.error('Error fetching messages:', err);
