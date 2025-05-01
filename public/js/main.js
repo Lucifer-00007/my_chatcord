@@ -102,7 +102,7 @@ try {
 
             if (res.ok) {
                 const messages = await res.json();
-                messages.reverse().forEach(msg => {
+                messages.forEach(msg => {
                     outputMessage({
                         username: msg.username,
                         text: msg.content,
