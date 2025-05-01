@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cleanModelDisplay = model ? ` (${model.replace(/:free$/i, '')})` : '';
 
         div.innerHTML = `
-            <p class="meta">${sender}${cleanModelDisplay} <span>${formatDateTime(createdAt)}</span></p>
+            <p class="meta">${sender}${cleanModelDisplay} <span class="msg-time">${formatDateTime(createdAt)}</span></p>
             <p class="text">${sender === 'AI' && window.marked ? `<div class="ai-markdown">${renderedText}</div>` : text}</p>
         `;
         chatMessages.appendChild(div);
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const day = d.getDate().toString().padStart(2, '0');
         const month = (d.getMonth() + 1).toString().padStart(2, '0');
         const year = d.getFullYear();
-        return `${hours}:${minutes}${am_pm}, ${day}/${month}/${year}`;
+        return `${hours}:${minutes} ${am_pm}, ${day}/${month}/${year}`;
     }
 
     // Load models when page loads

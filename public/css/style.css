@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
 
 :root {
+    --dark-color: #001cd7;
     --dark-color-a: #667aff;
     --dark-color-b: #7386ff;
     --dark-color-c: #8c9cff;
@@ -338,9 +339,14 @@ a {
 .chat-messages .message .meta {
     font-size: 15px;
     font-weight: bold;
-    color: var(--dark-color-b);
+    color: var(--dark-color);
     opacity: 0.7;
     margin-bottom: 7px;
+}
+
+.chat-messages .message .meta .msg-time {
+    color: #555555db;
+    font-size: 0.8rem;
 }
 
 chat-messages .message .meta span {
@@ -421,7 +427,8 @@ chat-messages .message .meta span {
 
 .chat-form-container textarea#msg {
     min-height: 40px;
-    max-height: 160px; /* ~6 lines */
+    max-height: 160px;
+    /* ~6 lines */
     overflow-y: auto;
     resize: none;
     width: 100%;
@@ -432,6 +439,7 @@ chat-messages .message .meta span {
     box-sizing: border-box;
     transition: border 0.2s;
 }
+
 .chat-form-container textarea#msg:focus {
     outline: none;
 }
@@ -507,7 +515,7 @@ chat-messages .message .meta span {
 }
 
 /* Text to Image Styles / Generation Area */
-.generation-area {    
+.generation-area {
     padding: 20px;
     background: #f4f4f4;
     /* Original */
@@ -521,14 +529,14 @@ chat-messages .message .meta span {
     margin: 0 auto;
 }
 
-.prompt-section {    
+.prompt-section {
     background: var(--light-color);
     padding: 25px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.prompt-section textarea {    
+.prompt-section textarea {
     width: 100%;
     padding: 15px;
     border: 1px solid #ddd;
@@ -541,19 +549,19 @@ chat-messages .message .meta span {
     transition: border-color 0.3s ease;
 }
 
-.prompt-section textarea:focus {    
+.prompt-section textarea:focus {
     border-color: var(--dark-color-a);
     outline: none;
     box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
 
-.image-options {    
+.image-options {
     display: flex;
     gap: 25px;
     margin: 20px 0;
 }
 
-.option-group {    
+.option-group {
     display: flex;
     /* From first definition */
     flex-direction: column;
@@ -564,22 +572,20 @@ chat-messages .message .meta span {
     /* From later definitions */
 }
 
-.option-group label {    
+.option-group label {
     font-weight: 600;
-    color: var(--dark-color);
     display: block;
     margin-bottom: 10px;
     font-size: 0.95rem;
 }
 
-.image-options select {    
+.image-options select {
     padding: 12px;
     border-radius: 5px;
     border: 0;
     min-width: 200px;
     width: 100%;
     background-color: #cad1ff;
-    color: var(--dark-color);
     font-size: 0.95rem;
     cursor: pointer;
     appearance: none;
@@ -589,12 +595,12 @@ chat-messages .message .meta span {
     background-size: 16px;
 }
 
-.image-options select:focus {    
+.image-options select:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
 
-.results-section {    
+.results-section {
     flex: 1;
     background: var(--light-color-a);
     padding: 25px;
@@ -621,7 +627,7 @@ chat-messages .message .meta span {
     gap: 20px;
 }
 
-.generated-image img {    
+.generated-image img {
     width: 750px;
     height: 500px;
     object-fit: contain;
@@ -631,7 +637,7 @@ chat-messages .message .meta span {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.image-actions {    
+.image-actions {
     width: 100%;
     /* From first definition */
     display: flex;
@@ -649,7 +655,7 @@ chat-messages .message .meta span {
     transition: all 0.3s ease;
 }
 
-#generate-btn {    
+#generate-btn {
     width: 100%;
     padding: 15px;
     font-size: 1.1rem;
@@ -674,14 +680,14 @@ chat-messages .message .meta span {
     color: white;
 }
 
-#generate-btn:disabled {    
+#generate-btn:disabled {
     background-color: var(--dark-color-a);
     cursor: not-allowed;
     transform: none;
 }
 
 /* Loading indicator */
-#loading-indicator {    
+#loading-indicator {
     color: var(--dark-color-a);
     font-size: 2rem;
     position: absolute;
@@ -753,7 +759,7 @@ chat-messages .message .meta span {
 }
 
 /* Text to Voice Styles / Voice Area */
-.voice-area {    
+.voice-area {
     padding: 20px;
     background: #f4f4f4;
     height: 100%;
@@ -763,7 +769,7 @@ chat-messages .message .meta span {
     gap: 20px;
 }
 
-.text-input-section {    
+.text-input-section {
     background: #fff;
     padding: 25px;
     border-radius: 8px;
@@ -1073,7 +1079,7 @@ chat-messages .message .meta span {
 }
 
 /* Admin API Configuration Styles */
-.api-config-section {    
+.api-config-section {
     padding: 20px;
     background: #fff;
     border-radius: 8px;
@@ -1081,7 +1087,7 @@ chat-messages .message .meta span {
     margin-top: 2%;
 }
 
-.admin-form {    
+.admin-form {
     margin-bottom: 30px;
     padding: 25px;
     background: var(--light-color-a);
@@ -1089,7 +1095,7 @@ chat-messages .message .meta span {
     border: 1px solid #e9ecef;
 }
 
-.form-group {    
+.form-group {
     margin-bottom: 25px;
 }
 
@@ -1115,7 +1121,7 @@ chat-messages .message .meta span {
     margin-top: 30px;
 } */
 
-.api-item {    
+.api-item {
     display: flex;
     align-items: center;
     padding: 20px;
@@ -1135,7 +1141,7 @@ chat-messages .message .meta span {
     flex: 1;
 }
 
-.api-name {    
+.api-name {
     font-weight: 600;
     color: #333;
     margin-bottom: 5px;
@@ -1148,7 +1154,7 @@ chat-messages .message .meta span {
     font-family: monospace;
 }
 
-.api-controls {    
+.api-controls {
     display: flex;
     gap: 15px;
     align-items: center;
@@ -1203,7 +1209,7 @@ input:checked+.toggle-slider:before {
 }
 
 /* Button Icons */
-.btn-icon {    
+.btn-icon {
     width: 36px;
     height: 36px;
     padding: 8px;
@@ -1223,7 +1229,7 @@ input:checked+.toggle-slider:before {
     color: #495057;
 }
 
-.btn-icon:hover {    
+.btn-icon:hover {
     background: var(--light-color-a);
     transform: translateY(-1px);
     color: var(--dark-color-a);
@@ -1288,7 +1294,7 @@ input:checked+.toggle-slider:before {
 }
 
 /* Enhanced Admin API Configuration Styles */
-.section-header {    
+.section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1299,7 +1305,7 @@ input:checked+.toggle-slider:before {
     /* From first definition */
 }
 
-.section-header h2 {    
+.section-header h2 {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1318,7 +1324,7 @@ input:checked+.toggle-slider:before {
     font-size: 0.9em;
 }
 
-.btn-wide {    
+.btn-wide {
     min-width: 150px;
     height: 45px !important;
     padding: 12px 24px;
@@ -1343,7 +1349,7 @@ input:checked+.toggle-slider:before {
     color: #fff !important;
 }
 
-.form-input {    
+.form-input {
     width: 100%;
     height: 42px;
     padding: 10px 12px;
@@ -1354,13 +1360,13 @@ input:checked+.toggle-slider:before {
     background: #fff;
 }
 
-.form-input:focus {    
+.form-input:focus {
     border-color: var(--dark-color-a);
     box-shadow: 0 0 0 2px rgba(102, 122, 255, 0.1);
     outline: none;
 }
 
-.form-select {    
+.form-select {
     width: 100%;
     height: 42px;
     padding: 10px 12px;
@@ -1396,7 +1402,7 @@ input:checked+.toggle-slider:before {
     margin-top: 5px;
 }
 
-.code-input-container {    
+.code-input-container {
     position: relative;
     margin-top: 8px;
 }
@@ -1435,7 +1441,7 @@ input:checked+.toggle-slider:before {
     margin-top: 10px;
 }
 
-.headers-preview {    
+.headers-preview {
     margin-top: 10px;
 }
 
@@ -1681,7 +1687,7 @@ input:checked+.toggle-slider:before {
 }
 
 /* AI Chat Model Select Styles */
-.model-select-container {    
+.model-select-container {
     position: relative;
     margin: 10px 0 15px 0;
     /* margin-bottom updated from 20px */
@@ -1692,22 +1698,20 @@ input:checked+.toggle-slider:before {
     width: 100%;
     padding: 12px;
     background: #e6e9ff69;
-    border: 1px solid var(--dark-color-a);
-    border-radius: 8px;
+    color: white;
+    border: 0;
+    border-radius: 5px;
     font-size: 1rem;
-    color: var(--dark-color);
     cursor: pointer;
     outline: none;
     transition: all 0.3s ease;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    /* Only in first block example */
     margin-bottom: 10px;
-    /* Only in first block example */
 }
 
-.model-select-container::after {    
+.model-select-container::after {
     content: '\f078';
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
@@ -1716,7 +1720,6 @@ input:checked+.toggle-slider:before {
     top: 45%;
     transform: translateY(-50%);
     pointer-events: none;
-    color: var(--dark-color);
     transition: transform 0.3s ease;
     /* From first definition */
 }
@@ -1727,7 +1730,7 @@ input:checked+.toggle-slider:before {
     border-color: var(--dark-color-a);
 }
 
-.model-select option {    
+.model-select option {
     background: var(--dark-color-b);
     color: #fff;
     padding: 12px;
@@ -1742,7 +1745,7 @@ input:checked+.toggle-slider:before {
     background: var(--dark-color-a);
 }
 
-.model-select:disabled {    
+.model-select:disabled {
     opacity: 0.7;
     cursor: not-allowed;
     background-color: var(--dark-color-a);
@@ -1823,7 +1826,7 @@ input:checked+.toggle-slider:before {
 }
 
 /* Image API Configuration Styles */
-.options-grid {    
+.options-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
@@ -1832,7 +1835,7 @@ input:checked+.toggle-slider:before {
 }
 
 .size-option,
-.style-option {    
+.style-option {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1982,7 +1985,6 @@ input:checked+.toggle-slider:before {
 
 .range-item label {
     font-weight: 500;
-    color: var(--dark-color);
 }
 
 .range-item input {
@@ -2612,7 +2614,7 @@ input:checked+.toggle-slider:before {
 
 .block-reason,
 .block-date,
-.block-by, 
+.block-by,
 .block-duration {
     font-size: 0.9rem;
     color: #666;
@@ -2852,7 +2854,6 @@ input:checked+.toggle-slider:before {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
-    color: var(--dark-color);
 }
 
 /* Existing modal and form styles... */
@@ -2886,69 +2887,75 @@ input:checked+.toggle-slider:before {
 
 /* AI Markdown Styles */
 .ai-markdown {
-  font-family: inherit;
-  font-size: 1em;
-  color: #222;
-  background: none;
-  padding: 0;
-  margin: 0;
-  word-break: break-word;
+    font-family: inherit;
+    font-size: 1em;
+    color: #222;
+    background: none;
+    padding: 0;
+    margin: 0;
+    word-break: break-word;
 }
 
-.ai-markdown pre, .ai-markdown code {
-  border-radius: 4px;
-  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
-  font-size: 0.95em;
+.ai-markdown pre,
+.ai-markdown code {
+    border-radius: 4px;
+    font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 0.95em;
 }
 
 .ai-markdown pre {
-  overflow-x: auto;
-  margin: 8px 0;
+    overflow-x: auto;
+    margin: 8px 0;
 }
 
-.ai-markdown h1, .ai-markdown h2, .ai-markdown h3 {
-  margin: 12px 0 6px 0;
-  font-weight: 600;
+.ai-markdown h1,
+.ai-markdown h2,
+.ai-markdown h3 {
+    margin: 12px 0 6px 0;
+    font-weight: 600;
 }
 
-.ai-markdown ul, .ai-markdown ol {
-  margin: 8px 0 8px 20px;
-  padding: 0 0 0 20px;
+.ai-markdown ul,
+.ai-markdown ol {
+    margin: 8px 0 8px 20px;
+    padding: 0 0 0 20px;
 }
 
 .ai-markdown blockquote {
-  border-left: 4px solid #b3b3b3;
-  margin: 8px 0;
-  padding: 8px 16px;
-  color: #555;
-  background: #f9f9f9;
+    border-left: 4px solid #b3b3b3;
+    margin: 8px 0;
+    padding: 8px 16px;
+    color: #555;
+    background: #f9f9f9;
 }
 
 .ai-markdown table {
-  border-collapse: collapse;
-  margin: 8px 0;
+    border-collapse: collapse;
+    margin: 8px 0;
 }
 
-.ai-markdown th, .ai-markdown td {
-  border: 1px solid #ddd;
-  padding: 6px 12px;
+.ai-markdown th,
+.ai-markdown td {
+    border: 1px solid #ddd;
+    padding: 6px 12px;
 }
 
 .copy-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #272822;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  padding: 4px 8px;
-  font-size: 0.9em;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  z-index: 2;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #272822;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 0.9em;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    z-index: 2;
 }
+
 .copy-btn:hover {
-  opacity: 1;
+    opacity: 1;
 }

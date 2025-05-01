@@ -8,7 +8,7 @@ function formatMessage(username, text) {
   return {
     username,
     text,
-    time: dayjs().format("h:mm a"), // Use dayjs for formatting
+    dateTime: dayjs().format("h:mm a, DD/MM/YYYY"), // Use dayjs for formatting
   };
 }
 

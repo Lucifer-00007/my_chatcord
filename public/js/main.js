@@ -3,6 +3,11 @@ const user = AuthGuard.getUser();
 const roomToken = AuthGuard.getRoomToken();
 const authToken = AuthGuard.getAuthToken();
 
+const chatForm = document.getElementById('chat-form');
+const chatMessages = document.querySelector('.chat-messages');
+const roomName = document.getElementById('room-name');
+const userList = document.getElementById('users');
+
 if (!user || !roomToken || !authToken) {
     AuthGuard.logout();
 }
@@ -43,11 +48,6 @@ setInterval(checkTokenExpiration, 5 * 60 * 1000);
 
 // Start first token check
 checkTokenExpiration();
-
-const chatForm = document.getElementById('chat-form');
-const chatMessages = document.querySelector('.chat-messages');
-const roomName = document.getElementById('room-name');
-const userList = document.getElementById('users');
 
 let roomId = null;
 if (roomToken) {
@@ -103,14 +103,20 @@ try {
             if (res.ok) {
                 const messages = await res.json();
                 messages.forEach(msg => {
+                    const time = new Date(msg.createdAt).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    })
+                    const date = new Date(msg.createdAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    })
                     outputMessage({
                         username: msg.username,
                         text: msg.content,
-                        time: new Date(msg.createdAt).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                            hour12: true
-                        })
+                        dateTime: `${time}, ${date}`,
                     });
                 });
                 chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -147,6 +153,7 @@ try {
 
     // Message from server
     socket.on('message', (message) => {
+        console.log('Message received:', message);
         outputMessage(message);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     });
@@ -177,6 +184,9 @@ try {
             // Clear input and focus
             e.target.elements.msg.value = '';
             e.target.elements.msg.focus();
+            // Reset textarea height and overflow
+            e.target.elements.msg.style.height = '';
+            e.target.elements.msg.style.overflowY = 'hidden';
         } catch (err) {
             console.error('Error sending message:', err);
             // Show error to user
@@ -196,6 +206,9 @@ try {
                 // Only submit if not Shift+Enter
                 e.preventDefault();
                 chatForm.requestSubmit();
+                // Reset textarea height and overflow
+                this.style.height = '';
+                this.style.overflowY = 'hidden';
             } else if (e.key === 'Enter' && e.shiftKey) {
                 // Let browser insert newline (default)
             }
@@ -230,7 +243,7 @@ function outputMessage(message) {
     const p = document.createElement('p');
     p.classList.add('meta');
     p.innerText = message.username;
-    p.innerHTML += `<span> ${message.time}</span>`;
+    p.innerHTML += `<span class="msg-time"> ${message.dateTime}</span>`;
     div.appendChild(p);
     const para = document.createElement('p');
     para.classList.add('text');
