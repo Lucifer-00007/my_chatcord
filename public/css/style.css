@@ -530,7 +530,7 @@ chat-messages .message .meta span {
 }
 
 .prompt-section {
-    background: var(--light-color);
+    background: white;
     padding: 25px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -539,39 +539,38 @@ chat-messages .message .meta span {
 .prompt-section textarea {
     width: 100%;
     padding: 15px;
-    border: 0;
+    border: 1px solid #ddd;;
     border-radius: 8px;
     resize: vertical;
-    font-size: 1rem;
-    margin-bottom: 15px;
+    font-size: 16px;
     min-height: 120px;
-    font-family: inherit;
     transition: border-color 0.3s ease;
 }
 
 .prompt-section textarea:focus {
     border-color: var(--dark-color-a);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
 
 .image-options {
     display: flex;
     gap: 25px;
     margin: 20px 0;
+    background-color: var(--light-color);
+    padding: 20px;
+    border-radius: 5px;
 }
 
 .option-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 10px;
     flex: 1;
 }
 
 .option-group label {
     font-weight: 600;
     display: block;
-    margin-bottom: 10px;
     font-size: 0.95rem;
 }
 
@@ -581,7 +580,6 @@ chat-messages .message .meta span {
     border: 0;
     min-width: 200px;
     width: 100%;
-    background-color: #cad1ff;
     font-size: 0.95rem;
     cursor: pointer;
     appearance: none;
@@ -655,35 +653,12 @@ chat-messages .message .meta span {
     transition: all 0.3s ease;
 }
 
-#generate-btn {
-    width: 100%;
-    padding: 15px;
-    font-size: 1.1rem;
-    margin-top: 20px;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    background-color: #cad1ff !important;
-    color: #667aff;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-#generate-btn:hover,
+#generate-image-btn:hover,
 #generate-voice-btn:hover {
     /* Merged properties - identical definitions */
     background-color: #7386ffe8 !important;
     transform: translateY(-1px);
     color: white;
-}
-
-#generate-btn:disabled {
-    background-color: var(--dark-color-a);
-    cursor: not-allowed;
-    transform: none;
 }
 
 /* Loading indicator */
@@ -907,7 +882,6 @@ chat-messages .message .meta span {
 .action-buttons {
     display: flex;
     gap: 15px;
-    /* width: 95%; */
     justify-content: center;
     /* Center horizontally */
     margin-left: auto;

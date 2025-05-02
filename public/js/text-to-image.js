@@ -11,7 +11,7 @@ function downloadImage(url) {
 document.addEventListener('DOMContentLoaded', () => {
     const styleSelect = document.getElementById('image-style');
     const sizeSelect = document.getElementById('image-size');
-    const generateBtn = document.getElementById('generate-btn');
+    const generateBtn = document.getElementById('generate-image-btn');
     const modelSelect = document.getElementById('model-select');
 
     async function loadActiveImageApis() {
