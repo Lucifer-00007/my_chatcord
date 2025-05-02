@@ -640,7 +640,7 @@ chat-messages .message .meta span {
 
 .image-actions {
     position: relative;
-    width: 20rem;
+    width: 50%;
     display: flex;
     justify-content: center;
     margin-bottom: 15px;
