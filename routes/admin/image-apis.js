@@ -7,13 +7,23 @@ const ImageSettings = require('../../models/ImageSettings');
 const { parseCurlCommand } = require('../../utils/apiHelpers');
 const mongoose = require('mongoose');
 
-// Get all image APIs
-router.get('/', auth, async (req, res) => {
+// Restrict to admin only
+router.get('/', [auth, adminAuth], async (req, res) => {
     try {
         const apis = await ImageApi.find();
         res.json(apis);
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+});
+
+// Public version: expose only id and name of active APIs
+router.get('/public-active', auth, async (req, res) => {
+    try {
+        const apis = await ImageApi.find({ isActive: true }).select('_id name');
+        res.json(apis);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching public active image APIs' });
     }
 });
 

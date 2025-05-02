@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadActiveImageApis() {
         try {
-            const res = await fetch('/api/image-apis', {
+            const res = await fetch('/api/image-apis/public-active', {
                 headers: {
                     'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
                 }
@@ -28,13 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const apis = await res.json();
             
-            // Filter active APIs
-            const activeApis = apis.filter(api => api.isActive);
-
-            if (activeApis.length > 0) {
+            if (apis.length > 0) {
                 modelSelect.innerHTML = `
                     <option value="">Select Model</option>
-                    ${activeApis.map(api => `
+                    ${apis.map(api => `
                         <option value="${api._id}">${api.name}</option>
                     `).join('')}
                 `;
@@ -181,13 +178,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Display the image
             imageResult.innerHTML = `
-                <div class="generated-image">
-                    <img src="${imageUrl}" alt="Generated image" loading="lazy">
-                    <div class="image-actions">
-                        <button onclick="downloadImage('${imageUrl}')" class="btn">
-                            <i class="fas fa-download"></i> Download Original
-                        </button>
+                <div class="image-result-box">
+                    <div class="generated-image">
+                        <img src="${imageUrl}" alt="Generated image" loading="lazy">
                     </div>
+                </div>
+                <div class="image-actions">
+                    <button onclick="downloadImage('${imageUrl}')" class="btn btn-download">
+                        <i class="fas fa-download"></i> Download Image
+                    </button>
                 </div>
             `;
 

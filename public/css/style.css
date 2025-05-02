@@ -539,7 +539,7 @@ chat-messages .message .meta span {
 .prompt-section textarea {
     width: 100%;
     padding: 15px;
-    border: 1px solid #ddd;
+    border: 0;
     border-radius: 8px;
     resize: vertical;
     font-size: 1rem;
@@ -563,13 +563,9 @@ chat-messages .message .meta span {
 
 .option-group {
     display: flex;
-    /* From first definition */
     flex-direction: column;
-    /* From first definition */
     gap: 0.5rem;
-    /* From first definition */
     flex: 1;
-    /* From later definitions */
 }
 
 .option-group label {
@@ -602,49 +598,53 @@ chat-messages .message .meta span {
 
 .results-section {
     flex: 1;
-    background: var(--light-color-a);
-    padding: 25px;
+    background: #e7e9ff;
+    padding-top: 25px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
-    margin-top: 20px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
-    min-height: 630px;
+}
+
+.image-result-box {
+    padding: 13px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .generated-image {
-    /* Merged properties - identical definitions */
-    max-width: 700px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
 }
 
 .generated-image img {
-    width: 750px;
     height: 500px;
     object-fit: contain;
-    border-radius: 8px;
     margin-bottom: 10px;
-    /* From first definition */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 100%;
 }
 
 .image-actions {
-    width: 100%;
-    /* From first definition */
+    position: relative;
+    width: 20rem;
     display: flex;
     justify-content: center;
-    /* From first definition */
-    gap: 15px;
-    margin-top: 10px;
+    margin-bottom: 15px;
+    left: 25%;
 }
 
 .image-actions button {
@@ -689,21 +689,17 @@ chat-messages .message .meta span {
 /* Loading indicator */
 #loading-indicator {
     color: var(--dark-color-a);
-    font-size: 2rem;
+    font-size: 1.5rem;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.95);
-    padding: 30px;
-    /* Updated from merge */
     border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 5px;
     z-index: 10;
     flex-direction: column;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .error-message {
@@ -745,7 +741,7 @@ chat-messages .message .meta span {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 5px;
 }
 
 .loading-indicator .spinner {
@@ -814,7 +810,7 @@ chat-messages .message .meta span {
 
 #voice-loading {
     color: var(--dark-color-a);
-    font-size: 1.2em;
+    font-size: 1.5rem;
 }
 
 .input-header {
@@ -1300,9 +1296,7 @@ input:checked+.toggle-slider:before {
     align-items: center;
     /* margin-bottom: 25px; */
     padding-bottom: 20px;
-    /* From first definition */
     border-bottom: 1px solid #d7d7d7;
-    /* From first definition */
 }
 
 .section-header h2 {
@@ -1310,7 +1304,6 @@ input:checked+.toggle-slider:before {
     align-items: center;
     gap: 10px;
     margin: 0;
-    /* From first definition */
 }
 
 .section-title {
@@ -1721,7 +1714,6 @@ input:checked+.toggle-slider:before {
     transform: translateY(-50%);
     pointer-events: none;
     transition: transform 0.3s ease;
-    /* From first definition */
 }
 
 .model-select:focus {
@@ -1735,9 +1727,7 @@ input:checked+.toggle-slider:before {
     color: #fff;
     padding: 12px;
     direction: ltr;
-    /* From first definition */
     text-align: left;
-    /* From first definition */
     font-size: 14px;
 }
 
