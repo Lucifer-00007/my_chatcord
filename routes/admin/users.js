@@ -39,7 +39,7 @@ router.get('/search', async (req, res) => {
                 { email: searchRegex }
             ]
         })
-        .select('username email')
+        .select('username email isAdmin createdAt')
         .sort('username')
         .limit(10);
 

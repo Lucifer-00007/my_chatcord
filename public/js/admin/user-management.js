@@ -16,6 +16,33 @@ async function initUserManagement() {
         return;
     }
 
+    // Add search, filter, and sort UI above the table
+    const userListSection = document.querySelector('.user-list-section');
+    if (userListSection) {
+        const controls = document.createElement('div');
+        controls.className = 'user-controls';
+        controls.innerHTML = `
+            <div class="search-wrapper">
+                <input class="form-input" type="text" id="user-search" placeholder="Search users..."/>
+                <span class="search-icon"><i class="fa fa-search" aria-hidden="true"></i></span>
+            </div>
+            <select id="user-filter" class="form-select">
+                <option value="all">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
+            <select id="user-sort" class="form-select">
+                <option value="username-asc">Username (A-Z)</option>
+                <option value="username-desc">Username (Z-A)</option>
+                <option value="email-asc">Email (A-Z)</option>
+                <option value="email-desc">Email (Z-A)</option>
+                <option value="createdAt-desc">Newest</option>
+                <option value="createdAt-asc">Oldest</option>
+            </select>
+        `;
+        userListSection.insertBefore(controls, userListSection.firstChild);
+    }
+
     // Load initial user list
     await loadUsers();
 
@@ -24,16 +51,49 @@ async function initUserManagement() {
 
     // Initialize form submission handler
     elements.userForm.addEventListener('submit', handleUserFormSubmit);
+
+    // Add event listeners for search, filter, and sort
+    setTimeout(() => {
+        const search = document.getElementById('user-search');
+        const filter = document.getElementById('user-filter');
+        const sort = document.getElementById('user-sort');
+        if (search) search.addEventListener('input', () => loadUsers());
+        if (filter) filter.addEventListener('change', () => loadUsers());
+        if (sort) sort.addEventListener('change', () => loadUsers());
+    }, 0);
 }
 
 async function loadUsers() {
     const userListBody = document.getElementById('user-list-body');
-    if (!userListBody) return; // Prevent error if not on user management page
-
+    if (!userListBody) return;
+    const search = document.getElementById('user-search')?.value.trim() || '';
+    const filter = document.getElementById('user-filter')?.value || 'all';
+    const sort = document.getElementById('user-sort')?.value || 'username-asc';
     try {
-        const users = await window.adminUtils.makeApiRequest('/api/admin/users');
-        console.log('Loaded users:', users);
-
+        let users = [];
+        if (search) {
+            users = await window.adminUtils.makeApiRequest(`/api/admin/users/search?q=${encodeURIComponent(search)}`);
+        } else {
+            users = await window.adminUtils.makeApiRequest('/api/admin/users');
+        }
+        // Filter by role
+        if (filter === 'admin') {
+            users = users.filter(u => u.isAdmin);
+        } else if (filter === 'user') {
+            users = users.filter(u => !u.isAdmin);
+        }
+        // Sort
+        users.sort((a, b) => {
+            switch (sort) {
+                case 'username-asc': return a.username.localeCompare(b.username);
+                case 'username-desc': return b.username.localeCompare(a.username);
+                case 'email-asc': return a.email.localeCompare(b.email);
+                case 'email-desc': return b.email.localeCompare(a.email);
+                case 'createdAt-asc': return new Date(a.createdAt) - new Date(b.createdAt);
+                case 'createdAt-desc': return new Date(b.createdAt) - new Date(a.createdAt);
+                default: return 0;
+            }
+        });
         userListBody.innerHTML = users.map(user => `
             <tr data-id="${user._id}">
             <td>${user.username}</td>
@@ -122,17 +182,16 @@ async function handleUserFormSubmit(event) {
 // Helper to format date as "DD/MM/YYYY"
 function formatDate(dateString) {
     try {
-        if (!dateString) throw new Error('Invalid date');
+        if (!dateString) return '';
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) throw new Error('Invalid date format');
+        if (isNaN(date.getTime())) return '';
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     } catch (err) {
-        console.error('Error formatting date:', err);
-        showNotification('Error formatting date', 'error');
-        return 'Invalid date';
+        // Silently fail and return empty string
+        return '';
     }
 }
 
