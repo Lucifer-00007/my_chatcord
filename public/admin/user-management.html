@@ -28,20 +28,17 @@
 <form id="user-form" class="user-form" style="display:none;">
     <h3 id="user-form-title">Add/Edit User</h3>
     <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" required autocomplete="off">
+        <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off">
     </div>
     <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required autocomplete="off">
+        <input type="email" id="email" name="email" placeholder="Email" required autocomplete="off">
     </div>
     <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required autocomplete="new-password">
+        <input type="password" id="password" name="password" placeholder="Password" required autocomplete="new-password">
     </div>
-    <div class="form-group" style="display: flex; align-items: center;">
+    <div class="form-group admin-checkbox">
         <input type="checkbox" id="isAdmin" name="isAdmin">
-        <label for="isAdmin" style="margin-left: 8px;">Admin</label>
+        <label for="isAdmin">Admin</label>
     </div>
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">Save</button>

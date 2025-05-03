@@ -58,12 +58,14 @@ async function loadUsers() {
 function showAddUserForm() {
     const form = document.getElementById('user-form');
     const addButton = document.getElementById('add-user-btn');
-    
     if (form && addButton) {
         form.reset();
         form.dataset.mode = 'add';
         form.style.display = 'block';
         addButton.style.display = 'none';
+        // Move focus to the first input in the form
+        const firstInput = form.querySelector('input:not([type="checkbox"])');
+        if (firstInput) firstInput.focus();
     }
 }
 
