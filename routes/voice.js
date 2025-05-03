@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { adminAuth } = require('../middleware/admin');
 const VoiceApi = require('../models/VoiceApi');
 const fetch = require('node-fetch');
 const { parseCurlCommand } = require('../utils/apiHelpers');  // Add this line
@@ -298,6 +299,26 @@ router.post('/test', auth, async (req, res) => {
                 statusCode: err.status || 400
             }
         });
+    }
+});
+
+// Admin-only: Get all voice APIs
+router.get('/', [auth, adminAuth], async (req, res) => {
+    try {
+        const apis = await VoiceApi.find();
+        res.json(apis);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Public: Get id and name of active voice APIs
+router.get('/public-active', auth, async (req, res) => {
+    try {
+        const apis = await VoiceApi.find({ isActive: true }).select('_id name supportedVoices');
+        res.json(apis);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching public active voice APIs' });
     }
 });
 

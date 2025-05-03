@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             const apis = await res.json();
-            
+            // Only id and name are available from the public endpoint
             if (apis.length > 0) {
                 modelSelect.innerHTML = `
                     <option value="">Select Model</option>

@@ -113,7 +113,7 @@ async function loadVoiceConfig() {
 
 async function loadVoiceApis() {
     try {
-        const response = await fetch('/api/voice', {
+        const response = await fetch('/api/voice/public-active', {
             headers: {
                 'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
             }
@@ -124,8 +124,8 @@ async function loadVoiceApis() {
             showNotification('Voice APIs are not available for your account', 'warning');
             return;
         }
-        const apis = await response.json();
-        VOICE_APIS = apis.filter(api => api.isActive);
+        VOICE_APIS = await response.json();
+        // Only id and name are available from the public endpoint
         console.log('Loaded voice APIs:', VOICE_APIS);
     } catch (err) {
         console.error('Failed to load voice APIs:', err);
@@ -240,6 +240,7 @@ function updateVoiceSelectionForModel(modelId) {
 
     // Find the selected API
     const selectedApi = VOICE_APIS.find(api => api._id === modelId);
+    console.log('Selected API:', selectedApi);
     if (!selectedApi || !selectedApi.supportedVoices || selectedApi.supportedVoices.length === 0) {
         voiceSelection.innerHTML = '<option value="">No voices available</option>';
         return;
