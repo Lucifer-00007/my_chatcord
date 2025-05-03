@@ -24,21 +24,36 @@ async function initUserManagement() {
         controls.innerHTML = `
             <div class="search-wrapper">
                 <input class="form-input" type="text" id="user-search" placeholder="Search users..."/>
-                <span class="search-icon"><i class="fa fa-search" aria-hidden="true"></i></span>
+                <span class="search-icon">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                </span>
             </div>
-            <select id="user-filter" class="form-select">
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-            </select>
-            <select id="user-sort" class="form-select">
-                <option value="username-asc">Username (A-Z)</option>
-                <option value="username-desc">Username (Z-A)</option>
-                <option value="email-asc">Email (A-Z)</option>
-                <option value="email-desc">Email (Z-A)</option>
-                <option value="createdAt-desc">Newest</option>
-                <option value="createdAt-asc">Oldest</option>
-            </select>
+            <div class="select-wrapper">
+                <span class="filter-icon">
+                    <i class="fa fa-filter" aria-hidden="true"></i>
+                </span>
+                <select id="user-filter" class="form-select">
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+            </div>
+            <div class="select-wrapper">
+                <span class="sort-icon">
+                    <i class="fa fa-sort" aria-hidden="true"></i>
+                </span>
+                <select id="user-sort" class="form-select">
+                    <option value="username-asc">Name (A-Z)</option>
+                    <option value="username-desc">Name (Z-A)</option>
+                    <option value="email-asc">Email (A-Z)</option>
+                    <option value="email-desc">Email (Z-A)</option>
+                    <option value="createdAt-desc">Newest</option>
+                    <option value="createdAt-asc">Oldest</option>
+                </select>
+            </div>
+            <button id="user-controls-reset" class="btn btn-secondary" style="white-space:nowrap;">
+                <i class="fa fa-undo"></i> Reset
+            </button>
         `;
         userListSection.insertBefore(controls, userListSection.firstChild);
     }
@@ -52,14 +67,21 @@ async function initUserManagement() {
     // Initialize form submission handler
     elements.userForm.addEventListener('submit', handleUserFormSubmit);
 
-    // Add event listeners for search, filter, and sort
+    // Add event listeners for search, filter, sort, and reset
     setTimeout(() => {
         const search = document.getElementById('user-search');
         const filter = document.getElementById('user-filter');
         const sort = document.getElementById('user-sort');
+        const reset = document.getElementById('user-controls-reset');
         if (search) search.addEventListener('input', () => loadUsers());
         if (filter) filter.addEventListener('change', () => loadUsers());
         if (sort) sort.addEventListener('change', () => loadUsers());
+        if (reset) reset.addEventListener('click', () => {
+            if (search) search.value = '';
+            if (filter) filter.value = 'all';
+            if (sort) sort.value = 'username-asc';
+            loadUsers();
+        });
     }, 0);
 }
 
