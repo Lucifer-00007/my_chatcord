@@ -2950,7 +2950,7 @@ input:checked+.toggle-slider:before {
 
 .user-table th,
 .user-table td {
-    padding: 1% 8%;
+    padding: 1% 6%;
     text-align: left;
     font-size: 1em;
 }
@@ -3084,13 +3084,6 @@ input:checked+.toggle-slider:before {
 .user-form input[type="password"]:focus {
     border-color: #667aff;
     outline: none;
-}
-
-.user-form .form-group[style*="display: flex"] {
-    display: flex !important;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 18px;
 }
 
 .user-form input[type="checkbox"] {

@@ -12,7 +12,7 @@ router.use(adminAuth);
 router.get('/', async (req, res) => {
     try {
         const users = await User.find()
-            .select('username email isAdmin')
+            .select('username email isAdmin createdAt')
             .sort('username');
         
         if (!users) {
@@ -46,6 +46,19 @@ router.get('/search', async (req, res) => {
         res.json(users);
     } catch (err) {
         res.status(500).json({ message: 'Error searching users' });
+    }
+});
+
+// Get single user by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('username email isAdmin createdAt');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
