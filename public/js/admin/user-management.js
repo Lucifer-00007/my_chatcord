@@ -27,28 +27,28 @@ async function initUserManagement() {
 }
 
 async function loadUsers() {
-    const userList = document.getElementById('user-list');
-    if (!userList) return; // Prevent error if not on user management page
+    const userListBody = document.getElementById('user-list-body');
+    if (!userListBody) return; // Prevent error if not on user management page
     
     try {
         const users = await window.adminUtils.makeApiRequest('/api/admin/users');
         
-        userList.innerHTML = users.map(user => `
-            <div class="user-item" data-id="${user._id}">
-                <div class="user-info">
-                    <div class="user-name">${user.username}</div>
-                    <div class="user-email">${user.email}</div>
-                    <div class="user-role">${user.isAdmin ? 'Admin' : 'User'}</div>
-                </div>
-                <div class="user-controls">
-                    <button class="btn btn-icon" onclick="editUser('${user._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-icon btn-danger" onclick="deleteUser('${user._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
+        userListBody.innerHTML = users.map(user => `
+            <tr data-id="${user._id}">
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${user.isAdmin ? 'Admin' : 'User'}</td>
+                <td>
+                    <div class="user-action">
+                        <a class="btn btn-icon btn-edit" onclick="editUser('${user._id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a class="btn btn-icon btn-danger" onclick="deleteUser('${user._id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
         `).join('');
     } catch (err) {
         showNotification(err.message, 'error');
@@ -65,6 +65,12 @@ function showAddUserForm() {
         form.style.display = 'block';
         addButton.style.display = 'none';
     }
+}
+
+function handleUserFormSubmit(event) {
+    event.preventDefault();
+    showNotification('User form submitted (implement logic here)', 'info');
+    // TODO: Implement add/edit user logic here
 }
 
 // Export functions for global use

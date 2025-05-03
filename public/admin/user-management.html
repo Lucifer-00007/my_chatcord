@@ -9,5 +9,42 @@
 </div>
 
 <div id="user-list" class="user-list-section">
-    <!-- Users will be populated here -->
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="user-list-body">
+            <!-- Users will be populated here as <tr> -->
+        </tbody>
+    </table>
 </div>
+
+<!-- User Form (hidden by default) -->
+<form id="user-form" class="user-form" style="display:none;">
+    <h3 id="user-form-title">Add/Edit User</h3>
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required autocomplete="off">
+    </div>
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="off">
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="new-password">
+    </div>
+    <div class="form-group" style="display: flex; align-items: center;">
+        <input type="checkbox" id="isAdmin" name="isAdmin">
+        <label for="isAdmin" style="margin-left: 8px;">Admin</label>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary" onclick="this.closest('form').style.display='none'; document.getElementById('add-user-btn').style.display='inline-block';">Cancel</button>
+    </div>
+</form>

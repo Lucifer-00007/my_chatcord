@@ -2923,3 +2923,109 @@ input:checked+.toggle-slider:before {
 .copy-btn:hover {
     opacity: 1;
 }
+
+/* User Management Table Styles */
+.user-list-section {
+    margin-top: 30px;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(102,122,255,0.06);
+    margin-bottom: 30px;
+}
+
+.user-table thead {
+    background: #f5f7ff;
+}
+
+.user-table th, .user-table td {
+    padding: 1% 8%;
+    text-align: left;
+    font-size: 1em;
+}
+
+.user-table th {
+    color: #667aff;
+    font-weight: 600;
+    border-bottom: 2px solid #e6e9ff;
+    background: #f5f7ff;
+}
+
+.user-table tbody tr {
+    border-bottom: 1px solid #e6e9ff;
+    transition: background 0.2s;
+}
+
+.user-table tbody tr:hover {
+    background: #f0f4ff;
+}
+
+.user-table td {
+    color: #333;
+    vertical-align: middle;
+}
+
+.user-table .user-action {
+    display: flex;
+    gap: 5px;
+}
+
+.user-table .btn-icon {
+    margin-right: 6px;
+    border: 1px solid #dbe2ef;
+    background: #f5f7ff;
+    color: #667aff;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: 1em;
+    transition: background 0.2s, color 0.2s;
+}
+
+.user-table .btn-edit {
+    border-color: var(--dark-color-a);
+    background: #fff;
+}
+
+.user-table .btn-edit:hover {
+    background: var(--dark-color-a);
+    color: #fff;
+}
+
+.user-table .btn-danger {
+    border-color: #d9534f;
+    background: #fff;
+}
+
+.user-table .btn-danger:hover {
+    background: #d9534f;
+    color: #fff;
+}
+
+.user-table .user-role {
+    background: #e6e9ff;
+    color: #667aff;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.95em;
+    font-weight: 500;
+    display: inline-block;
+}
+
+@media (max-width: 700px) {
+    .user-table th, .user-table td {
+        padding: 10px 6px;
+        font-size: 0.95em;
+    }
+    .user-form {
+        padding: 18px 8px !important;
+    }
+}
