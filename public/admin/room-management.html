@@ -16,6 +16,7 @@
     </div>
 
     <div class="room-blocks-section">
+        <!-- Room blocks -->
         <div class="section-header">
             <div class="section-title">
                 <h3><i class="fas fa-ban"></i> Room Blocks</h3>
@@ -33,6 +34,24 @@
                 <!-- Room blocks will be populated here -->
             </div>
         </div>
+
+        <!-- Chat History Management -->
+        <div class="section-header">
+            <div class="section-title">
+                <h3><i class="fa fa-comments" aria-hidden="true"></i> Chat Management</h3>
+                <span class="section-description">
+                    Chat history list for:
+                    <b><span id="selected-room-name">No room selected</span></b>
+                </span>
+            </div>
+            <button id="refresh-chat-history" class="btn btn-secondary"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div id="chat-history-container">
+            <div  id="chat-list" class="chat-list">
+                <!-- Chat history will be populated here -->
+            </div>
+        </div>
+
     </div>
 </div>
 

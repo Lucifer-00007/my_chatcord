@@ -86,17 +86,35 @@ app.use(helmet({
 // Apply rate limiting with different rules for static and API routes
 const adminApiLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 1000 // 1000 requests per minute for admin routes
+    max: 1000, // 1000 requests per minute for admin routes
+    handler: (req, res) => {
+        res.status(429).json({
+            message: 'Too many requests, please try again later.',
+            code: 429
+        });
+    }
 });
 
 const apiLimiter = rateLimit({
     windowMs: security.RATE_LIMIT_WINDOW,
-    max: security.RATE_LIMIT_MAX
+    max: security.RATE_LIMIT_MAX,
+    handler: (req, res) => {
+        res.status(429).json({
+            message: 'Too many requests, please try again later.',
+            code: 429
+        });
+    }
 });
 
 const staticLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 300 // 300 requests per minute for static assets
+    max: 300, // 300 requests per minute for static assets
+    handler: (req, res) => {
+        res.status(429).json({
+            message: 'Too many requests, please try again later.',
+            code: 429
+        });
+    }
 });
 
 // Apply rate limiting middleware

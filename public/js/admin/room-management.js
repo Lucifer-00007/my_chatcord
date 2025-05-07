@@ -65,13 +65,15 @@ async function initRoomManagement() {
         // Add active class to clicked room
         roomItem.classList.add('active');
         selectedRoom = roomItem.dataset.id;
-        elements.selectedRoomName.textContent = roomItem.dataset.name;
+        const roomName = roomItem.dataset.name;
+        elements.selectedRoomName.textContent = roomName;
+        // Also update all #selected-room-name elements (if multiple exist)
+        document.querySelectorAll('#selected-room-name').forEach(el => el.textContent = roomName);
 
         // Load blocks for selected room
         await loadBlocks(selectedRoom);
-
-        // Enable block user button
         elements.blockUserButton.disabled = false;
+        loadChatHistory(selectedRoom);
     });
 
     // Add room button click handler
@@ -176,6 +178,9 @@ async function initRoomManagement() {
 
     // Initialize room action handlers
     initRoomActions();
+
+    // Initialize chat history management
+    initChatHistoryManagement();
 }
 
 async function loadRooms() {
@@ -457,6 +462,89 @@ async function loadUsersForModal() {
     } catch (err) {
         window.showNotification(err.message || 'Failed to load users', 'error');
         userSelect.innerHTML = '<option value="">Error loading users</option>';
+    }
+}
+
+// --- Chat History Management ---
+async function loadChatHistory(roomId) {
+    const chatList = document.getElementById('chat-list');
+    if (!roomId) {
+        chatList.innerHTML = '<div class="empty-state">Select a room to view chat history.</div>';
+        return;
+    }
+    try {
+        const messages = await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/chats`);
+        if (!messages || !messages.length) {
+            chatList.innerHTML = '<div class="empty-state">No chat history for this room.</div>';
+            return;
+        }
+        chatList.innerHTML = messages.map(msg => `
+            <div class="chat-message">
+                <div class="chat-meta">
+                    <b>${msg.username || 'Unknown'}</b>
+                    <span class="chat-date">${formatChatDate(msg.createdAt)}</span>
+                </div>
+                <div class="chat-content">${escapeHtml(msg.content)}</div>
+            </div>
+        `).join('');
+    } catch (err) {
+        chatList.innerHTML = `<div class="error-state">${err.message}</div>`;
+    }
+}
+
+function formatChatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Attach chat history events
+function initChatHistoryManagement() {
+    const chatList = document.getElementById('chat-list');
+    const refreshBtn = document.getElementById('refresh-chat-history');
+    const roomSelect = document.getElementById('chat-history-room-select');
+    const deleteBtn = document.getElementById('delete-chat-history');
+
+    // Populate room select
+    window.adminUtils.makeApiRequest('/api/admin/room-management/rooms').then(rooms => {
+        if (roomSelect) {
+            roomSelect.innerHTML = rooms.map(room => `<option value="${room._id}">${room.name}</option>`).join('');
+            if (rooms.length) {
+                roomSelect.value = rooms[0]._id;
+                loadChatHistory(rooms[0]._id);
+            }
+        }
+    });
+
+    if (roomSelect) {
+        roomSelect.addEventListener('change', () => {
+            loadChatHistory(roomSelect.value);
+        });
+    }
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            loadChatHistory(roomSelect.value);
+        });
+    }
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (!roomSelect.value) return;
+            if (!confirm('Delete all chat history for this room?')) return;
+            try {
+                await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomSelect.value}/chats`, { method: 'DELETE' });
+                showNotification('Chat history deleted', 'success');
+                loadChatHistory(roomSelect.value);
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        });
     }
 }
 
