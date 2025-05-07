@@ -478,13 +478,14 @@ async function loadChatHistory(roomId) {
             chatList.innerHTML = '<div class="empty-state">No chat history for this room.</div>';
             return;
         }
-        chatList.innerHTML = messages.map(msg => `
-            <div class="chat-message">
+        chatList.innerHTML = messages.map((msg, idx) => `
+            <div class="chat-message" data-idx="${idx}">
                 <div class="chat-meta">
                     <b>${msg.username || 'Unknown'}</b>
                     <span class="chat-date">${formatChatDate(msg.createdAt)}</span>
                 </div>
                 <div class="chat-content">${escapeHtml(msg.content)}</div>
+                <button class="delete-chat-btn" title="Delete message" onclick="deleteChatMessage('${roomId}', ${idx})"><i class="fa fa-trash"></i></button>
             </div>
         `).join('');
     } catch (err) {
@@ -496,7 +497,7 @@ function formatChatDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    return `${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 }
 
 function escapeHtml(text) {
@@ -504,6 +505,18 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Add global deleteChatMessage for admin
+window.deleteChatMessage = async function(roomId, idx) {
+    if (!confirm('Delete this message?')) return;
+    try {
+        await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/chats/${idx}`, { method: 'DELETE' });
+        showNotification('Message deleted', 'success');
+        loadChatHistory(roomId);
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
 
 // Attach chat history events
 function initChatHistoryManagement() {

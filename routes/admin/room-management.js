@@ -240,4 +240,24 @@ router.delete('/rooms/:roomId/chats', [auth, adminAuth], async (req, res) => {
     }
 });
 
+// Delete a single chat message by index
+router.delete('/rooms/:roomId/chats/:idx', [auth, adminAuth], async (req, res) => {
+    try {
+        const { roomId, idx } = req.params;
+        const roomChat = await RoomChat.findOne({ room: roomId });
+        if (!roomChat || !roomChat.messages || !roomChat.messages.length) {
+            return res.status(404).json({ message: 'No chat history found for this room.' });
+        }
+        const index = parseInt(idx, 10);
+        if (isNaN(index) || index < 0 || index >= roomChat.messages.length) {
+            return res.status(400).json({ message: 'Invalid message index.' });
+        }
+        roomChat.messages.splice(index, 1);
+        await roomChat.save();
+        res.json({ message: 'Message deleted.' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;
