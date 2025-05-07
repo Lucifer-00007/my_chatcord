@@ -22,6 +22,7 @@ const {
     chat,
     cors
 } = require('./config/constants');
+const logger = require('./logger'); // Add logger import
 
 // Import additional libraries and set up Redis for Socket.io adapter
 const { createAdapter } = require("@socket.io/redis-adapter");
@@ -39,7 +40,7 @@ const {
 
 // Validate environment variables
 if (!process.env.REDIS_URL || !process.env.PORT) {
-  console.error("Missing required environment variables. Check .env file.");
+  logger.error("Missing required environment variables. Check .env file.");
   process.exit(1);
 }
 
@@ -48,8 +49,9 @@ if (!process.env.REDIS_URL || !process.env.PORT) {
     try {
         await connectDB();
         await initialize();
+        logger.info('Database connected and initialized');
     } catch (err) {
-        console.error('Failed to initialize application:', err);
+        logger.error('Failed to initialize application', { error: err.message, stack: err.stack });
         process.exit(1);
     }
 })();
@@ -208,15 +210,15 @@ const botName = chat.BOT_NAME;
     const pubClient = createClient({ url: process.env.REDIS_URL });
 
     pubClient.on("error", (err) => {
-      console.error("Redis Client Error:", err);
+      logger.error("Redis Client Error:", { error: err.message, stack: err.stack });
     });
 
     await pubClient.connect();
     const subClient = pubClient.duplicate();
     io.adapter(createAdapter(pubClient, subClient));
   } catch (error) {
-    console.error("Redis connection failed:", error.message);
-    console.error("Retrying in 5 seconds...");
+    logger.error("Redis connection failed:", { error: error.message, stack: error.stack });
+    logger.error("Retrying in 5 seconds...");
     setTimeout(() => {
       process.exit(1); // Exit process if retry fails
     }, 5000);
@@ -339,7 +341,7 @@ io.on("connection", (socket) => {
           io.to(user.room).emit("message", formatMessage(user.username, messageText));
         }
       } catch (err) {
-        console.error('Message error:', err);
+        logger.error('Message error:', { error: err.message, stack: err.stack });
         socket.emit("error", chat.MESSAGES.sendError);
       }
     });
@@ -360,9 +362,9 @@ io.on("connection", (socket) => {
       }
     });
   } catch (err) {
-    console.error("Error in connection handler:", err);
+    logger.error("Error in connection handler:", { error: err.message, stack: err.stack });
   }
 });
 
 // Start the server and listen on the specified port
-server.listen(env.PORT, process.env.HOST, () => console.log(`Server running on port ${env.PORT}`));
+server.listen(env.PORT, process.env.HOST, () => logger.info(`Server running on port ${env.PORT}`));

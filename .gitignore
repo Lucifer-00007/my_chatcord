@@ -18,7 +18,10 @@ migration.log
 /scripts/data/
 
 # Logs
+logs/
 *.log
+*.log.*
+*.audit.json
 
 # IDE specific files
 .vscode/

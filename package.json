@@ -26,6 +26,8 @@
     "mongoose": "^7.0.3",
     "node-fetch": "^2.6.9",
     "redis": "^4.6.7",
-    "socket.io": "^4.6.1"
+    "socket.io": "^4.6.1",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   }
 }
