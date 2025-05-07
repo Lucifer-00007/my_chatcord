@@ -16,9 +16,9 @@ async function initUserManagement() {
         return;
     }
 
-    // Add search, filter, and sort UI above the table
+    // Add search, filter, and sort UI above the table only if not already present
     const userListSection = document.querySelector('.user-list-section');
-    if (userListSection) {
+    if (userListSection && !userListSection.querySelector('.user-controls')) {
         const controls = document.createElement('div');
         controls.className = 'user-controls';
         controls.innerHTML = `
