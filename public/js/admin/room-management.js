@@ -187,7 +187,7 @@ async function loadRooms() {
     const container = document.getElementById('rooms-container');
     try {
         const rooms = await window.adminUtils.makeApiRequest('/api/admin/room-management/rooms');
-        console.log('Rooms:', rooms);    
+        console.log('Rooms:', rooms);
         container.innerHTML = rooms.map(room => `
             <div class="room-item" data-id="${room._id}" data-name="${room.name}">
                 <div class="room-info">
@@ -466,59 +466,84 @@ async function loadUsersForModal() {
 }
 
 // --- Chat History Management ---
+let allChatMessages = [];
+let allChatUsers = [];
+
 async function loadChatHistory(roomId) {
     const chatList = document.getElementById('chat-list');
+    const userFilter = document.getElementById('chat-user-filter');
+    const searchInput = document.getElementById('chat-search');
     if (!roomId) {
         chatList.innerHTML = '<div class="empty-state">Select a room to view chat history.</div>';
         return;
     }
     try {
         const messages = await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/chats`);
-        if (!messages || !messages.length) {
-            chatList.innerHTML = '<div class="empty-state">No chat history for this room.</div>';
-            return;
+        allChatMessages = messages;
+        // Populate user filter
+        const uniqueUsers = Array.from(new Set(messages.map(m => m.username || 'Unknown')));
+        allChatUsers = uniqueUsers;
+        if (userFilter) {
+            userFilter.innerHTML = '<option value="">All Users</option>' + uniqueUsers.map(u => `<option value="${u}">${u}</option>`).join('');
         }
-        chatList.innerHTML = messages.map((msg, idx) => `
-            <div class="chat-message" data-idx="${idx}">
-                <div class="chat-meta">
-                    <b>${msg.username || 'Unknown'}</b>
-                    <span class="chat-date">${formatChatDate(msg.createdAt)}</span>
-                </div>
-                <div class="chat-content">${escapeHtml(msg.content)}</div>
-                <button class="delete-chat-btn" title="Delete message" onclick="deleteChatMessage('${roomId}', ${idx})"><i class="fa fa-trash"></i></button>
-            </div>
-        `).join('');
+        renderChatMessages();
     } catch (err) {
+        console.error('Error loading chat history:', err);
         chatList.innerHTML = `<div class="error-state">${err.message}</div>`;
     }
 }
 
-function formatChatDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return `${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+function renderChatMessages() {
+    const chatList = document.getElementById('chat-list');
+    const userFilter = document.getElementById('chat-user-filter');
+    const searchInput = document.getElementById('chat-search');
+    let filtered = allChatMessages;
+    if (userFilter && userFilter.value) {
+        filtered = filtered.filter(m => m.username === userFilter.value);
+    }
+    if (searchInput && searchInput.value.trim()) {
+        const q = searchInput.value.trim().toLowerCase();
+        filtered = filtered.filter(m => (m.content || '').toLowerCase().includes(q));
+    }
+    if (!filtered.length) {
+        chatList.innerHTML = '<div class="empty-state">No chat messages found.</div>';
+        return;
+    }
+    chatList.innerHTML = filtered.map((msg, idx) => `
+        <div class="chat-message" data-idx="${idx}">
+            <div class="chat-meta">
+                <b>${msg.username || 'Unknown'}</b>
+                <span class="chat-date">${formatChatDate(msg.createdAt)}</span>
+            </div>
+            <div class="chat-content">${escapeHtml(msg.content)}</div>
+            <button class="delete-chat-btn" title="Delete message" onclick="deleteChatMessageForFiltered(${idx})"><i class="fa fa-trash"></i></button>
+        </div>
+    `).join('');
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Add global deleteChatMessage for admin
-window.deleteChatMessage = async function(roomId, idx) {
-    if (!confirm('Delete this message?')) return;
-    try {
-        await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/chats/${idx}`, { method: 'DELETE' });
-        showNotification('Message deleted', 'success');
-        loadChatHistory(roomId);
-    } catch (err) {
-        showNotification(err.message, 'error');
+// Helper to map filtered index to original index for deletion
+window.deleteChatMessageForFiltered = function(filteredIdx) {
+    const userFilter = document.getElementById('chat-user-filter');
+    const searchInput = document.getElementById('chat-search');
+    let filtered = allChatMessages;
+    if (userFilter && userFilter.value) {
+        filtered = filtered.filter(m => m.username === userFilter.value);
+    }
+    if (searchInput && searchInput.value.trim()) {
+        const q = searchInput.value.trim().toLowerCase();
+        filtered = filtered.filter(m => (m.content || '').toLowerCase().includes(q));
+    }
+    const msg = filtered[filteredIdx];
+    const origIdx = allChatMessages.indexOf(msg);
+    if (msg && origIdx !== -1) {
+        const roomId = document.querySelector('.room-item.active')?.dataset.id;
+        if (roomId) {
+            window.deleteChatMessage(roomId, origIdx);
+        }
     }
 };
 
-// Attach chat history events
+// Attach search/filter events
 function initChatHistoryManagement() {
     const chatList = document.getElementById('chat-list');
     const refreshBtn = document.getElementById('refresh-chat-history');
@@ -559,6 +584,35 @@ function initChatHistoryManagement() {
             }
         });
     }
+
+    const userFilter = document.getElementById('chat-user-filter');
+    const searchInput = document.getElementById('chat-search');
+    if (userFilter) userFilter.addEventListener('change', renderChatMessages);
+    if (searchInput) searchInput.addEventListener('input', renderChatMessages);
+
+    const resetBtn = document.getElementById('reset-actions');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            const searchInput = document.getElementById('chat-search');
+            const userFilter = document.getElementById('chat-user-filter');
+            if (searchInput) searchInput.value = '';
+            if (userFilter) userFilter.value = '';
+            renderChatMessages();
+        });
+    }
+}
+
+function formatChatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return `${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Export functions for global use
