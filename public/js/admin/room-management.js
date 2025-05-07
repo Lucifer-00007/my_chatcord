@@ -543,42 +543,64 @@ window.deleteChatMessageForFiltered = function(filteredIdx) {
     }
 };
 
+// Add global deleteChatMessage for admin
+window.deleteChatMessage = async function(roomId, idx) {
+    if (!confirm('Delete this message?')) return;
+    try {
+        await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/chats/${idx}`, { method: 'DELETE' });
+        showNotification('Message deleted', 'success');
+        loadChatHistory(roomId);
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
+
 // Attach search/filter events
 function initChatHistoryManagement() {
+    // Only try to use roomSelect if it exists
     const chatList = document.getElementById('chat-list');
     const refreshBtn = document.getElementById('refresh-chat-history');
     const roomSelect = document.getElementById('chat-history-room-select');
     const deleteBtn = document.getElementById('delete-chat-history');
 
-    // Populate room select
-    window.adminUtils.makeApiRequest('/api/admin/room-management/rooms').then(rooms => {
-        if (roomSelect) {
+    // If roomSelect does not exist, skip room select logic
+    if (roomSelect) {
+        window.adminUtils.makeApiRequest('/api/admin/room-management/rooms').then(rooms => {
             roomSelect.innerHTML = rooms.map(room => `<option value="${room._id}">${room.name}</option>`).join('');
             if (rooms.length) {
                 roomSelect.value = rooms[0]._id;
                 loadChatHistory(rooms[0]._id);
             }
-        }
-    });
-
-    if (roomSelect) {
+        });
         roomSelect.addEventListener('change', () => {
             loadChatHistory(roomSelect.value);
         });
+    } else {
+        // If no roomSelect, load chat history for the currently selected room (if any)
+        const selectedRoomId = document.querySelector('.room-item.active')?.dataset.id;
+        if (selectedRoomId) {
+            loadChatHistory(selectedRoomId);
+        }
     }
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
-            loadChatHistory(roomSelect.value);
+            if (roomSelect && roomSelect.value) {
+                loadChatHistory(roomSelect.value);
+            } else {
+                const selectedRoomId = document.querySelector('.room-item.active')?.dataset.id;
+                if (selectedRoomId) loadChatHistory(selectedRoomId);
+            }
         });
     }
     if (deleteBtn) {
         deleteBtn.addEventListener('click', async () => {
-            if (!roomSelect.value) return;
+            let roomId = roomSelect && roomSelect.value ? roomSelect.value : document.querySelector('.room-item.active')?.dataset.id;
+            if (!roomId) return;
             if (!confirm('Delete all chat history for this room?')) return;
             try {
-                await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomSelect.value}/chats`, { method: 'DELETE' });
+                await window.adminUtils.makeApiRequest(`/api/admin/room-management/rooms/${roomId}/chats`, { method: 'DELETE' });
                 showNotification('Chat history deleted', 'success');
-                loadChatHistory(roomSelect.value);
+                loadChatHistory(roomId);
             } catch (err) {
                 showNotification(err.message, 'error');
             }
