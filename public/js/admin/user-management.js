@@ -51,9 +51,11 @@ async function initUserManagement() {
                     <option value="createdAt-asc">Oldest</option>
                 </select>
             </div>
-            <button id="user-controls-reset" class="btn btn-secondary" style="white-space:nowrap;">
-                <i class="fa fa-undo"></i> Reset
-            </button>
+            <div>
+                <a id="user-controls-reset" class="btn btn-reset">
+                    <i class="fa fa-undo"></i> Reset
+                </a>
+            </div>
         `;
         userListSection.insertBefore(controls, userListSection.firstChild);
     }

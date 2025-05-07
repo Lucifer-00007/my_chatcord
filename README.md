@@ -230,11 +230,12 @@ The `config` folder contains crucial application settings. Update the following 
 
 
 ## Todo List
-- Create a postman collection of all the apis in categorized way.
-- Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure.    
-- Add the logged in user details to the nav bar.
-- Save room chat history to DB, fix the chat time, add a section in admin(rooms) to manage the chat history.
-
+- [x] Save room chat history to DB, fix the chat time, add a section in admin(rooms) to manage the chat history.
+- [ ] Add the logged-in user details to the nav bar.
+- [ ] ⁠Remove the service layer and the all business logics from route layer to controller layer.
+- [ ] ⁠Follow the code structure of `homemenu`.
+- [ ] Create a postman collection of all the apis in categorized way.    
+- [ ] Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure.
 
 ## License
 

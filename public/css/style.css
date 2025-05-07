@@ -3172,6 +3172,19 @@ input:checked+.toggle-slider:before {
     max-width: 200px;
     flex: 0 0 auto;
     padding-left: 11%;
+    border-radius: 6px;
+}
+
+.user-controls .btn-reset {
+    white-space: nowrap;
+    border: 1px solid var(--dark-color-a);
+    font-size: 14px;
+    padding: 10px;
+    background: white;
+
+}
+.user-controls .btn-reset:hover {
+    background: var(--dark-color-a);
 }
 
 @media (max-width: 900px) {
