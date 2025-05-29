@@ -23,6 +23,7 @@ const {
     cors
 } = require('./config/constants');
 const logger = require('./logger'); // Add logger import
+const { logUserMessageActivity } = require('./utils/users');
 
 // Import additional libraries and set up Redis for Socket.io adapter
 const { createAdapter } = require("@socket.io/redis-adapter");
@@ -70,11 +71,13 @@ app.use(express.static(path.join(__dirname, "public")));
 const cspConfig = {
     directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "cdn.jsdelivr.net"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
         scriptSrcAttr: ["'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
-        fontSrc: ["'self'", "cdnjs.cloudflare.com", "fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "blob:", "https:", "*"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
+        imgSrc: [
+            "'self'", "data:", "blob:", "https:", "*"
+        ],
         mediaSrc: ["'self'", "blob:", "data:"],
         connectSrc: ["'self'", "ws:", "wss:"]
     }
@@ -335,6 +338,10 @@ io.on("connection", (socket) => {
             roomChat.roomName = room.name;
           }
           await roomChat.save();
+          // Log user message activity for analytics (IP, userAgent from handshake)
+          const ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+          const userAgent = socket.handshake.headers['user-agent'];
+          await logUserMessageActivity(socket.userId, ip, userAgent, { room: room._id });
           // --- End RoomChat logic ---
 
           // Send message to room

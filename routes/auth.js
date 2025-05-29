@@ -5,6 +5,7 @@ const { generateToken } = require('../utils/jwt');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { cookie } = require('../config/constants');
+const UserActivity = require('../models/UserActivity');
 
 // Select cookie options based on environment
 const cookieOptions = cookie;
@@ -79,6 +80,16 @@ router.post('/login', async (req, res) => {
     // Set both httpOnly cookie and regular cookie for client access
     res.cookie('token', token, cookieOptions);
     res.cookie('clientToken', token, { ...cookieOptions, httpOnly: false });
+
+    // Log user login activity with IP
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    await UserActivity.create({
+      user: user._id,
+      action: 'login',
+      ip,
+      userAgent
+    });
 
     res.json({
       user: {

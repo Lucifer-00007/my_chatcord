@@ -6,6 +6,7 @@ const RoomBlock = require('../models/RoomBlock');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const RoomChat = require('../models/RoomChat');
+const { logUserMessageActivity } = require('../utils/users');
 
 // Get all rooms
 router.get('/', auth, async (req, res) => {
@@ -98,6 +99,8 @@ router.get('/:roomId/messages', auth, async (req, res) => {
           username: msg.username,
           createdAt: msg.createdAt
         }));
+      // Log activity for each message fetch (optional, for heatmap)
+      await logUserMessageActivity(req.user._id, req.headers['x-forwarded-for'] || req.connection.remoteAddress, req.headers['user-agent'], { room: room._id });
     }
     res.json(messages);
   } catch (err) {
