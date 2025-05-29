@@ -12,14 +12,18 @@ router.get('/', async (req, res) => {
         const [
             users,
             rooms,
-            messages,
+            messageCount,
             aiApis,
             voiceApis,
             imageApis
         ] = await Promise.all([
             User.countDocuments().exec(),
-            Room.countDocuments().exec(), // Remove isActive filter since Room model doesn't have this field
-            RoomChat.countDocuments().exec(),
+            Room.countDocuments().exec(),
+            // Aggregate to sum the lengths of all messages arrays in RoomChat
+            RoomChat.aggregate([
+                { $project: { messageCount: { $size: { $ifNull: ["$messages", []] } } } },
+                { $group: { _id: null, total: { $sum: "$messageCount" } } }
+            ]).then(res => (res[0]?.total || 0)),
             AiApi.countDocuments({ isActive: true }).exec(),
             VoiceApi.countDocuments({ isActive: true }).exec(),
             ImageApi.countDocuments({ isActive: true }).exec()
@@ -29,7 +33,7 @@ router.get('/', async (req, res) => {
         const stats = {
             users: Number(users) || 0,
             rooms: Number(rooms) || 0,
-            messages: Number(messages) || 0,
+            messages: Number(messageCount) || 0,
             apis: Number(aiApis + voiceApis + imageApis) || 0,
             lastUpdated: new Date().toISOString()
         };
