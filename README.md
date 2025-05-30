@@ -232,8 +232,9 @@ The `config` folder contains crucial application settings. Update the following 
 ## Todo List
 - [x] Save room chat history to DB, fix the chat time, add a section in admin(rooms) to manage the chat history.
 - [x] Check the duplicate `user-controls` issue in `User Management(Admin)`
-- [ ] Fix the `Total Messages` count in `Dashboard` in the `admin-settings` page.
-- [ ] Add `Pie, Bars, Charts, Heatmap, Histogram, Geo location of active users in a map` on `Dashboard` in the `admin-settings` page.
+- [x] Fix the `Total Messages` count in `Dashboard` in the `admin-settings` page.
+- [x] Add `Pie, Bars, Charts, Heatmap, Histogram, Geo location of active users in a map` on `Dashboard` in the `admin-settings` page.
+- [ ] Complete the `System Settings` in `admin-settings` page.
 - [ ] Add the logged-in user details to the nav bar.
 - [ ] ⁠Remove the service layer and the all business logics from route layer to controller layer.
 - [ ] Create a postman collection of all the apis in categorized way.    
