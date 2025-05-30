@@ -588,6 +588,7 @@ chat-messages .message .meta span {
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 16px;
+    background-color: white;
 }
 
 .image-options select:focus {
