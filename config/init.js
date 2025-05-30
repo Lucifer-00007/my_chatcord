@@ -1,6 +1,7 @@
 const { chat } = require('./constants');
 const Room = require('../models/Room');
 const Settings = require('../models/Settings');
+const logger = require('../logger');
 
 async function initializeRooms() {
   try {
