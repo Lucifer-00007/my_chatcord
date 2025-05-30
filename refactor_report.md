@@ -1,126 +1,34 @@
-# ChatCord Refactor Report
-Date: April 27, 2025
+Refactor: Implement controllers, enhance security, logging, and settings
+This commit includes a comprehensive set of improvements across the application:
 
-## Summary of Changes
-This refactor focused on improving the codebase architecture, error handling, logging, and overall maintainability. Major changes include:
+**1. Major Structural Refactoring:**
+- Introduced a controller layer (`controllers/` and `controllers/admin/`).
+- Migrated all business logic from route handlers (in `routes/` and `routes/admin/`) to their respective controllers, significantly improving separation of concerns, maintainability, and testability.
 
-1. Service Layer Architecture
-   - Introduced dedicated service classes for all major components
-   - Moved business logic from routes to services
-   - Implemented proper separation of concerns
+**2. Enhanced Security Measures:**
+- **CSRF Protection:** Implemented `csurf` middleware globally. Added an API endpoint for CSRF token generation and integrated token handling into frontend AJAX requests (demonstrated with auth forms and system settings).
+- **Helmet Configuration:** Reviewed and updated Helmet CSP directives to tighten security (e.g., `imgSrc`, `frame-ancestors`, `object-src`, `base-uri`). Added comments for future `'unsafe-inline'` refactoring.
+- **API Key Management:** Modified Mongoose models (`AiApi`, `ImageApi`, `VoiceApi`) with `toJSON` transforms to prevent leakage of `curlCommand` (potentially containing API keys) in responses.
+- **Password Management:**
+    - Fixed a critical vulnerability in the admin user update route (`routes/admin/users.js`) to ensure new passwords set by admins are correctly hashed using the model's pre-save hook.
+    - Documented recommendations for user-initiated password changes and resets.
 
-2. Error Handling & Logging
-   - Added centralized error handling middleware
-   - Implemented structured logging with Winston
-   - Added request correlation IDs for better traceability
+**3. Improved Error Handling and Logging:**
+- **Standardized Error Handling:** Introduced a custom `AppError` class and a centralized error handling middleware in `server.js` for consistent and secure error responses (detailed in dev, generic in prod for non-operational errors).
+- **Refined Winston Logging:**
+    - Enhanced `logger.js` with environment-specific console formatting and robust DB logging fallback.
+    - Systematically replaced most `console.*` calls throughout the backend with contextualized `logger` calls.
 
-3. Performance Monitoring
-   - Added performance monitoring middleware
-   - Implemented response time tracking
-   - Added API metrics collection
+**4. Database Performance Optimization:**
+- **Indexing:** Reviewed all Mongoose schemas and added appropriate indexes to key fields to improve query performance.
+- **Lean Queries:** Applied `.lean()` to applicable read-only Mongoose queries to reduce overhead and improve speed.
 
-4. Authentication & Authorization
-   - Enhanced token management with refresh tokens
-   - Improved socket authentication
-   - Added rate limiting for chat messages
+**5. System Settings Functionality Update (Admin):**
+- **CSRF Protection:** Integrated CSRF token handling in the frontend for save and reset operations.
+- **UX Enhancements:** Added loading states (button disabling, text changes) and improved user feedback for asynchronous operations.
+- **Client-Side Validation:** Implemented basic input validation on the client-side.
+- **Backend Reset Logic:** Refactored "Reset to Defaults" to fetch default values directly from the Mongoose schema via a new dedicated backend endpoint.
+- **Model/Validator Alignment:** Ensured consistency between the `Settings` Mongoose model, Joi validation schemas, and HTML form constraints.
+- **Documentation:** Added code comments.
 
-5. Code Organization
-   - Standardized route handlers
-   - Moved socket handling to dedicated ChatHandler class
-   - Centralized config and constants
-
-## Detailed Changes
-
-### New Service Layer
-- Added service classes:
-  - AiService
-  - ApiService (base class)
-  - AuthService
-  - ChatService
-  - ImageService
-  - LogService
-  - SettingsService
-  - TokenManager
-  - UserService
-  - VoiceService
-
-### New Admin Services
-- Added specialized admin services:
-  - AiApiAdminService
-  - ImageApiAdminService
-  - ImageSettingsAdminService
-  - VoiceSettingsAdminService
-
-### Middleware Improvements
-- Added new middleware:
-  - errorHandler.js: Centralized error handling
-  - performanceMonitor.js: Response time tracking
-  - socketAuth.js: Enhanced socket authentication
-
-### Route Refactoring
-- Restructured routes to use service layer
-- Improved error handling
-- Added input validation
-- Standardized response formats
-
-### Socket Handling
-- Created ChatHandler class for socket management
-- Added message rate limiting
-- Improved typing indicator handling
-- Added reliable message delivery with retries
-
-### Logging & Monitoring
-- Implemented Winston logger
-- Added structured logging
-- Added performance metrics collection
-- Added request correlation IDs
-
-## Package Updates
-Added new dependencies:
-- winston: ^3.17.0
-- winston-daily-rotate-file: ^5.0.0
-
-## API Changes
-No breaking changes to public APIs, but internal improvements:
-- Enhanced error responses
-- Added rate limiting
-- Improved validation
-
-## Suggested Improvements
-1. Add unit tests for new service layer
-2. Implement caching for frequently accessed data
-3. Add API documentation
-4. Set up monitoring dashboards
-5. Implement database migrations
-6. Add input sanitization for XSS prevention
-
-## Regression Results
-- Existing functionality maintained
-- Routes working as expected
-- Socket connections stable
-- Authentication flow preserved
-- Admin features operational
-
-## Performance Impact
-- Added response time tracking
-- Improved error handling overhead
-- Minimal impact on overall performance
-- New logging system with rotating files
-
-## Security Enhancements
-1. Improved token management
-2. Added rate limiting
-3. Enhanced error handling
-4. Improved socket authentication
-5. Added request validation
-
-## Documentation Updates Needed
-1. Update API documentation
-2. Document new service layer
-3. Update deployment guide
-4. Add logging configuration guide
-5. Document error handling patterns
-
----
-
-This refactor significantly improves the maintainability, reliability, and scalability of the ChatCord application while maintaining backward compatibility.
+These changes result in a more robust, secure, maintainable, and performant application
