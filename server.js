@@ -21,6 +21,7 @@ const RoomChat = require('./models/RoomChat'); // Add this import
 const { initialize } = require('./config/init');
 const { env, security, chat, cors } = require('./config/constants');
 const logger = require('./logger'); // Add logger import
+const { logUserMessageActivity } = require('./utils/users');
 
 // Import additional libraries and set up Redis for Socket.io adapter
 require('dotenv').config();
@@ -69,29 +70,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Update CSP configuration
 const cspConfig = {
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: [
-      "'self'",
-      "'unsafe-inline'", // FIXME: 'unsafe-inline' is a security risk. Refactor inline scripts and event handlers.
-      'cdnjs.cloudflare.com',
-      'cdn.jsdelivr.net',
-    ],
-    scriptSrcAttr: ["'unsafe-inline'"], // FIXME: 'unsafe-inline' is a security risk. Refactor inline event handlers.
-    styleSrc: [
-      "'self'",
-      "'unsafe-inline'", // FIXME: 'unsafe-inline' is a security risk. Refactor inline styles.
-      'cdnjs.cloudflare.com',
-      'fonts.googleapis.com',
-    ],
-    fontSrc: ["'self'", 'cdnjs.cloudflare.com', 'fonts.gstatic.com'],
-    imgSrc: ["'self'", 'data:', 'blob:', 'https:'], // INFO: 'https:' allows images from any HTTPS source. Review if this can be restricted to specific domains.
-    mediaSrc: ["'self'", 'blob:', 'data:'],
-    connectSrc: ["'self'", 'ws:', 'wss:'],
-    'frame-ancestors': ["'self'"],
-    'object-src': ["'none'"],
-    'base-uri': ["'self'"],
-  },
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+        scriptSrcAttr: ["'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
+        imgSrc: [
+            "'self'", "data:", "blob:", "https:", "*"
+        ],
+        mediaSrc: ["'self'", "blob:", "data:"],
+        connectSrc: ["'self'", "ws:", "wss:"]
+    }
 };
 
 // Apply security middleware with updated CSP
@@ -415,7 +405,10 @@ io.on('connection', (socket) => {
             roomChat.roomName = room.name; // Optionally update roomName
           }
           await roomChat.save();
-          logger.debug(`Saved chat message to RoomChat for room ${roomId}`, { roomId, messageId: messageObj._id, source: 'socket.io' });
+          // Log user message activity for analytics (IP, userAgent from handshake)
+          const ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+          const userAgent = socket.handshake.headers['user-agent'];
+          await logUserMessageActivity(socket.userId, ip, userAgent, { room: room._id });
           // --- End RoomChat logic ---
 
           // Send message to room

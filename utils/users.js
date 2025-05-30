@@ -1,4 +1,5 @@
 const users = [];
+const UserActivity = require('../models/UserActivity');
 
 // Join user to chat
 function userJoin(id, username, room) {
@@ -43,9 +44,25 @@ function getRoomUsers(room) {
   return users.filter((user) => user.room === room);
 }
 
+// Log user activity for each message sent (for heatmap, histogram, etc.)
+async function logUserMessageActivity(userId, ip, userAgent, metadata = {}) {
+  try {
+    await UserActivity.create({
+      user: userId,
+      action: 'message',
+      ip,
+      userAgent,
+      metadata
+    });
+  } catch (err) {
+    // Optionally log error
+  }
+}
+
 module.exports = {
   userJoin,
   getCurrentUser,
   userLeave,
   getRoomUsers,
+  logUserMessageActivity
 };

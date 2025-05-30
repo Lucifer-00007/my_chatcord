@@ -232,10 +232,18 @@ The `config` folder contains crucial application settings. Update the following 
 ## Todo List
 - [x] Save room chat history to DB, fix the chat time, add a section in admin(rooms) to manage the chat history.
 - [x] Check the duplicate `user-controls` issue in `User Management(Admin)`
-- [ ] Fix the `Total Messages` count in `Dashboard` in the `admin-settings` page.
-- [ ] Add `Pie, Bars, Charts, Heatmap, Histogram, Geo location of active users in a map` on `Dashboard` in the `admin-settings` page.
+- [x] Fix the `Total Messages` count in `Dashboard` in the `admin-settings` page.
+- [x] Add `Pie, Bars, Charts, Heatmap, Histogram, Geo location of active users in a map` on `Dashboard` in the `admin-settings` page.
+- [ ] Complete the `System Settings` in `admin-settings` page.
+    - [ ] CRUD Role management like: admin, sub-admin, user. 
+    - [ ] App settings: 
+        - [ ] Set by uploading the `Logo`, `Favicon` images. Remove the old images. And select and set any one of the previous images.
+        - [ ] Set the main `Theme Colors`, `App Name`, etc with a `Reset Default` to reset.
+        - [ ] CMS for each page like: `Normal Chat`, `AI Chat`, `Text To Image` , `Text To Voice` , `Admin Settings` and `chat`. In the CMS need `Header Name`, `Theme Color`, `Static Texts` etc customization.
+- [ ] Create a `Landing Page` with navbar to navigate to all the `existing pages` along with to be created pages like: `About Us`, `Terms & Conditions` and `Privacy Policy`.
 - [ ] Add the logged-in user details to the nav bar.
 - [ ] ⁠Remove the service layer and the all business logics from route layer to controller layer.
+- [ ] In `Image Generation Configuration` in `admin-settings` page fix the repetitive `Image Sizes` and `Image Styles` when switching back to the `Text To Image` tab from any other tabs in this page.
 - [ ] Create a postman collection of all the apis in categorized way.    
 - [ ] Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure.
 

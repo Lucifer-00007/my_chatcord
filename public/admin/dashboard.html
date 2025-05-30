@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ChatCord Admin</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js/dist/Chart.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon">
 </head>
+
 <body>
     <div class="container">
         <nav class="admin-nav"></nav>
-        
+
         <main class="admin-content">
             <h1>Dashboard</h1>
-            
+
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-title">Total Users</div>
@@ -36,6 +40,38 @@
                     <div class="stat-icon"><i class="fas fa-plug"></i></div>
                 </div>
             </div>
+
+            <div class="dashboard-grid">
+                <div class="chart-container">
+                    <h2>User Status</h2>
+                    <canvas id="userStatusPieChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h2>Active APIs</h2>
+                    <canvas id="activeApisPieChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">    
+                <div class="chart-container">
+                    <h2>Messages per Channel</h2>
+                    <canvas id="messagesBarChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">    
+                <div class="chart-container">
+                    <h2>Activity Heatmap</h2>
+                    <div id="activityHeatmap"></div>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">    
+                <div class="chart-container">
+                    <h2>Message Length Distribution</h2>
+                    <canvas id="messageLengthHistogram"></canvas>
+                </div>    
+            </div>
         </main>
     </div>
 
@@ -43,4 +79,5 @@
     <script src="/js/auth-guard.js"></script>
     <script src="/js/admin/dashboard.js"></script>
 </body>
+
 </html>

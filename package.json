@@ -16,6 +16,7 @@
   "dependencies": {
     "@socket.io/redis-adapter": "^7.2.0",
     "bcryptjs": "^2.4.3",
+    "chart.js": "^4.4.9",
     "cookie-parser": "^1.4.6",
     "csurf": "^1.11.0",
     "dayjs": "^1.11.7",
@@ -26,8 +27,9 @@
     "helmet": "^6.0.1",
     "joi": "^17.9.2",
     "jsonwebtoken": "^9.0.0",
+    "leaflet": "^1.9.4",
     "mongoose": "^7.0.3",
-    "node-fetch": "^2.6.9",
+    "node-fetch": "^2.7.0",
     "redis": "^4.6.7",
     "socket.io": "^4.6.1",
     "winston": "^3.17.0",
