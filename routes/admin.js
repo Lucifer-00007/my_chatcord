@@ -1,4 +1,5 @@
 const express = require('express');
+
 const router = express.Router();
 const path = require('path');
 
@@ -16,35 +17,35 @@ router.use('/image-settings', require('./admin/image-settings'));
 
 // Serve admin pages
 router.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/dashboard.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/dashboard.html'));
 });
 
 router.get('/user-management', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/user-management.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/user-management.html'));
 });
 
 router.get('/room-management', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/room-management.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/room-management.html'));
 });
 
 router.get('/system-settings', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/system-settings.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/system-settings.html'));
 });
 
 router.get('/system-logs', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/system-logs.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/system-logs.html'));
 });
 
 router.get('/ai-chat', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/ai-chat.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/ai-chat.html'));
 });
 
 router.get('/text-to-voice', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/text-to-voice.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/text-to-voice.html'));
 });
 
 router.get('/text-to-image', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/admin/text-to-image.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/text-to-image.html'));
 });
 
 module.exports = router;

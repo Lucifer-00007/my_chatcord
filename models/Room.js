@@ -5,39 +5,41 @@ const roomSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
   },
   topic: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
   },
   isDefault: {
     type: Boolean,
-    default: false
+    default: false,
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
   sentimentDistribution: {
     positive: { type: Number, default: 0 },
     neutral: { type: Number, default: 0 },
-    negative: { type: Number, default: 0 }
+    negative: { type: Number, default: 0 },
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // Build indexes
 roomSchema.index({ createdAt: -1 });
-roomSchema.index({ name: 1 }, { unique: true });
+// roomSchema.index({ name: 1 }, { unique: true }); // Redundant due to unique: true in schema
+roomSchema.index({ isDefault: 1 });
+roomSchema.index({ createdBy: 1 });
 
 const Room = mongoose.model('Room', roomSchema);
 

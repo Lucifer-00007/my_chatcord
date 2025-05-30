@@ -1,124 +1,49 @@
 const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcryptjs');
-const { generateToken } = require('../utils/jwt');
-const User = require('../models/User');
-const auth = require('../middleware/auth');
-const { cookie } = require('../config/constants');
+const authMiddleware = require('../middleware/auth');
+const validate = require('../middleware/validationMiddleware');
+const { registerSchema, loginSchema } = require('../validators/authSchemas');
+const authController = require('../controllers/authController');
+const AppError = require('../utils/AppError'); // Keep AppError for direct use if any, though controller should handle most.
+const logger = require('../logger'); // Keep logger for any route-level logging if needed.
 
-// Select cookie options based on environment
-const cookieOptions = cookie;
+const router = express.Router();
 
 // Register user
-router.post('/register', async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    // Validate input
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    // Check existing user
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { username }] 
-    });
-
-    if (existingUser) {
-      return res.status(400).json({ 
-        message: existingUser.email === email ? 'Email already exists' : 'Username already exists' 
-      });
-    }
-
-    // Create new user
-    const user = new User({ username, email, password });
-    await user.save();
-
-    // Generate token
-    const token = generateToken(user._id);
-
-    // Set HTTP-only cookie
-    res.cookie('token', token, cookieOptions);
-
-    res.status(201).json({
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email
-      }
-    });
-  } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+router.post(
+  '/register',
+  validate(registerSchema),
+  authController.registerUser
+);
 
 // Login User
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Use the imported generateToken function
-    const token = generateToken(user._id);
-
-    // Set both httpOnly cookie and regular cookie for client access
-    res.cookie('token', token, cookieOptions);
-    res.cookie('clientToken', token, { ...cookieOptions, httpOnly: false });
-
-    res.json({
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        isAdmin: user.isAdmin  // Add isAdmin to the response
-      }
-    });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+router.post(
+  '/login',
+  validate(loginSchema),
+  authController.loginUser
+);
 
 // Get Current User
-router.get('/me', auth, async (req, res) => {
-  try {
-    res.json({
-      user: {
-        id: req.user._id,
-        username: req.user.username,
-        email: req.user.email
-      }
-    });
-  } catch (err) {
-    console.error('Error fetching user:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+router.get(
+  '/me',
+  authMiddleware,
+  authController.getCurrentUser
+);
 
 // Logout User
-router.post('/logout', auth, async (req, res) => {
-  try {
-    res.clearCookie('token');
-    res.json({ message: 'Logged out successfully' });
-  } catch (err) {
-    console.error('Logout error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+router.post(
+  '/logout',
+  authMiddleware,
+  authController.logoutUser
+);
+
+// CSRF Token Endpoint
+router.get(
+  '/csrf-token',
+  authController.getCsrfToken
+);
+
+// TODO: Implement user-initiated password change functionality.
+// TODO: Implement secure password reset (forgot password) functionality.
+// FUTURE: Consider advanced password policies: account lockout, password expiry, complexity rules beyond min length.
 
 module.exports = router;

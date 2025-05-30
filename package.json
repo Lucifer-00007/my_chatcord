@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server",
     "dev": "nodemon server",
+    "lint": "eslint . --ext .js",
+    "format": "prettier --write \"**/*.js\"",
     "db:flush": "node scripts/flushDb.js",
     "db:seed": "node scripts/seedData.js"
   },
@@ -15,6 +17,7 @@
     "@socket.io/redis-adapter": "^7.2.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
+    "csurf": "^1.11.0",
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
@@ -29,5 +32,13 @@
     "socket.io": "^4.6.1",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.4.0",
+    "prettier": "^3.5.3"
   }
 }

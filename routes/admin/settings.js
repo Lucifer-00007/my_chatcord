@@ -1,55 +1,36 @@
 const express = require('express');
+const authMiddleware = require('../../middleware/auth');
+const { adminAuth } = require('../../middleware/admin');
+const validate = require('../../middleware/validationMiddleware');
+const { updateSettingsSchema } = require('../../validators/admin/settingsSchemas');
+const appSettingsController = require('../../controllers/admin/appSettingsController');
+// Settings model, AppError, logger are used in the controller.
+
 const router = express.Router();
-const Settings = require('../../models/Settings');
-const auth = require('../../middleware/auth');
-const admin = require('../../middleware/admin');
+
+// This router handles administrative tasks related to system-wide application settings.
+// All routes are protected by authentication and admin authorization middleware.
+// Business logic is delegated to the appSettingsController.
 
 // Get current system settings
-router.get('/', [auth, admin.adminAuth], async (req, res) => {
-    try {
-        const settings = await Settings.findOne() || new Settings();
-        res.json(settings);
-    } catch (error) {
-        console.error('Error fetching settings:', error);
-        res.status(500).json({ message: 'Error fetching system settings' });
-    }
-});
+router.get(
+  '/',
+  [authMiddleware, adminAuth],
+  appSettingsController.getAppSettings
+);
 
 // Update system settings
-router.post('/', [auth, admin.adminAuth], async (req, res) => {
-    try {
-        const {
-            maxUsersPerRoom,
-            maxRoomsPerUser,
-            maxMessageLength,
-            messageRateLimit,
-            requireEmailVerification,
-            allowGuestAccess,
-            enableProfanityFilter
-        } = req.body;
+router.post(
+  '/',
+  [authMiddleware, adminAuth, validate(updateSettingsSchema)],
+  appSettingsController.updateAppSettings
+);
 
-        let settings = await Settings.findOne();
-        
-        if (!settings) {
-            settings = new Settings();
-        }
-
-        // Update settings
-        settings.maxUsersPerRoom = maxUsersPerRoom;
-        settings.maxRoomsPerUser = maxRoomsPerUser;
-        settings.maxMessageLength = maxMessageLength;
-        settings.messageRateLimit = messageRateLimit;
-        settings.requireEmailVerification = requireEmailVerification;
-        settings.allowGuestAccess = allowGuestAccess;
-        settings.enableProfanityFilter = enableProfanityFilter;
-
-        await settings.save();
-        
-        res.json({ message: 'Settings updated successfully', settings });
-    } catch (error) {
-        console.error('Error updating settings:', error);
-        res.status(500).json({ message: 'Error updating system settings' });
-    }
-});
+// Reset system settings to defaults
+router.post(
+  '/reset',
+  [authMiddleware, adminAuth],
+  appSettingsController.resetAppSettings
+);
 
 module.exports = router;

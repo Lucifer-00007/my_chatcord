@@ -1,19 +1,44 @@
-const adminAuth = async function(req, res, next) {
-    try {
-        // Check if user exists and is authenticated (should be set by authMiddleware)
-        if (!req.user) {
-            return res.status(401).json({ message: 'Authentication required' });
-        }
+const logger = require('../logger'); // Import logger
+const AppError = require('../utils/AppError'); // Import AppError
 
-        // Check if user is an admin
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ message: 'Admin access required' });
-        }
+const adminAuth = async (req, res, next) => {
+  // Assuming authMiddleware has already run and populated req.user
+  if (!req.user) {
+    // This case should ideally be caught by authMiddleware first
+    logger.warn('Admin access denied: No user object in request. Auth middleware might not have run or failed.', {
+      path: req.path,
+      method: req.method,
+      ip: req.ip,
+    });
+    return next(
+      new AppError('Authentication required. Please log in.', 401, 'AUTH_REQUIRED')
+    );
+  }
 
-        next();
-    } catch (err) {
-        res.status(500).json({ message: 'Server error' });
-    }
+  if (!req.user.isAdmin) {
+    logger.warn('Admin access denied: User is not an admin.', {
+      userId: req.user.id,
+      username: req.user.username,
+      path: req.path,
+      method: req.method,
+      ip: req.ip,
+    });
+    return next(
+      new AppError(
+        'Access denied. You do not have permission to perform this action.',
+        403,
+        'FORBIDDEN_ADMIN_ONLY'
+      )
+    );
+  }
+
+  // If user is admin, proceed
+  logger.debug(`Admin access granted for user: ${req.user.username}`, {
+    userId: req.user.id,
+    path: req.path,
+    method: req.method,
+  });
+  return next(); // Explicitly return next()
 };
 
 module.exports = { adminAuth };

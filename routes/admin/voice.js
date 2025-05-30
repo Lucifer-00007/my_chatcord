@@ -1,326 +1,71 @@
 const express = require('express');
+const authMiddleware = require('../../middleware/auth');
+const { adminAuth } = require('../../middleware/admin');
+const validate = require('../../middleware/validationMiddleware');
+const {
+  voiceApiIdParamSchema,
+  createVoiceApiSchema,
+  updateVoiceApiSchema,
+} = require('../../validators/admin/voiceApiSchemas');
+const { testVoiceApiSchema } = require('../../validators/voiceSchemas'); // For the test route
+const voiceApiController = require('../../controllers/admin/voiceApiController');
+// Models, fetch, parseCurlCommand, AppError, logger, constants are used in the controller.
+
 const router = express.Router();
-const auth = require('../../middleware/auth');
-const VoiceApi = require('../../models/VoiceApi');
-const fetch = require('node-fetch');
-const { parseCurlCommand } = require('../../utils/apiHelpers');
-const { voice } = require('../../config/constants');
-const mongoose = require('mongoose');
 
-// Get all voice APIs
-router.get('/', auth, async (req, res) => {
-    try {
-        const apis = await VoiceApi.find();
-        res.json(apis);
-    } catch (err) {
-        console.error('Error fetching voice APIs:', err);
-        res.status(500).json({ message: voice.messages.NOT_FOUND });
-    }
-});
+// Apply adminAuth to all routes in this file
+router.use(authMiddleware);
+router.use(adminAuth);
 
-// Get active voice APIs
-router.get('/active', auth, async (req, res) => {
-    try {
-        const apis = await VoiceApi.find({ isActive: true });
-        res.json(apis);
-    } catch (err) {
-        console.error('Error fetching active voice APIs:', err);
-        res.status(500).json({ message: 'Error fetching active voice APIs' });
-    }
-});
+// Get all voice APIs (admin only)
+router.get('/', voiceApiController.getAllVoiceApis);
 
-// Add config route BEFORE the :id route to prevent path conflicts
-router.get('/config', (req, res) => {
-    try {
-        if (!voice) {
-            throw new Error('Voice configuration not found');
-        }
-        
-        res.json({
-            defaultVoiceTypes: voice.defaultVoiceTypes || [],
-            voiceProviders: voice.voiceProviders || {}
-        });
-    } catch (err) {
-        console.error('Error loading voice config:', err);
-        res.status(500).json({ 
-            message: 'Failed to load voice configuration',
-            error: err.message 
-        });
-    }
-});
+// Get active voice APIs (admin only)
+router.get('/active', voiceApiController.getActiveVoiceApisForAdmin);
 
-// Create new voice API
-router.post('/', auth, async (req, res) => {
-    try {
-        const { name, apiType, responseType, curlCommand, requestPath, responsePath, supportedVoices } = req.body;
+// Voice API Config (admin only)
+router.get('/config', voiceApiController.getVoiceApiConfig);
 
-        const existingApi = await VoiceApi.findOne({ name });
-        if (existingApi) {
-            return res.status(400).json({
-                success: false,
-                message: voice.messages.DUPLICATE_NAME(name)
-            });
-        }
+// Create new voice API (admin only)
+router.post(
+  '/',
+  validate(createVoiceApiSchema),
+  voiceApiController.createVoiceApi
+);
 
-        const voiceApi = new VoiceApi({
-            name,
-            apiType,
-            responseType,
-            curlCommand,
-            requestPath,
-            responsePath,
-            method: voice.methods.POST,
-            supportedVoices: supportedVoices || []
-        });
+// Get single voice API by ID (admin only)
+router.get(
+  '/:id',
+  validate(voiceApiIdParamSchema, 'params'),
+  voiceApiController.getVoiceApiByIdForAdmin
+);
 
-        const savedApi = await voiceApi.save();
-        res.json({
-            success: true,
-            message: voice.messages.SAVE_SUCCESS,
-            api: savedApi
-        });
+// Update voice API (admin only)
+router.put(
+  '/:id',
+  [validate(voiceApiIdParamSchema, 'params'), validate(updateVoiceApiSchema)],
+  voiceApiController.updateVoiceApi
+);
 
-    } catch (err) {
-        console.error('Error saving voice API:', err);
-        res.status(400).json({
-            success: false,
-            message: err.message
-        });
-    }
-});
+// Toggle voice API active status (admin only)
+router.patch(
+  '/:id/toggle',
+  validate(voiceApiIdParamSchema, 'params'),
+  voiceApiController.toggleVoiceApiStatus
+);
 
-// Add GET single voice API endpoint
-router.get('/:id', auth, async (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({
-            success: false,
-            message: 'Admin access required'
-        });
-    }
+// Delete voice API (admin only)
+router.delete(
+  '/:id',
+  validate(voiceApiIdParamSchema, 'params'),
+  voiceApiController.deleteVoiceApi
+);
 
-    try {
-        const { id } = req.params;
-        
-        // Check if id is 'config' to prevent ObjectId cast error
-        if (id === 'config') {
-            return res.status(400).json({ 
-                message: 'Invalid voice API ID',
-                code: 'INVALID_ID'
-            });
-        }
-
-        // Check if id is a valid ObjectId
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ 
-                message: 'Invalid voice API ID format',
-                code: 'INVALID_ID'
-            });
-        }
-
-        const api = await VoiceApi.findById(id);
-
-        if (!api) {
-            return res.status(404).json({
-                success: false,
-                message: voice.messages.NOT_FOUND
-            });
-        }
-
-        res.json(api);
-    } catch (err) {
-        console.error('Error fetching voice API:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch voice API details'
-        });
-    }
-});
-
-// Update voice API
-router.put('/:id', auth, async (req, res) => {
-if (!req.user.isAdmin) {
-        return res.status(403).json({ message: 'Admin access required' });
-    }
-
-    try {
-        const api = await VoiceApi.findById(req.params.id);
-        if (!api) {
-            return res.status(404).json({
-                success: false,
-                message: 'Voice API not found'
-            });
-        }
-
-        // Remove name from update data to prevent modification
-        const { name, ...updateData } = req.body;
-
-        // Update API without changing name
-        const updatedApi = await VoiceApi.findByIdAndUpdate(
-            req.params.id,
-            { $set: updateData },
-            { new: true }
-        );
-
-        res.json({
-            success: true,
-            message: 'Voice API updated successfully',
-            api: updatedApi
-        });
-
-    } catch (err) {
-        console.error('Error updating voice API:', err);
-        res.status(400).json({
-            success: false,
-            message: err.message || 'Failed to update voice API'
-        });
-    }
-});
-
-// Add toggle endpoint for voice APIs
-router.patch('/:id/toggle', auth, async (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({
-            success: false,
-            message: 'Admin access required'
-        });
-    }
-
-    try {
-        const api = await VoiceApi.findById(req.params.id);
-        if (!api) {
-            return res.status(404).json({
-                success: false,
-                message: 'Voice API not found'
-            });
-        }
-
-        // Toggle the isActive status
-        api.isActive = !api.isActive;
-        await api.save();
-
-        res.json({
-            success: true,
-            message: `Voice API ${api.isActive ? 'activated' : 'deactivated'} successfully`,
-            api
-        });
-    } catch (err) {
-        console.error('Error toggling voice API:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to update voice API status'
-        });
-    }
-});
-
-// Delete voice API
-router.delete('/:id', auth, async (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({
-            success: false,
-            message: 'Admin access required'
-        });
-    }
-
-    try {
-        const api = await VoiceApi.findByIdAndDelete(req.params.id);
-
-        if (!api) {
-            return res.status(404).json({
-                success: false,
-                message: voice.messages.NOT_FOUND
-            });
-        }
-
-        res.json({
-            success: true,
-            message: voice.messages.DELETE_SUCCESS
-        });
-    } catch (err) {
-        console.error('Error deleting voice API:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to delete voice API'
-        });
-    }
-});
-
-// Add test endpoint
-router.post('/test', auth, async (req, res) => {
-    try {
-        const { curlCommand, requestPath, responsePath, apiType, responseType, auth: authData } = req.body;
-
-        if (!curlCommand || !requestPath) {
-            return res.status(400).json({
-                success: false,
-                message: 'cURL command and request path are required'
-            });
-        }
-
-        // Parse cURL command with URL validation
-        let parsedCurl;
-        try {
-            parsedCurl = parseCurlCommand(curlCommand);
-            if (!parsedCurl.endpoint.startsWith('http')) {
-                throw new Error('URL must be absolute (start with http:// or https://)');
-            }
-        } catch (parseErr) {
-            return res.status(400).json({
-                success: false,
-                message: parseErr.message
-            });
-        }
-
-        const { endpoint, method, headers, body: requestBody } = parsedCurl;
-
-        console.log('Making test request:', {
-            url: endpoint,
-            method,
-            headers,
-            bodyPreview: requestBody ? JSON.stringify(requestBody).slice(0, 100) : null
-        });
-
-        // Make test request
-        const testResponse = await fetch(endpoint, {
-            method,
-            headers,
-            body: requestBody ? JSON.stringify(requestBody) : undefined
-        });
-
-        // Handle response based on response type
-        if (responseType === 'binary') {
-            const buffer = await testResponse.buffer();
-            return res.json({
-                success: true,
-                message: 'Test successful - Binary response received',
-                details: {
-                    contentType: testResponse.headers.get('content-type'),
-                    dataSize: buffer.length,
-                    status: testResponse.status
-                }
-            });
-        }
-
-        const data = await testResponse.json();
-        if (!testResponse.ok) {
-            throw new Error(data?.error?.message || `API responded with status ${testResponse.status}`);
-        }
-
-        res.json({
-            success: true,
-            message: 'Test successful - JSON response received',
-            details: {
-                status: testResponse.status,
-                response: data
-            }
-        });
-
-    } catch (err) {
-        console.error('Test endpoint error:', err);
-        res.status(400).json({
-            success: false,
-            message: err.message || 'Failed to test voice API'
-        });
-    }
-});
+// Test voice API endpoint (admin only)
+router.post(
+  '/test',
+  validate(testVoiceApiSchema),
+  voiceApiController.testVoiceApiEndpointAdmin
+);
 
 module.exports = router;

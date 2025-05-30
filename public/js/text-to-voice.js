@@ -1,433 +1,465 @@
 function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 
-                         type === 'error' ? 'exclamation-circle' : 
-                         'info-circle'}"></i>
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `
+        <i class="fas fa-${
+          type === 'success'
+            ? 'check-circle'
+            : type === 'error'
+              ? 'exclamation-circle'
+              : 'info-circle'
+        }"></i>
         <span>${message}</span>
     `;
-    
-    document.body.appendChild(notification);
+
+  document.body.appendChild(notification);
+  setTimeout(() => {
+    notification.classList.add('show');
     setTimeout(() => {
-        notification.classList.add('show');
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }, 100);
+      notification.classList.remove('show');
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }, 100);
 }
 
 function validateAudioBlob(blob) {
-    return new Promise((resolve, reject) => {
-        // First try with AudioContext for more reliable decoding
-        const reader = new FileReader();
-        reader.onload = async () => {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const arrayBuffer = reader.result;
-                
-                // Attempt to decode the audio data
-                await audioContext.decodeAudioData(arrayBuffer);
-                audioContext.close();
-                resolve(true);
-            } catch (decodeError) {
-                console.warn('AudioContext decode failed, falling back to Audio element:', decodeError);
-                
-                // Fallback to Audio element if decoding fails
-                const audio = new Audio();
-                const objectUrl = URL.createObjectURL(blob);
-                
-                const loadTimeout = setTimeout(() => {
-                    URL.revokeObjectURL(objectUrl);
-                    audio.remove();
-                    reject(new Error('Audio loading timed out'));
-                }, 10000);
+  return new Promise((resolve, reject) => {
+    // First try with AudioContext for more reliable decoding
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const audioContext = new (window.AudioContext ||
+          window.webkitAudioContext)();
+        const arrayBuffer = reader.result;
 
-                audio.onloadedmetadata = () => {
-                    clearTimeout(loadTimeout);
-                    URL.revokeObjectURL(objectUrl);
-                    
-                    // Additional validation for the loaded audio
-                    if (audio.duration === Infinity || isNaN(audio.duration) || audio.duration === 0) {
-                        audio.remove();
-                        reject(new Error('Invalid audio duration'));
-                        return;
-                    }
-                    
-                    audio.remove();
-                    resolve(true);
-                };
+        // Attempt to decode the audio data
+        await audioContext.decodeAudioData(arrayBuffer);
+        audioContext.close();
+        resolve(true);
+      } catch (decodeError) {
+        console.warn(
+          'AudioContext decode failed, falling back to Audio element:',
+          decodeError
+        );
 
-                audio.onerror = () => {
-                    clearTimeout(loadTimeout);
-                    URL.revokeObjectURL(objectUrl);
-                    audio.remove();
-                    reject(new Error(`Audio loading failed: ${audio.error?.message || 'Unknown error'}`));
-                };
+        // Fallback to Audio element if decoding fails
+        const audio = new Audio();
+        const objectUrl = URL.createObjectURL(blob);
 
-                audio.preload = 'metadata';
-                audio.src = objectUrl;
-            }
+        const loadTimeout = setTimeout(() => {
+          URL.revokeObjectURL(objectUrl);
+          audio.remove();
+          reject(new Error('Audio loading timed out'));
+        }, 10000);
+
+        audio.onloadedmetadata = () => {
+          clearTimeout(loadTimeout);
+          URL.revokeObjectURL(objectUrl);
+
+          // Additional validation for the loaded audio
+          if (
+            audio.duration === Infinity ||
+            isNaN(audio.duration) ||
+            audio.duration === 0
+          ) {
+            audio.remove();
+            reject(new Error('Invalid audio duration'));
+            return;
+          }
+
+          audio.remove();
+          resolve(true);
         };
 
-        reader.onerror = () => {
-            reject(new Error('Failed to read audio data'));
+        audio.onerror = () => {
+          clearTimeout(loadTimeout);
+          URL.revokeObjectURL(objectUrl);
+          audio.remove();
+          reject(
+            new Error(
+              `Audio loading failed: ${audio.error?.message || 'Unknown error'}`
+            )
+          );
         };
 
-        reader.readAsArrayBuffer(blob);
-    });
+        audio.preload = 'metadata';
+        audio.src = objectUrl;
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error('Failed to read audio data'));
+    };
+
+    reader.readAsArrayBuffer(blob);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    Promise.all([
-        loadVoiceConfig(),
-        loadVoiceApis()
-    ]).then(() => {
-        initializeVoiceInterface();
-    });
+  Promise.all([loadVoiceConfig(), loadVoiceApis()]).then(() => {
+    initializeVoiceInterface();
+  });
 });
 
 let VOICE_API_CONFIG = null;
 let VOICE_APIS = [];
 
 async function loadVoiceConfig() {
-    try {
-        const response = await fetch('/api/voice/config', {
-            headers: {
-                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-            }
-        });
-        // If forbidden but endpoint is public, do not show admin error
-        if (response.status === 403) {
-            VOICE_API_CONFIG = null;
-            showNotification('Voice configuration is not available for your account', 'warning');
-            return;
-        }
-        VOICE_API_CONFIG = await response.json();
-    } catch (err) {
-        console.error('Failed to load voice config:', err);
-        showNotification('Failed to load voice configuration', 'error');
+  try {
+    const response = await fetch('/api/voice/config', {
+      headers: {
+        Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
+      },
+    });
+    // If forbidden but endpoint is public, do not show admin error
+    if (response.status === 403) {
+      VOICE_API_CONFIG = null;
+      showNotification(
+        'Voice configuration is not available for your account',
+        'warning'
+      );
+      return;
     }
+    VOICE_API_CONFIG = await response.json();
+  } catch (err) {
+    console.error('Failed to load voice config:', err);
+    showNotification('Failed to load voice configuration', 'error');
+  }
 }
 
 async function loadVoiceApis() {
-    try {
-        const response = await fetch('/api/voice/public-active', {
-            headers: {
-                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-            }
-        });
-        // If forbidden but endpoint is public, do not show admin error
-        if (response.status === 403) {
-            VOICE_APIS = [];
-            showNotification('Voice APIs are not available for your account', 'warning');
-            return;
-        }
-        VOICE_APIS = await response.json();
-        // Only id and name are available from the public endpoint
-        console.log('Loaded voice APIs:', VOICE_APIS);
-    } catch (err) {
-        console.error('Failed to load voice APIs:', err);
-        showNotification('Failed to load voice APIs', 'error');
+  try {
+    const response = await fetch('/api/voice/public-active', {
+      headers: {
+        Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
+      },
+    });
+    // If forbidden but endpoint is public, do not show admin error
+    if (response.status === 403) {
+      VOICE_APIS = [];
+      showNotification(
+        'Voice APIs are not available for your account',
+        'warning'
+      );
+      return;
     }
+    VOICE_APIS = await response.json();
+    // Only id and name are available from the public endpoint
+    console.log('Loaded voice APIs:', VOICE_APIS);
+  } catch (err) {
+    console.error('Failed to load voice APIs:', err);
+    showNotification('Failed to load voice APIs', 'error');
+  }
 }
 
 function initializeVoiceInterface() {
-    console.log('Initializing voice interface');
-    if (!VOICE_API_CONFIG) {
-        console.error('Voice configuration not loaded');
-        return;
-    }
+  console.log('Initializing voice interface');
+  if (!VOICE_API_CONFIG) {
+    console.error('Voice configuration not loaded');
+    return;
+  }
 
-    // Get elements for the user interface
-    const modelSelect = document.getElementById('model-select');
-    const voiceSelection = document.getElementById('voice-selection');
-    const voiceLanguage = document.getElementById('voice-language');
-    const previewBtn = document.getElementById('preview-btn');
-    const generateBtn = document.getElementById('generate-voice-btn');
-    const voiceText = document.getElementById('voice-text');
-    const charCount = document.getElementById('char-count');
+  // Get elements for the user interface
+  const modelSelect = document.getElementById('model-select');
+  const voiceSelection = document.getElementById('voice-selection');
+  const voiceLanguage = document.getElementById('voice-language');
+  const previewBtn = document.getElementById('preview-btn');
+  const generateBtn = document.getElementById('generate-voice-btn');
+  const voiceText = document.getElementById('voice-text');
+  const charCount = document.getElementById('char-count');
 
-    // Initialize character counter
-    if (voiceText && charCount) {
-        voiceText.addEventListener('input', () => {
-            charCount.textContent = voiceText.value.length;
-        });
-    }
+  // Initialize character counter
+  if (voiceText && charCount) {
+    voiceText.addEventListener('input', () => {
+      charCount.textContent = voiceText.value.length;
+    });
+  }
 
-    // Initialize sliders
-    const voiceSpeed = document.getElementById('voice-speed');
-    const voicePitch = document.getElementById('voice-pitch');
+  // Initialize sliders
+  const voiceSpeed = document.getElementById('voice-speed');
+  const voicePitch = document.getElementById('voice-pitch');
 
-    if (voiceSpeed) {
-        voiceSpeed.addEventListener('input', () => {
-            const valueDisplay = voiceSpeed.parentElement.querySelector('.value');
-            if (valueDisplay) {
-                valueDisplay.textContent = `${voiceSpeed.value}x`;
-            }
-        });
-    }
+  if (voiceSpeed) {
+    voiceSpeed.addEventListener('input', () => {
+      const valueDisplay = voiceSpeed.parentElement.querySelector('.value');
+      if (valueDisplay) {
+        valueDisplay.textContent = `${voiceSpeed.value}x`;
+      }
+    });
+  }
 
-    if (voicePitch) {
-        voicePitch.addEventListener('input', () => {
-            const valueDisplay = voicePitch.parentElement.querySelector('.value');
-            if (valueDisplay) {
-                valueDisplay.textContent = voicePitch.value;
-            }
-        });
-    }
+  if (voicePitch) {
+    voicePitch.addEventListener('input', () => {
+      const valueDisplay = voicePitch.parentElement.querySelector('.value');
+      if (valueDisplay) {
+        valueDisplay.textContent = voicePitch.value;
+      }
+    });
+  }
 
-    // Populate model dropdown
-    if (modelSelect) {
-        if (VOICE_APIS.length > 0) {
-            modelSelect.innerHTML = `
+  // Populate model dropdown
+  if (modelSelect) {
+    if (VOICE_APIS.length > 0) {
+      modelSelect.innerHTML = `
                 <option value="">Select Voice Model</option>
-                ${VOICE_APIS.map(api => `
+                ${VOICE_APIS.map(
+                  (api) => `
                     <option value="${api._id}">${api.name}</option>
-                `).join('')}
+                `
+                ).join('')}
             `;
 
-            // Enable buttons if we have APIs
-            if (previewBtn) previewBtn.disabled = !modelSelect.value;
-            if (generateBtn) generateBtn.disabled = !modelSelect.value;
-        } else {
-            modelSelect.innerHTML = '<option value="">No Voice Models Available</option>';
-            if (previewBtn) previewBtn.disabled = true;
-            if (generateBtn) generateBtn.disabled = true;
-        }
-
-        // Add change event listener for model select
-        modelSelect.addEventListener('change', () => {
-            updateVoiceSelectionForModel(modelSelect.value);
-
-            // Enable/disable buttons based on selection
-            const hasSelection = !!modelSelect.value;
-            if (previewBtn) previewBtn.disabled = !hasSelection;
-            if (generateBtn) generateBtn.disabled = !hasSelection;
-        });
+      // Enable buttons if we have APIs
+      if (previewBtn) previewBtn.disabled = !modelSelect.value;
+      if (generateBtn) generateBtn.disabled = !modelSelect.value;
+    } else {
+      modelSelect.innerHTML =
+        '<option value="">No Voice Models Available</option>';
+      if (previewBtn) previewBtn.disabled = true;
+      if (generateBtn) generateBtn.disabled = true;
     }
 
-    // Add change event listener for voice selection
-    if (voiceSelection) {
-        voiceSelection.addEventListener('change', () => {
-            updateLanguageDisplay();
-        });
-    }
+    // Add change event listener for model select
+    modelSelect.addEventListener('change', () => {
+      updateVoiceSelectionForModel(modelSelect.value);
 
-    // Add event listeners for preview and generate buttons
-    if (previewBtn) {
-        previewBtn.addEventListener('click', previewVoice);
-    }
+      // Enable/disable buttons based on selection
+      const hasSelection = !!modelSelect.value;
+      if (previewBtn) previewBtn.disabled = !hasSelection;
+      if (generateBtn) generateBtn.disabled = !hasSelection;
+    });
+  }
 
-    if (generateBtn) {
-        generateBtn.addEventListener('click', generateVoiceFile);
-    }
+  // Add change event listener for voice selection
+  if (voiceSelection) {
+    voiceSelection.addEventListener('change', () => {
+      updateLanguageDisplay();
+    });
+  }
+
+  // Add event listeners for preview and generate buttons
+  if (previewBtn) {
+    previewBtn.addEventListener('click', previewVoice);
+  }
+
+  if (generateBtn) {
+    generateBtn.addEventListener('click', generateVoiceFile);
+  }
 }
 
 // Function to update voice selection dropdown based on selected model
 function updateVoiceSelectionForModel(modelId) {
-    const voiceSelection = document.getElementById('voice-selection');
-    if (!voiceSelection) return;
+  const voiceSelection = document.getElementById('voice-selection');
+  if (!voiceSelection) return;
 
-    // Clear current options
-    voiceSelection.innerHTML = '';
+  // Clear current options
+  voiceSelection.innerHTML = '';
 
-    if (!modelId) {
-        voiceSelection.innerHTML = '<option value="">Select a model first!</option>';
-        return;
+  if (!modelId) {
+    voiceSelection.innerHTML =
+      '<option value="">Select a model first!</option>';
+    return;
+  }
+
+  // Find the selected API
+  const selectedApi = VOICE_APIS.find((api) => api._id === modelId);
+  console.log('Selected API:', selectedApi);
+  if (
+    !selectedApi ||
+    !selectedApi.supportedVoices ||
+    selectedApi.supportedVoices.length === 0
+  ) {
+    voiceSelection.innerHTML = '<option value="">No voices available</option>';
+    return;
+  }
+
+  // Add voices from the selected API
+  selectedApi.supportedVoices.forEach((voice) => {
+    if (voice.isActive !== false) {
+      // Include voice if it's active or if isActive is not specified
+      const option = document.createElement('option');
+      option.value = voice.id;
+      option.textContent = `${voice.name} (${voice.gender})`;
+      option.dataset.language = voice.language;
+      voiceSelection.appendChild(option);
     }
+  });
 
-    // Find the selected API
-    const selectedApi = VOICE_APIS.find(api => api._id === modelId);
-    console.log('Selected API:', selectedApi);
-    if (!selectedApi || !selectedApi.supportedVoices || selectedApi.supportedVoices.length === 0) {
-        voiceSelection.innerHTML = '<option value="">No voices available</option>';
-        return;
-    }
-
-    // Add voices from the selected API
-    selectedApi.supportedVoices.forEach(voice => {
-        if (voice.isActive !== false) { // Include voice if it's active or if isActive is not specified
-            const option = document.createElement('option');
-            option.value = voice.id;
-            option.textContent = `${voice.name} (${voice.gender})`;
-            option.dataset.language = voice.language;
-            voiceSelection.appendChild(option);
-        }
-    });
-
-    // Trigger change event to update language display
-    voiceSelection.dispatchEvent(new Event('change'));
+  // Trigger change event to update language display
+  voiceSelection.dispatchEvent(new Event('change'));
 }
 
 // Function to update language display based on selected voice
 function updateLanguageDisplay() {
-    const voiceSelection = document.getElementById('voice-selection');
-    const languageDisplay = document.getElementById('voice-language');
-    if (!voiceSelection || !languageDisplay) return;
+  const voiceSelection = document.getElementById('voice-selection');
+  const languageDisplay = document.getElementById('voice-language');
+  if (!voiceSelection || !languageDisplay) return;
 
-    const selectedOption = voiceSelection.options[voiceSelection.selectedIndex];
-    console.log('Selected voice option:', selectedOption);
-    if (!selectedOption || !selectedOption.value) {
-        languageDisplay.textContent = 'Select a voice';
-        return;
-    }
+  const selectedOption = voiceSelection.options[voiceSelection.selectedIndex];
+  console.log('Selected voice option:', selectedOption);
+  if (!selectedOption || !selectedOption.value) {
+    languageDisplay.textContent = 'Select a voice';
+    return;
+  }
 
-    // Get language from the data attribute
-    const language = selectedOption.dataset.language;
+  // Get language from the data attribute
+  const { language } = selectedOption.dataset;
 
-    // Map language code to a more readable format
-    const languageMap = {
-        'en': 'English',
-        'en-US': 'English (US)',
-        'en-GB': 'English (UK)',
-        'es': 'Spanish',
-        'es-ES': 'Spanish (Spain)',
-        'fr': 'French',
-        'fr-FR': 'French (France)',
-        'de': 'German',
-        'de-DE': 'German (Germany)',
-        'it': 'Italian',
-        'it-IT': 'Italian (Italy)',
-        'ja': 'Japanese',
-        'ko': 'Korean',
-        'pt': 'Portuguese',
-        'pt-BR': 'Portuguese (Brazil)',
-        'ru': 'Russian',
-        'zh': 'Chinese',
-        'zh-CN': 'Chinese (Mandarin)',
-        'ar': 'Arabic',
-        'hi': 'Hindi',
-        'nl': 'Dutch',
-        'pl': 'Polish',
-        'tr': 'Turkish'
-    };
+  // Map language code to a more readable format
+  const languageMap = {
+    en: 'English',
+    'en-US': 'English (US)',
+    'en-GB': 'English (UK)',
+    es: 'Spanish',
+    'es-ES': 'Spanish (Spain)',
+    fr: 'French',
+    'fr-FR': 'French (France)',
+    de: 'German',
+    'de-DE': 'German (Germany)',
+    it: 'Italian',
+    'it-IT': 'Italian (Italy)',
+    ja: 'Japanese',
+    ko: 'Korean',
+    pt: 'Portuguese',
+    'pt-BR': 'Portuguese (Brazil)',
+    ru: 'Russian',
+    zh: 'Chinese',
+    'zh-CN': 'Chinese (Mandarin)',
+    ar: 'Arabic',
+    hi: 'Hindi',
+    nl: 'Dutch',
+    pl: 'Polish',
+    tr: 'Turkish',
+  };
 
-    languageDisplay.textContent = languageMap[language] || language || 'Unknown';
+  languageDisplay.textContent = languageMap[language] || language || 'Unknown';
 }
 
 // Update test API function
 async function testVoiceApi(e) {
-    e?.preventDefault();
-    console.log('Test API function called');
+  e?.preventDefault();
+  console.log('Test API function called');
 
-    const elements = {
-        testBtn: document.getElementById('test-voice-api'),
-        form: document.getElementById('voice-api-form'),
-        curlCommand: document.getElementById('voice-curl-command'),
-        requestPath: document.getElementById('voice-request-path'),
-        responsePath: document.getElementById('voice-response-path'),
-        apiType: document.getElementById('voice-api-type'),
-        responseType: document.getElementById('voice-response-type')
+  const elements = {
+    testBtn: document.getElementById('test-voice-api'),
+    form: document.getElementById('voice-api-form'),
+    curlCommand: document.getElementById('voice-curl-command'),
+    requestPath: document.getElementById('voice-request-path'),
+    responsePath: document.getElementById('voice-response-path'),
+    apiType: document.getElementById('voice-api-type'),
+    responseType: document.getElementById('voice-response-type'),
+  };
+
+  // Log found elements
+  console.log(
+    'Found elements:',
+    Object.fromEntries(Object.entries(elements).map(([k, v]) => [k, !!v]))
+  );
+
+  // Validate required elements
+  if (!elements.testBtn || !elements.form) {
+    console.error('Required elements not found for test');
+    return;
+  }
+
+  // Get preview status element
+  const previewStatus = elements.form.querySelector('.preview-status');
+  if (!previewStatus) {
+    console.error('Preview status element not found');
+    return;
+  }
+
+  // Validate required fields
+  if (!elements.curlCommand?.value || !elements.requestPath?.value) {
+    showNotification('cURL command and request path are required', 'error');
+    return;
+  }
+
+  try {
+    elements.testBtn.disabled = true;
+    elements.testBtn.innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    previewStatus.textContent = 'Testing API...';
+
+    const testData = {
+      curlCommand: elements.curlCommand.value,
+      requestPath: elements.requestPath.value,
+      responsePath: elements.responsePath.value,
+      apiType: elements.apiType.value,
+      responseType: elements.responseType.value,
+      auth:
+        elements.apiType.value === 'hearing'
+          ? {
+              loginEndpoint: document.getElementById('auth-endpoint')?.value,
+              tokenPath: document.getElementById('token-path')?.value,
+              username: document.getElementById('auth-username')?.value,
+              password: document.getElementById('auth-password')?.value,
+            }
+          : null,
     };
 
-    // Log found elements
-    console.log('Found elements:', Object.fromEntries(
-        Object.entries(elements).map(([k, v]) => [k, !!v])
-    ));
+    console.log('Sending test request to server...', {
+      endpoint: '/api/admin/voice/test',
+      dataKeys: Object.keys(testData),
+    });
 
-    // Validate required elements
-    if (!elements.testBtn || !elements.form) {
-        console.error('Required elements not found for test');
-        return;
+    const response = await fetch('/api/admin/voice/test', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
+      },
+      body: JSON.stringify(testData),
+    });
+
+    console.log('Received response:', {
+      status: response.status,
+      ok: response.ok,
+    });
+
+    const data = await response.json();
+    console.log('Response data:', data);
+
+    if (!response.ok) {
+      throw new Error(data.message || `HTTP error! status: ${response.status}`);
     }
 
-    // Get preview status element
-    const previewStatus = elements.form.querySelector('.preview-status');
-    if (!previewStatus) {
-        console.error('Preview status element not found');
-        return;
+    previewStatus.textContent = 'API Test Successful';
+    previewStatus.style.color = 'var(--success-color)';
+    showNotification('Voice API test successful', 'success');
+  } catch (err) {
+    console.error('Test API error:', {
+      message: err.message,
+      stack: err.stack,
+    });
+    previewStatus.textContent = 'API Test Failed';
+    previewStatus.style.color = 'var(--error-color)';
+    showNotification(err.message || 'Failed to test Voice API', 'error');
+  } finally {
+    console.log('Test completed, resetting button state');
+    if (elements.testBtn) {
+      elements.testBtn.disabled = false;
+      elements.testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
     }
-
-    // Validate required fields
-    if (!elements.curlCommand?.value || !elements.requestPath?.value) {
-        showNotification('cURL command and request path are required', 'error');
-        return;
-    }
-
-    try {
-        elements.testBtn.disabled = true;
-        elements.testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
-        previewStatus.textContent = 'Testing API...';
-
-        const testData = {
-            curlCommand: elements.curlCommand.value,
-            requestPath: elements.requestPath.value,
-            responsePath: elements.responsePath.value,
-            apiType: elements.apiType.value,
-            responseType: elements.responseType.value,
-            auth: elements.apiType.value === 'hearing' ? {
-                loginEndpoint: document.getElementById('auth-endpoint')?.value,
-                tokenPath: document.getElementById('token-path')?.value,
-                username: document.getElementById('auth-username')?.value,
-                password: document.getElementById('auth-password')?.value
-            } : null
-        };
-
-        console.log('Sending test request to server...', {
-            endpoint: '/api/admin/voice/test',
-            dataKeys: Object.keys(testData)
-        });
-
-        const response = await fetch('/api/admin/voice/test', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-            },
-            body: JSON.stringify(testData)
-        });
-
-        console.log('Received response:', {
-            status: response.status,
-            ok: response.ok
-        });
-
-        const data = await response.json();
-        console.log('Response data:', data);
-
-        if (!response.ok) {
-            throw new Error(data.message || `HTTP error! status: ${response.status}`);
-        }
-
-        previewStatus.textContent = 'API Test Successful';
-        previewStatus.style.color = 'var(--success-color)';
-        showNotification('Voice API test successful', 'success');
-
-    } catch (err) {
-        console.error('Test API error:', {
-            message: err.message,
-            stack: err.stack
-        });
-        previewStatus.textContent = 'API Test Failed';
-        previewStatus.style.color = 'var(--error-color)';
-        showNotification(err.message || 'Failed to test Voice API', 'error');
-    } finally {
-        console.log('Test completed, resetting button state');
-        if (elements.testBtn) {
-            elements.testBtn.disabled = false;
-            elements.testBtn.innerHTML = '<i class="fas fa-vial"></i> Test API';
-        }
-        setTimeout(() => {
-            if (previewStatus?.textContent.includes('Testing')) {
-                previewStatus.textContent = '';
-            }
-        }, 3000);
-    }
+    setTimeout(() => {
+      if (previewStatus?.textContent.includes('Testing')) {
+        previewStatus.textContent = '';
+      }
+    }, 3000);
+  }
 }
 
 // Function to add a new voice entry to the form
 function addVoiceEntry() {
-    const voicesContainer = document.getElementById('voice-entries-container');
-    if (!voicesContainer) return;
+  const voicesContainer = document.getElementById('voice-entries-container');
+  if (!voicesContainer) return;
 
-    const entryId = Date.now(); // Use timestamp as unique ID
-    const newEntry = document.createElement('div');
-    newEntry.className = 'voice-entry';
-    newEntry.dataset.id = entryId;
+  const entryId = Date.now(); // Use timestamp as unique ID
+  const newEntry = document.createElement('div');
+  newEntry.className = 'voice-entry';
+  newEntry.dataset.id = entryId;
 
-    newEntry.innerHTML = `
+  newEntry.innerHTML = `
         <div class="entry-fields">
             <div class="form-group">
                 <label for="voice-id-${entryId}">Voice ID</label>
@@ -455,275 +487,295 @@ function addVoiceEntry() {
         </button>
     `;
 
-    voicesContainer.appendChild(newEntry);
+  voicesContainer.appendChild(newEntry);
 }
 
 // Function to remove a voice entry from the form
 function removeVoiceEntry(button) {
-    const entry = button.closest('.voice-entry');
-    if (entry) {
-        entry.remove();
-    }
+  const entry = button.closest('.voice-entry');
+  if (entry) {
+    entry.remove();
+  }
 }
 
 // Function to collect all voice entries from the form
 function collectVoices() {
-    const entries = document.querySelectorAll('.voice-entry');
-    const voices = [];
+  const entries = document.querySelectorAll('.voice-entry');
+  const voices = [];
 
-    entries.forEach(entry => {
-        const id = entry.querySelector('.voice-id').value.trim();
-        const name = entry.querySelector('.voice-name').value.trim();
-        const gender = entry.querySelector('.voice-gender').value;
-        const language = entry.querySelector('.voice-language').value.trim();
+  entries.forEach((entry) => {
+    const id = entry.querySelector('.voice-id').value.trim();
+    const name = entry.querySelector('.voice-name').value.trim();
+    const gender = entry.querySelector('.voice-gender').value;
+    const language = entry.querySelector('.voice-language').value.trim();
 
-        if (id && name && language) {
-            voices.push({
-                id,
-                name,
-                gender,
-                language
-            });
-        }
-    });
+    if (id && name && language) {
+      voices.push({
+        id,
+        name,
+        gender,
+        language,
+      });
+    }
+  });
 
-    return voices;
+  return voices;
 }
 
 // Function to generate voice audio
 async function generateVoiceAudio(preview = false) {
-    console.log('Generate voice audio function called');
+  console.log('Generate voice audio function called');
 
-    // Get all required elements at the start
-    const elements = {
-        modelSelect: document.getElementById('model-select'),
-        voiceSelection: document.getElementById('voice-selection'),
-        voiceText: document.getElementById('voice-text'),
-        voiceSpeed: document.getElementById('voice-speed'),
-        voicePitch: document.getElementById('voice-pitch'),
-        audioPlayer: document.getElementById('audio-player'),
-        loadingIndicator: document.getElementById('voice-loading'),
-        audioResult: document.getElementById('audio-result'),
-        downloadSection: document.getElementById('download-section'),
-        generateBtn: document.getElementById('generate-voice-btn')
+  // Get all required elements at the start
+  const elements = {
+    modelSelect: document.getElementById('model-select'),
+    voiceSelection: document.getElementById('voice-selection'),
+    voiceText: document.getElementById('voice-text'),
+    voiceSpeed: document.getElementById('voice-speed'),
+    voicePitch: document.getElementById('voice-pitch'),
+    audioPlayer: document.getElementById('audio-player'),
+    loadingIndicator: document.getElementById('voice-loading'),
+    audioResult: document.getElementById('audio-result'),
+    downloadSection: document.getElementById('download-section'),
+    generateBtn: document.getElementById('generate-voice-btn'),
+  };
+
+  try {
+    if (!(await validateInputs())) {
+      return;
+    }
+
+    // Show loading indicator and disable generate button
+    if (elements.loadingIndicator)
+      elements.loadingIndicator.style.display = 'flex';
+    if (elements.generateBtn) elements.generateBtn.disabled = true;
+    if (elements.audioResult) elements.audioResult.style.display = 'none';
+    if (elements.downloadSection)
+      elements.downloadSection.style.display = 'none';
+
+    // Prepare request data using elements object
+    const requestData = {
+      apiId: elements.modelSelect.value,
+      voice: elements.voiceSelection.value,
+      text: elements.voiceText.value.trim(),
+      speed: elements.voiceSpeed ? parseFloat(elements.voiceSpeed.value) : 1.0,
+      pitch: elements.voicePitch ? parseFloat(elements.voicePitch.value) : 1.0,
+      preview,
     };
 
-    try {
-        if (!await validateInputs()) {
-            return;
+    console.log('Sending preview request:', requestData);
+
+    // Send request to server
+    const response = await fetch('/api/voice/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    // Get content type from response headers
+    const contentType = response.headers.get('Content-Type');
+
+    // Handle different response types
+    let audioBlob;
+    let audioType = 'audio/mpeg'; // Set default audio type
+
+    if (contentType.includes('audio/')) {
+      audioType = contentType;
+      const arrayBuffer = await response.arrayBuffer();
+      audioBlob = new Blob([arrayBuffer], { type: audioType });
+    } else if (contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data.audioUrl) {
+        const audioRes = await fetch(data.audioUrl);
+        audioType = audioRes.headers.get('Content-Type') || 'audio/mpeg';
+        const arrayBuffer = await audioRes.arrayBuffer();
+        audioBlob = new Blob([arrayBuffer], { type: audioType });
+      } else if (data.audioData) {
+        const binaryData = atob(data.audioData);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i);
         }
+        audioBlob = new Blob([bytes], { type: audioType });
+      } else {
+        throw new Error('No audio data in response');
+      }
+    } else {
+      throw new Error(`Unsupported response type: ${contentType}`);
+    }
 
-        // Show loading indicator and disable generate button
-        if (elements.loadingIndicator) elements.loadingIndicator.style.display = 'flex';
-        if (elements.generateBtn) elements.generateBtn.disabled = true;
-        if (elements.audioResult) elements.audioResult.style.display = 'none';
-        if (elements.downloadSection) elements.downloadSection.style.display = 'none';
+    await validateAudioBlob(audioBlob);
+    const audioSource = URL.createObjectURL(audioBlob);
 
-        // Prepare request data using elements object
-        const requestData = {
-            apiId: elements.modelSelect.value,
-            voice: elements.voiceSelection.value,
-            text: elements.voiceText.value.trim(),
-            speed: elements.voiceSpeed ? parseFloat(elements.voiceSpeed.value) : 1.0,
-            pitch: elements.voicePitch ? parseFloat(elements.voicePitch.value) : 1.0,
-            preview: preview
-        };
+    console.log('Starting duration calculation for audio...');
+    console.log(
+      `Audio blob details: type=${audioType}, size=${audioBlob.size} bytes`
+    );
 
-        console.log('Sending preview request:', requestData);
+    const duration = await getAudioDuration(audioBlob);
+    console.log(`Final duration passed to buildCustomAudioPlayer: ${duration}`);
+    const durationFormatted = formatDuration(duration);
+    console.log(`Formatted duration for display: ${durationFormatted}`);
 
-        // Send request to server
-        const response = await fetch('/api/voice/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-            },
-            body: JSON.stringify(requestData)
-        });
+    if (elements.audioPlayer) {
+      const selectedVoice =
+        elements.voiceSelection.options[elements.voiceSelection.selectedIndex]
+          .text;
+      console.log(
+        `Building audio player with duration: ${duration}, formatted: ${durationFormatted}`
+      );
+      elements.audioPlayer.innerHTML = buildCustomAudioPlayer(
+        audioSource,
+        audioType,
+        duration,
+        selectedVoice
+      );
+      initializeCustomPlayer();
+    }
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-        }
-
-        // Get content type from response headers
-        const contentType = response.headers.get('Content-Type');
-        
-        // Handle different response types
-        let audioBlob;
-        let audioType = 'audio/mpeg'; // Set default audio type
-        
-        if (contentType.includes('audio/')) {
-            audioType = contentType;
-            const arrayBuffer = await response.arrayBuffer();
-            audioBlob = new Blob([arrayBuffer], { type: audioType });
-        } else if (contentType.includes('application/json')) {
-            const data = await response.json();
-            if (data.audioUrl) {
-                const audioRes = await fetch(data.audioUrl);
-                audioType = audioRes.headers.get('Content-Type') || 'audio/mpeg';
-                const arrayBuffer = await audioRes.arrayBuffer();
-                audioBlob = new Blob([arrayBuffer], { type: audioType });
-            } else if (data.audioData) {
-                const binaryData = atob(data.audioData);
-                const bytes = new Uint8Array(binaryData.length);
-                for (let i = 0; i < binaryData.length; i++) {
-                    bytes[i] = binaryData.charCodeAt(i);
-                }
-                audioBlob = new Blob([bytes], { type: audioType });
-            } else {
-                throw new Error('No audio data in response');
-            }
-        } else {
-            throw new Error(`Unsupported response type: ${contentType}`);
-        }
-
-        await validateAudioBlob(audioBlob);
-        const audioSource = URL.createObjectURL(audioBlob);
-        
-        console.log('Starting duration calculation for audio...');
-        console.log(`Audio blob details: type=${audioType}, size=${audioBlob.size} bytes`);
-        
-        const duration = await getAudioDuration(audioBlob);
-        console.log(`Final duration passed to buildCustomAudioPlayer: ${duration}`);
-        const durationFormatted = formatDuration(duration);
-        console.log(`Formatted duration for display: ${durationFormatted}`);
-
-        if (elements.audioPlayer) {
-            const selectedVoice = elements.voiceSelection.options[elements.voiceSelection.selectedIndex].text;
-            console.log(`Building audio player with duration: ${duration}, formatted: ${durationFormatted}`);
-            elements.audioPlayer.innerHTML = buildCustomAudioPlayer(audioSource, audioType, duration, selectedVoice);
-            initializeCustomPlayer();
-        }
-
-        // Show audio result and enable download
-        if (elements.loadingIndicator) elements.loadingIndicator.style.display = 'none';
-        if (elements.audioResult) elements.audioResult.style.display = 'block';
-        if (elements.downloadSection) {
-            elements.downloadSection.style.display = 'block';
-            elements.downloadSection.innerHTML = `
+    // Show audio result and enable download
+    if (elements.loadingIndicator)
+      elements.loadingIndicator.style.display = 'none';
+    if (elements.audioResult) elements.audioResult.style.display = 'block';
+    if (elements.downloadSection) {
+      elements.downloadSection.style.display = 'block';
+      elements.downloadSection.innerHTML = `
                 <button class="btn btn-download" onclick="downloadAudio('${audioSource}', 'mp3')">
                     <i class="fas fa-download"></i> Download MP3
                 </button>
             `;
-        }
-
-        // Re-enable generate button
-        if (elements.generateBtn) elements.generateBtn.disabled = false;
-
-    } catch (err) {
-        console.error('Preview voice error:', err);
-        showNotification(err.message || 'Failed to preview voice', 'error');
-
-        // Reset UI state on error
-        if (elements.loadingIndicator) elements.loadingIndicator.style.display = 'none';
-        if (elements.generateBtn) elements.generateBtn.disabled = false;
-        if (elements.downloadSection) elements.downloadSection.style.display = 'none';
     }
+
+    // Re-enable generate button
+    if (elements.generateBtn) elements.generateBtn.disabled = false;
+  } catch (err) {
+    console.error('Preview voice error:', err);
+    showNotification(err.message || 'Failed to preview voice', 'error');
+
+    // Reset UI state on error
+    if (elements.loadingIndicator)
+      elements.loadingIndicator.style.display = 'none';
+    if (elements.generateBtn) elements.generateBtn.disabled = false;
+    if (elements.downloadSection)
+      elements.downloadSection.style.display = 'none';
+  }
 }
 
 // Function to handle generate button click
 async function generateVoiceFile(e) {
-    e?.preventDefault();
-    await generateVoiceAudio(false);
+  e?.preventDefault();
+  await generateVoiceAudio(false);
 }
 
 // Function to handle preview button click
 async function previewVoice(e) {
-    e?.preventDefault();
-    await generateVoiceAudio(true);
+  e?.preventDefault();
+  await generateVoiceAudio(true);
 }
 
 async function validateInputs() {
-    const modelSelect = document.getElementById('model-select');
-    const voiceSelection = document.getElementById('voice-selection');
-    const voiceText = document.getElementById('voice-text');
+  const modelSelect = document.getElementById('model-select');
+  const voiceSelection = document.getElementById('voice-selection');
+  const voiceText = document.getElementById('voice-text');
 
-    if (!modelSelect?.value) {
-        showNotification('Please select a voice model', 'warning');
-        return false;
-    }
+  if (!modelSelect?.value) {
+    showNotification('Please select a voice model', 'warning');
+    return false;
+  }
 
-    if (!voiceSelection?.value) {
-        showNotification('Please select a voice', 'warning');
-        return false;
-    }
+  if (!voiceSelection?.value) {
+    showNotification('Please select a voice', 'warning');
+    return false;
+  }
 
-    if (!voiceText?.value.trim()) {
-        showNotification('Please enter some text to convert', 'warning');
-        return false;
-    }
+  if (!voiceText?.value.trim()) {
+    showNotification('Please enter some text to convert', 'warning');
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 async function generateVoiceRequest() {
+  try {
+    // Disable generate button and show loading indicator
+    const generateBtn = document.getElementById('generate-voice-btn');
+    if (generateBtn) generateBtn.disabled = true;
+    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+    if (audioResult) audioResult.style.display = 'none';
+    if (downloadSection) downloadSection.style.display = 'none';
+
+    // Prepare request data
+    const requestData = {
+      apiId: modelSelect.value,
+      voice: voiceSelection.value,
+      text: voiceText.value.trim(),
+      speed: voiceSpeed ? parseFloat(voiceSpeed.value) : 1.0,
+      pitch: voicePitch ? parseFloat(voicePitch.value) : 1.0,
+      preview,
+    };
+
+    console.log('Sending generate request:', requestData);
+
+    // Send request to server
+    const response = await fetch('/api/voice/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    // Handle response
+    const audioArrayBuffer = await response.arrayBuffer();
+    const audioType = response.headers.get('Content-Type') || 'audio/mpeg';
+    const blob = new Blob([audioArrayBuffer], { type: audioType });
+
+    // Validate the audio blob before creating URL
     try {
-        // Disable generate button and show loading indicator
-        const generateBtn = document.getElementById('generate-voice-btn');
-        if (generateBtn) generateBtn.disabled = true;
-        if (loadingIndicator) loadingIndicator.style.display = 'flex';
-        if (audioResult) audioResult.style.display = 'none';
-        if (downloadSection) downloadSection.style.display = 'none';
+      await validateAudioBlob(blob);
+    } catch (err) {
+      notify(`Audio validation failed: ${err.message}`, 'error');
+      throw err;
+    }
 
-        // Prepare request data
-        const requestData = {
-            apiId: modelSelect.value,
-            voice: voiceSelection.value,
-            text: voiceText.value.trim(),
-            speed: voiceSpeed ? parseFloat(voiceSpeed.value) : 1.0,
-            pitch: voicePitch ? parseFloat(voicePitch.value) : 1.0,
-            preview: preview
-        };
+    const audioSource = URL.createObjectURL(blob);
 
-        console.log('Sending generate request:', requestData);
+    // Create a temporary audio element to get duration
+    const tempAudio = new Audio();
+    tempAudio.preload = 'metadata';
+    tempAudio.src = audioSource;
+    await new Promise((resolve) => {
+      tempAudio.addEventListener('loadedmetadata', () => {
+        resolve();
+      });
+    });
 
-        // Send request to server
-        const response = await fetch('/api/voice/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AuthGuard.getAuthToken()}`
-            },
-            body: JSON.stringify(requestData)
-        });
+    const duration = Math.round(tempAudio.duration);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-        }
-
-        // Handle response
-        const audioArrayBuffer = await response.arrayBuffer();
-        const audioType = response.headers.get('Content-Type') || 'audio/mpeg';
-        const blob = new Blob([audioArrayBuffer], { type: audioType });
-        
-        // Validate the audio blob before creating URL
-        try {
-            await validateAudioBlob(blob);
-        } catch (err) {
-            notify(`Audio validation failed: ${err.message}`, 'error');
-            throw err;
-        }
-        
-        const audioSource = URL.createObjectURL(blob);
-
-        // Create a temporary audio element to get duration
-        const tempAudio = new Audio();
-        tempAudio.preload = 'metadata';
-        tempAudio.src = audioSource;
-        await new Promise((resolve) => {
-            tempAudio.addEventListener('loadedmetadata', () => {
-                resolve();
-            });
-        });
-
-        const duration = Math.round(tempAudio.duration);
-
-        // Create audio player with enhanced UI
-        if (audioPlayer) {
-            const selectedVoice = voiceSelection.options[voiceSelection.selectedIndex].text;
-            audioPlayer.innerHTML = `
+    // Create audio player with enhanced UI
+    if (audioPlayer) {
+      const selectedVoice =
+        voiceSelection.options[voiceSelection.selectedIndex].text;
+      audioPlayer.innerHTML = `
                 <audio controls autoplay>
                     <source src="${audioSource}" type="${audioType}">
                     Your browser does not support the audio element.
@@ -736,97 +788,102 @@ async function generateVoiceRequest() {
                     </div>
                 </div>
             `;
-        }
+    }
 
-        // Show audio result
-        if (loadingIndicator) loadingIndicator.style.display = 'none';
-        if (audioResult) audioResult.style.display = 'block';
+    // Show audio result
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
+    if (audioResult) audioResult.style.display = 'block';
 
-        // Update download buttons
-        const downloadSection = document.getElementById('download-section');
-        if (downloadSection) {
-            downloadSection.innerHTML = `
+    // Update download buttons
+    const downloadSection = document.getElementById('download-section');
+    if (downloadSection) {
+      downloadSection.innerHTML = `
                 <button class="btn btn-download" onclick="downloadAudio('${audioSource}', 'mp3')">
                     <i class="fas fa-download"></i> Download MP3
                 </button>
             `;
-        }
-
-        // Add to history
-        if (responseData && typeof responseData === 'object') {
-            addToVoiceHistory({
-                id: responseData.id || 'voice-' + Date.now(),
-                text: voiceText.value.substring(0, 30) + (voiceText.value.length > 30 ? '...' : ''),
-                voiceName: responseData.voiceName || voiceSelection.options[voiceSelection.selectedIndex].textContent,
-                audioUrl: responseData.audioUrl || audioSource,
-                wavUrl: responseData.wavUrl || null,
-                timestamp: new Date().toISOString()
-            });
-        }
-
-    } catch (err) {
-        console.error('Generate voice error:', err);
-        showNotification(err.message || 'Failed to generate voice file', 'error');
-
-        // Hide loading indicator and re-enable generate button
-        if (loadingIndicator) loadingIndicator.style.display = 'none';
-        const generateBtn = document.getElementById('generate-voice-btn');
-        if (generateBtn) generateBtn.disabled = false;
-        if (downloadSection) downloadSection.style.display = 'none';
     }
 
+    // Add to history
+    if (responseData && typeof responseData === 'object') {
+      addToVoiceHistory({
+        id: responseData.id || `voice-${Date.now()}`,
+        text:
+          voiceText.value.substring(0, 30) +
+          (voiceText.value.length > 30 ? '...' : ''),
+        voiceName:
+          responseData.voiceName ||
+          voiceSelection.options[voiceSelection.selectedIndex].textContent,
+        audioUrl: responseData.audioUrl || audioSource,
+        wavUrl: responseData.wavUrl || null,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (err) {
+    console.error('Generate voice error:', err);
+    showNotification(err.message || 'Failed to generate voice file', 'error');
 
-    // Function to download audio file
-    window.downloadAudio = function(url, format) {
-        if (!url) {
-            showNotification('Download URL not available', 'error');
-            return;
-        }
+    // Hide loading indicator and re-enable generate button
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
+    const generateBtn = document.getElementById('generate-voice-btn');
+    if (generateBtn) generateBtn.disabled = false;
+    if (downloadSection) downloadSection.style.display = 'none';
+  }
 
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `voice-${new Date().getTime()}.${format}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+  // Function to download audio file
+  window.downloadAudio = function (url, format) {
+    if (!url) {
+      showNotification('Download URL not available', 'error');
+      return;
     }
 
-    // Function to add entry to voice history
-    function addToVoiceHistory(entry) {
-        const historyList = document.getElementById('voice-history');
-        if (!historyList) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `voice-${new Date().getTime()}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
-        // Get existing history from localStorage
-        let history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
+  // Function to add entry to voice history
+  function addToVoiceHistory(entry) {
+    const historyList = document.getElementById('voice-history');
+    if (!historyList) return;
 
-        // Add new entry to the beginning
-        history.unshift(entry);
+    // Get existing history from localStorage
+    let history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
 
-        // Keep only the last 10 entries
-        history = history.slice(0, 10);
+    // Add new entry to the beginning
+    history.unshift(entry);
 
-        // Save to localStorage
-        localStorage.setItem('voiceHistory', JSON.stringify(history));
+    // Keep only the last 10 entries
+    history = history.slice(0, 10);
 
-        // Update UI
-        updateVoiceHistory();
+    // Save to localStorage
+    localStorage.setItem('voiceHistory', JSON.stringify(history));
+
+    // Update UI
+    updateVoiceHistory();
+  }
+
+  // Function to update voice history UI
+  function updateVoiceHistory() {
+    const historyList = document.getElementById('voice-history');
+    if (!historyList) return;
+
+    // Get history from localStorage
+    const history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
+
+    if (history.length === 0) {
+      historyList.innerHTML =
+        '<li class="empty-history">No recent conversions</li>';
+      return;
     }
 
-    // Function to update voice history UI
-    function updateVoiceHistory() {
-        const historyList = document.getElementById('voice-history');
-        if (!historyList) return;
-
-        // Get history from localStorage
-        const history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
-
-        if (history.length === 0) {
-            historyList.innerHTML = '<li class="empty-history">No recent conversions</li>';
-            return;
-        }
-
-        // Update UI
-        historyList.innerHTML = history.map(entry => `
+    // Update UI
+    historyList.innerHTML = history
+      .map(
+        (entry) => `
         <li class="history-item" data-id="${entry.id}">
             <div class="history-text">${entry.text}</div>
             <div class="history-meta">
@@ -842,192 +899,212 @@ async function generateVoiceRequest() {
                 </button>
             </div>
         </li>
-    `).join('');
+    `
+      )
+      .join('');
+  }
+
+  // Function to play audio from history
+  function playHistoryAudio(url) {
+    if (!url) {
+      showNotification('Audio URL not available', 'error');
+      return;
     }
 
-    // Function to play audio from history
-    function playHistoryAudio(url) {
-        if (!url) {
-            showNotification('Audio URL not available', 'error');
-            return;
-        }
+    const audioPlayer = document.getElementById('audio-player');
+    const audioResult = document.getElementById('audio-result');
 
-        const audioPlayer = document.getElementById('audio-player');
-        const audioResult = document.getElementById('audio-result');
-
-        if (audioPlayer) {
-            audioPlayer.innerHTML = `
+    if (audioPlayer) {
+      audioPlayer.innerHTML = `
             <audio controls autoplay>
                 <source src="${url}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
         `;
-        }
-
-        if (audioResult) audioResult.style.display = 'block';
     }
 
-    // Helper function to format timestamp
-    function formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
-        const now = new Date();
+    if (audioResult) audioResult.style.display = 'block';
+  }
 
-        // If today, show time only
-        if (date.toDateString() === now.toDateString()) {
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
+  // Helper function to format timestamp
+  function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
 
-        // Otherwise show date
-        return date.toLocaleDateString();
+    // If today, show time only
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
     }
 
-    // Export functions needed by admin.js
-    window.addVoiceEntry = addVoiceEntry;
-    window.removeVoiceEntry = removeVoiceEntry;
-    window.collectVoices = collectVoices;
-    window.testVoiceApi = testVoiceApi;
+    // Otherwise show date
+    return date.toLocaleDateString();
+  }
 
-    // Export functions for voice history
-    window.downloadAudio = downloadAudio;
-    window.playHistoryAudio = playHistoryAudio;
+  // Export functions needed by admin.js
+  window.addVoiceEntry = addVoiceEntry;
+  window.removeVoiceEntry = removeVoiceEntry;
+  window.collectVoices = collectVoices;
+  window.testVoiceApi = testVoiceApi;
 
-    // Add notification function
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 
-                             type === 'error' ? 'exclamation-circle' : 
-                             'info-circle'}"></i>
+  // Export functions for voice history
+  window.downloadAudio = downloadAudio;
+  window.playHistoryAudio = playHistoryAudio;
+
+  // Add notification function
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+            <i class="fas fa-${
+              type === 'success'
+                ? 'check-circle'
+                : type === 'error'
+                  ? 'exclamation-circle'
+                  : 'info-circle'
+            }"></i>
             <span>${message}</span>
         `;
-        
-        document.body.appendChild(notification);
-        setTimeout(() => {
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }, 100);
-    }
+
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.classList.add('show');
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }, 100);
+  }
 }
 
 // Move downloadAudio function to the global scope
-window.downloadAudio = function(url, format) {
-    if (!url) {
-        showNotification('Download URL not available', 'error');
-        return;
-    }
+window.downloadAudio = function (url, format) {
+  if (!url) {
+    showNotification('Download URL not available', 'error');
+    return;
+  }
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `voice-${new Date().getTime()}.${format}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `voice-${new Date().getTime()}.${format}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
 // Function to get audio duration using AudioContext (more accurate)
 function getAudioDurationWithContext(blob) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            console.log('FileReader loaded audio data, creating AudioContext...');
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            audioContext.decodeAudioData(event.target.result,
-                (buffer) => {
-                    const duration = buffer.duration;
-                    console.log(`AudioContext decoded duration: ${duration} seconds`);
-                    resolve(duration);
-                    audioContext.close();
-                },
-                (error) => {
-                    console.error('Error decoding audio data:', error);
-                    reject(error);
-                    audioContext.close();
-                }
-            );
-        };
-        reader.onerror = (error) => {
-            console.error('FileReader error:', error);
-            reject(error);
-        };
-        console.log('Starting to read audio blob as ArrayBuffer...');
-        reader.readAsArrayBuffer(blob);
-    });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      console.log('FileReader loaded audio data, creating AudioContext...');
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      audioContext.decodeAudioData(
+        event.target.result,
+        (buffer) => {
+          const { duration } = buffer;
+          console.log(`AudioContext decoded duration: ${duration} seconds`);
+          resolve(duration);
+          audioContext.close();
+        },
+        (error) => {
+          console.error('Error decoding audio data:', error);
+          reject(error);
+          audioContext.close();
+        }
+      );
+    };
+    reader.onerror = (error) => {
+      console.error('FileReader error:', error);
+      reject(error);
+    };
+    console.log('Starting to read audio blob as ArrayBuffer...');
+    reader.readAsArrayBuffer(blob);
+  });
 }
 
 async function getAudioDuration(blob) {
-    let duration = 0;
-    try {
-        console.log("Attempting duration calculation with AudioContext...");
-        console.log(`Blob type: ${blob.type}, size: ${blob.size} bytes`);
-        
-        duration = await getAudioDurationWithContext(blob);
-        console.log(`AudioContext method succeeded. Duration: ${duration}`);
-        return duration;
-    } catch (error) {
-        console.error('AudioContext method failed:', error);
-        console.log("Falling back to HTMLAudioElement method...");
-        
-        return new Promise((resolve) => {
-            const audio = new Audio();
-            const url = URL.createObjectURL(blob);
+  let duration = 0;
+  try {
+    console.log('Attempting duration calculation with AudioContext...');
+    console.log(`Blob type: ${blob.type}, size: ${blob.size} bytes`);
 
-            audio.addEventListener('loadedmetadata', () => {
-                const fallbackDuration = audio.duration;
-                console.log(`HTMLAudioElement loadedmetadata duration: ${fallbackDuration}`);
-                URL.revokeObjectURL(url);
-                audio.remove();
-                if (fallbackDuration === Infinity) {
-                    console.warn('HTMLAudioElement reported Infinity duration, defaulting to 0');
-                }
-                resolve(fallbackDuration === Infinity ? 0 : fallbackDuration);
-            });
+    duration = await getAudioDurationWithContext(blob);
+    console.log(`AudioContext method succeeded. Duration: ${duration}`);
+    return duration;
+  } catch (error) {
+    console.error('AudioContext method failed:', error);
+    console.log('Falling back to HTMLAudioElement method...');
 
-            audio.addEventListener('error', (e) => {
-                console.error('HTMLAudioElement error:', audio.error || e);
-                URL.revokeObjectURL(url);
-                audio.remove();
-                resolve(0);
-            });
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      const url = URL.createObjectURL(blob);
 
-            audio.preload = 'metadata';
-            audio.src = url;
-            console.log('HTMLAudioElement created and metadata loading started...');
+      audio.addEventListener('loadedmetadata', () => {
+        const fallbackDuration = audio.duration;
+        console.log(
+          `HTMLAudioElement loadedmetadata duration: ${fallbackDuration}`
+        );
+        URL.revokeObjectURL(url);
+        audio.remove();
+        if (fallbackDuration === Infinity) {
+          console.warn(
+            'HTMLAudioElement reported Infinity duration, defaulting to 0'
+          );
+        }
+        resolve(fallbackDuration === Infinity ? 0 : fallbackDuration);
+      });
 
-            const timeoutId = setTimeout(() => {
-                console.warn("HTMLAudioElement fallback timed out after 5 seconds");
-                URL.revokeObjectURL(url);
-                audio.remove();
-                resolve(0);
-            }, 5000);
+      audio.addEventListener('error', (e) => {
+        console.error('HTMLAudioElement error:', audio.error || e);
+        URL.revokeObjectURL(url);
+        audio.remove();
+        resolve(0);
+      });
 
-            audio.addEventListener('loadedmetadata', () => clearTimeout(timeoutId));
-            audio.addEventListener('error', () => clearTimeout(timeoutId));
-        });
-    }
+      audio.preload = 'metadata';
+      audio.src = url;
+      console.log('HTMLAudioElement created and metadata loading started...');
+
+      const timeoutId = setTimeout(() => {
+        console.warn('HTMLAudioElement fallback timed out after 5 seconds');
+        URL.revokeObjectURL(url);
+        audio.remove();
+        resolve(0);
+      }, 5000);
+
+      audio.addEventListener('loadedmetadata', () => clearTimeout(timeoutId));
+      audio.addEventListener('error', () => clearTimeout(timeoutId));
+    });
+  }
 }
 
 // Add these helper functions
 function formatDuration(seconds) {
-    // Ensure we have a valid number and it's not Infinity
-    if (!seconds || seconds === Infinity || isNaN(seconds)) {
-        return '0:00';
-    }
-    
-    // Round down to nearest whole number
-    seconds = Math.floor(seconds);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  // Ensure we have a valid number and it's not Infinity
+  if (!seconds || seconds === Infinity || isNaN(seconds)) {
+    return '0:00';
+  }
+
+  // Round down to nearest whole number
+  seconds = Math.floor(seconds);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-function buildCustomAudioPlayer(audioSource, audioType, duration, selectedVoice) {
-    const durationFormatted = formatDuration(duration);
-    
-    return `
+function buildCustomAudioPlayer(
+  audioSource,
+  audioType,
+  duration,
+  selectedVoice
+) {
+  const durationFormatted = formatDuration(duration);
+
+  return `
         <div class="custom-audio-player">
             <audio id="audioElement" preload="metadata">
                 <source src="${audioSource}" type="${audioType}">
@@ -1061,129 +1138,145 @@ function buildCustomAudioPlayer(audioSource, audioType, duration, selectedVoice)
 }
 
 function initializeCustomPlayer() {
-    const audio = document.getElementById('audioElement');
-    if (!audio) return;
+  const audio = document.getElementById('audioElement');
+  if (!audio) return;
 
-    const player = audio.closest('.custom-audio-player');
-    if (!player) return;
+  const player = audio.closest('.custom-audio-player');
+  if (!player) return;
 
-    const playPauseBtn = player.querySelector('.play-pause-btn');
-    const progress = player.querySelector('.progress');
-    const currentTimeDisplay = player.querySelector('.current-time');
-    const durationDisplay = player.querySelector('.duration');
-    const audioMetaDuration = player.querySelector('.audio-meta span:first-child');
-    const progressBar = player.querySelector('.progress-bar');
+  const playPauseBtn = player.querySelector('.play-pause-btn');
+  const progress = player.querySelector('.progress');
+  const currentTimeDisplay = player.querySelector('.current-time');
+  const durationDisplay = player.querySelector('.duration');
+  const audioMetaDuration = player.querySelector(
+    '.audio-meta span:first-child'
+  );
+  const progressBar = player.querySelector('.progress-bar');
 
-    if (!playPauseBtn || !progress || !currentTimeDisplay || !durationDisplay || !progressBar) {
-        console.error("Custom audio player elements not found!");
-        return;
+  if (
+    !playPauseBtn ||
+    !progress ||
+    !currentTimeDisplay ||
+    !durationDisplay ||
+    !progressBar
+  ) {
+    console.error('Custom audio player elements not found!');
+    return;
+  }
+
+  // Get the pre-calculated duration from the display
+  const initialDuration = parseDurationString(durationDisplay.textContent);
+  console.log(`Using pre-calculated duration: ${initialDuration}s`);
+
+  let animationFrameId = null;
+
+  function updateProgress() {
+    if (!isNaN(audio.currentTime)) {
+      // Use our initial duration rather than audio.duration
+      const percent = (audio.currentTime / initialDuration) * 100;
+      progress.style.width = `${percent}%`;
+      currentTimeDisplay.textContent = formatDuration(audio.currentTime);
+    } else {
+      progress.style.width = '0%';
+      currentTimeDisplay.textContent = formatDuration(0);
     }
+  }
 
-    // Get the pre-calculated duration from the display
-    const initialDuration = parseDurationString(durationDisplay.textContent);
-    console.log(`Using pre-calculated duration: ${initialDuration}s`);
+  function animationLoop() {
+    // console.log(`RAF Loop: time=${audio.currentTime.toFixed(2)}, paused=${audio.paused}, ended=${audio.ended}`);
 
-    let animationFrameId = null;
-
-    function updateProgress() {
-        if (!isNaN(audio.currentTime)) {
-            // Use our initial duration rather than audio.duration
-            const percent = (audio.currentTime / initialDuration) * 100;
-            progress.style.width = `${percent}%`;
-            currentTimeDisplay.textContent = formatDuration(audio.currentTime);
-        } else {
-            progress.style.width = '0%';
-            currentTimeDisplay.textContent = formatDuration(0);
-        }
-    }
-
-    function animationLoop() {
-        // console.log(`RAF Loop: time=${audio.currentTime.toFixed(2)}, paused=${audio.paused}, ended=${audio.ended}`);
-        
-        updateProgress();
-
-        if (!audio.paused && !audio.ended) {
-            animationFrameId = requestAnimationFrame(animationLoop);
-        } else {
-            console.log("RAF Loop stopping.");
-            animationFrameId = null;
-        }
-    }
-
-    function startLoop() {
-        if (animationFrameId) {
-            console.log("Cancelling existing RAF frame before starting new one.");
-            cancelAnimationFrame(animationFrameId);
-        }
-        console.log("Starting RAF Loop...");
-        animationFrameId = requestAnimationFrame(animationLoop);
-    }
-
-    function stopLoop() {
-        if (animationFrameId) {
-            console.log("Stopping RAF Loop via stopLoop().");
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-        }
-    }
-
-    // Helper function to parse duration string back to seconds
-    function parseDurationString(durationStr) {
-        const [minutes, seconds] = durationStr.split(':').map(Number);
-        return minutes * 60 + seconds;
-    }
-
-    playPauseBtn.addEventListener('click', () => {
-        if (audio.paused) {
-            audio.play();
-        } else {
-            audio.pause();
-        }
-    });
-
-    audio.addEventListener('loadedmetadata', () => {
-        console.log(`Audio metadata loaded. HTMLAudioElement reports duration: ${audio.duration.toFixed(2)}s. Using pre-calculated duration: ${initialDuration}s`);
-        
-        // Only log a warning if the durations are significantly different
-        const durationDiff = Math.abs(audio.duration - initialDuration);
-        if (durationDiff > 1) {
-            console.warn(`Duration discrepancy detected: HTMLAudioElement duration differs by ${durationDiff.toFixed(2)}s from calculated duration`);
-        }
-
-        updateProgress();
-    });
-
-    progressBar.addEventListener('click', (e) => {
-        const rect = progressBar.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        // Use initial duration for seeking calculations
-        const newTime = percent * initialDuration;
-        console.log(`Seeking to: ${newTime.toFixed(2)}s (${(percent * 100).toFixed(1)}%)`);
-        audio.currentTime = newTime;
-        updateProgress();
-    });
-
-    audio.addEventListener('play', () => {
-        console.log('Play event triggered');
-        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        startLoop();
-    });
-
-    audio.addEventListener('pause', () => {
-        console.log('Pause event triggered');
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        stopLoop();
-    });
-
-    audio.addEventListener('ended', () => {
-        console.log(`Audio ended event. Final time: ${audio.currentTime.toFixed(2)}`);
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        stopLoop();
-        progress.style.width = '0%';
-        currentTimeDisplay.textContent = formatDuration(0);
-        audio.currentTime = 0; // Reset to beginning for replay
-    });
-
-    // Initialize progress bar
     updateProgress();
+
+    if (!audio.paused && !audio.ended) {
+      animationFrameId = requestAnimationFrame(animationLoop);
+    } else {
+      console.log('RAF Loop stopping.');
+      animationFrameId = null;
+    }
+  }
+
+  function startLoop() {
+    if (animationFrameId) {
+      console.log('Cancelling existing RAF frame before starting new one.');
+      cancelAnimationFrame(animationFrameId);
+    }
+    console.log('Starting RAF Loop...');
+    animationFrameId = requestAnimationFrame(animationLoop);
+  }
+
+  function stopLoop() {
+    if (animationFrameId) {
+      console.log('Stopping RAF Loop via stopLoop().');
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+
+  // Helper function to parse duration string back to seconds
+  function parseDurationString(durationStr) {
+    const [minutes, seconds] = durationStr.split(':').map(Number);
+    return minutes * 60 + seconds;
+  }
+
+  playPauseBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play();
+    } else {
+      audio.pause();
+    }
+  });
+
+  audio.addEventListener('loadedmetadata', () => {
+    console.log(
+      `Audio metadata loaded. HTMLAudioElement reports duration: ${audio.duration.toFixed(2)}s. Using pre-calculated duration: ${initialDuration}s`
+    );
+
+    // Only log a warning if the durations are significantly different
+    const durationDiff = Math.abs(audio.duration - initialDuration);
+    if (durationDiff > 1) {
+      console.warn(
+        `Duration discrepancy detected: HTMLAudioElement duration differs by ${durationDiff.toFixed(2)}s from calculated duration`
+      );
+    }
+
+    updateProgress();
+  });
+
+  progressBar.addEventListener('click', (e) => {
+    const rect = progressBar.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    // Use initial duration for seeking calculations
+    const newTime = percent * initialDuration;
+    console.log(
+      `Seeking to: ${newTime.toFixed(2)}s (${(percent * 100).toFixed(1)}%)`
+    );
+    audio.currentTime = newTime;
+    updateProgress();
+  });
+
+  audio.addEventListener('play', () => {
+    console.log('Play event triggered');
+    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    startLoop();
+  });
+
+  audio.addEventListener('pause', () => {
+    console.log('Pause event triggered');
+    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+    stopLoop();
+  });
+
+  audio.addEventListener('ended', () => {
+    console.log(
+      `Audio ended event. Final time: ${audio.currentTime.toFixed(2)}`
+    );
+    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+    stopLoop();
+    progress.style.width = '0%';
+    currentTimeDisplay.textContent = formatDuration(0);
+    audio.currentTime = 0; // Reset to beginning for replay
+  });
+
+  // Initialize progress bar
+  updateProgress();
 }
