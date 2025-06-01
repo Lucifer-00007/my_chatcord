@@ -172,18 +172,22 @@ exports.testVoiceApiEndpointAdmin = async (req, res, next) => {
     const { endpoint, method, headers, body: requestBody } = parsedCurl;
     logger.debug('Making voice API test request (admin)', { url: endpoint, method, source: 'voiceApiController.testVoiceApiEndpointAdmin', path: req.path, userId: req.user?.id });
 
-    const testResponse = await fetch(endpoint, {
-      method,
-      headers,
-      body: requestBody ? JSON.stringify(requestBody) : undefined,
-    });
+    const options = { method, headers };
+    if (
+      requestBody !== undefined &&
+      !['GET', 'HEAD'].includes(method.toUpperCase())
+    ) {
+      options.body =
+        typeof requestBody === 'string' ? requestBody : JSON.stringify(requestBody);
+    }
+    const testResponse = await fetch(endpoint, options);
 
     const responseBodyText = await testResponse.text();
     const responseDetails = {
-        statusCode: testResponse.status,
-        statusText: testResponse.statusText,
-        contentType: testResponse.headers.get('content-type') || 'unknown',
-        responsePreview: responseBodyText.substring(0, 500) + (responseBodyText.length > 500 ? '...' : ''),
+      statusCode: testResponse.status,
+      statusText: testResponse.statusText,
+      contentType: testResponse.headers.get('content-type') || 'unknown',
+      responsePreview: responseBodyText.substring(0, 500) + (responseBodyText.length > 500 ? '...' : ''),
     };
 
     if (!testResponse.ok) {

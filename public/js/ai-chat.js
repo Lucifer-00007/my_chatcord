@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <li class="chat-session ${currentSession?._id === session._id ? 'active' : ''}" 
                     data-id="${session._id}">
                     <i class="fas fa-comments"></i>
-                    <span>${session.title}</span>
+                    <span>${escapeHtml(session.title)}</span>
                 </li>
             `
         )

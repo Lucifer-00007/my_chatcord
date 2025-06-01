@@ -13,7 +13,7 @@ function setValueAtPath(obj, path, value) {
 
     if (arrayMatch) {
       const [_, prop, index] = arrayMatch;
-      const idx = parseInt(index);
+      const idx = Number.parseInt(index, 10);
 
       if (i === parts.length - 1) {
         if (!current[prop]) current[prop] = [];
@@ -71,7 +71,7 @@ function processImageSettings(type, values) {
     throw new Error('Values must be an array');
   }
 
-  console.log('Processing settings:', { type, valuesCount: values.length });
+  // logger.debug('Processing settings', { type, valuesCount: values.length });
 
   return values.map((value) => {
     if (type === 'sizes') {
@@ -107,7 +107,11 @@ function processImageSettings(type, values) {
         isActive: value.isActive !== false,
       };
     }
-    const styleId = value.id || value.name.toLowerCase().replace(/\s+/g, '-');
+    if (!value.id && typeof value.name !== 'string') {
+    throw new Error('Style must include either id or name');
+  }
+  const styleId =
+    value.id || value.name.toLowerCase().replace(/\s+/g, '-');
     return {
       id: styleId,
       name: value.name,

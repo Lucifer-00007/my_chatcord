@@ -224,7 +224,7 @@ async function loadRooms() {
         (room) => `
             <div class="room-item" data-id="${room._id}" data-name="${room.name}">
                 <div class="room-info">
-                    <div class="room-name">${room.name}</div>
+                    <div class="room-name">${escapeHtml(room.name)}</div>
                     <div class="room-topic">${room.topic}</div>
                     ${room.description ? `<div class="room-description">${room.description}</div>` : ''}
                     <div class="room-stats">
@@ -621,7 +621,7 @@ function renderChatMessages() {
       (msg, idx) => `
         <div class="chat-message" data-idx="${idx}">
             <div class="chat-meta">
-                <b>${msg.username || 'Unknown'}</b>
+                <b>${escapeHtml(msg.username || 'Unknown')}</b>
                 <span class="chat-date">${formatChatDate(msg.createdAt)}</span>
             </div>
             <div class="chat-content">${escapeHtml(msg.content)}</div>

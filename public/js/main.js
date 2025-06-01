@@ -17,9 +17,22 @@ const REFRESH_THRESHOLD = 50 * 60 * 1000; // 50 minutes
 
 function checkTokenExpiration() {
   if (roomToken) {
-    const payload = JSON.parse(atob(roomToken.split('.')[1]));
-    const exp = payload.exp * 1000; // Convert to milliseconds
-    const timeUntilExp = exp - Date.now();
+    try {
+      const parts = roomToken.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      const payload = JSON.parse(atob(parts[1]));
+      if (!payload.exp) {
+        throw new Error('Token missing expiration');
+      }
+      const exp = payload.exp * 1000; // Convert to milliseconds
+      const timeUntilExp = exp - Date.now();
+    } catch (err) {
+      console.error('Invalid token format:', err);
+      AuthGuard.logout();
+      return;
+    }
 
     if (timeUntilExp < REFRESH_THRESHOLD) {
       // Refresh room token
@@ -51,12 +64,20 @@ checkTokenExpiration();
 
 let roomId = null;
 if (roomToken) {
-  const payload = JSON.parse(atob(roomToken.split('.')[1]));
-  roomId = payload.room; // This is the ObjectId of the room
+  const payload = safeParseJwtPayload(roomToken);
+  if (payload && payload.room) {
+    roomId = payload.room;
+  } else {
+    // Invalid token, force logout
+    AuthGuard.logout();
+  }
 }
 
 try {
-  const tokenData = JSON.parse(atob(roomToken.split('.')[1]));
+  const tokenData = safeParseJwtPayload(roomToken);
+  if (!tokenData || !tokenData.username || !tokenData.room) {
+    throw new Error('Invalid or malformed room token');
+  }
   const { username, room } = tokenData;
 
   // Fetch and display the actual room name
@@ -269,4 +290,22 @@ function outputUsers(users) {
     li.innerText = user.username;
     userList.appendChild(li);
   });
+}
+
+// --- Secure JWT payload parsing helper ---
+function safeParseJwtPayload(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  try {
+    // atob can throw, and JSON.parse can throw
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    // Pad base64 if needed
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const json = atob(padded);
+    return JSON.parse(json);
+  } catch (e) {
+    console.error('Invalid JWT payload:', e);
+    return null;
+  }
 }

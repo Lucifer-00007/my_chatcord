@@ -18,7 +18,14 @@ const createVoiceApiSchema = Joi.object({
   name: Joi.string().min(3).max(100).required(),
   apiType: Joi.string().valid('tts', 'vc').required(), // Text-to-Speech, Voice Cloning
   responseType: Joi.string().valid('binary', 'base64', 'url').required(),
-  curlCommand: Joi.string().required(),
+  curlCommand: Joi.string()
+    .pattern(/^curl\s+/)
+    .max(5000)
+    .required()
+    .messages({
+      'string.pattern.base': 'cURL command must start with "curl "',
+      'string.max': 'cURL command is too long (max 5000 characters)'
+    }),
   requestPath: Joi.string().required(), // Path to set the text/voice input in the request body
   responsePath: Joi.string().optional().allow(''), // Path to extract data if response is JSON (e.g., for base64 or URL)
   supportedVoices: Joi.array().items(voiceDetailSchema).optional().default([]),

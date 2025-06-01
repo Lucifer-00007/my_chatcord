@@ -4,10 +4,23 @@ const { generateToken } = require('../utils/jwt');
 const { cookie: cookieOptions } = require('../config/constants');
 const AppError = require('../utils/AppError');
 const logger = require('../logger');
+const zxcvbn = require('zxcvbn');
 
 exports.registerUser = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
+
+    // Password strength validation using zxcvbn
+    const passwordStrength = zxcvbn(password || '');
+    if (passwordStrength.score < 3) { // 0-4, 3 is 'good', 4 is 'strong'
+      logger.warn('Weak password rejected during registration', { email, username, score: passwordStrength.score, feedback: passwordStrength.feedback, source: 'authController.registerUser' });
+      return next(new AppError(
+        'Password is too weak. Please choose a stronger password (at least 8 characters, not easily guessable).',
+        400,
+        'WEAK_PASSWORD',
+        passwordStrength.feedback
+      ));
+    }
 
     const existingUser = await User.findOne({ $or: [{ email }, { username }] }).lean();
     if (existingUser) {
@@ -62,16 +75,17 @@ exports.loginUser = async (req, res, next) => {
 
     const token = generateToken(user.id);
     res.cookie('token', token, cookieOptions);
-    res.cookie('clientToken', token, { ...cookieOptions, httpOnly: false }); // For client-side access if needed
+    // Removed clientToken cookie for security: do not expose JWT to XSS via non-httpOnly cookies
 
     logger.info('User logged in successfully', { userId: user.id, source: 'authController.loginUser' });
-    return res.json({ // res.json() will call toJSON on the user model instance
+    return res.json({
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         isAdmin: user.isAdmin,
       },
+      token // If client-side access is needed, send token in response body for sessionStorage
     });
   } catch (err) {
     logger.error('Login error', { error: err.message, stack: err.stack, source: 'authController.loginUser' });

@@ -74,7 +74,8 @@ exports.createAiApi = async (req, res, next) => {
       return next(new AppError(`An API named "${req.body.name}" already exists. Please choose a unique name.`, 400, 'DUPLICATE_NAME'));
     }
 
-    const aiApi = new AiApi(req.body);
+    const { name, description, modelId, apiType, tags, metadata } = req.body;
+    const aiApi = new AiApi({ name, description, modelId, apiType, tags, metadata });
     const savedApi = await aiApi.save();
     logger.info('AI API created successfully (admin)', { apiId: savedApi._id, name: savedApi.name, source: 'aiApiController.createAiApi', path: req.path, userId: req.user?.id });
     return res.status(201).json(savedApi);
@@ -99,7 +100,11 @@ exports.updateAiApi = async (req, res, next) => {
         return next(new AppError(`Another API with the name "${req.body.name}" already exists.`, 400, 'DUPLICATE_NAME'));
       }
     }
-    const api = await AiApi.findByIdAndUpdate(req.params.id, req.body, {
+    const safeFields = ['description', 'modelId', 'apiType', 'tags', 'metadata'];
+    const update = Object.fromEntries(
+      Object.entries(req.body).filter(([k]) => safeFields.includes(k))
+    );
+    const api = await AiApi.findByIdAndUpdate(req.params.id, { $set: update }, {
       new: true,
       runValidators: true,
     });

@@ -33,14 +33,18 @@ function validateAudioBlob(blob) {
         const arrayBuffer = reader.result;
 
         // Attempt to decode the audio data
-        await audioContext.decodeAudioData(arrayBuffer);
-        audioContext.close();
-        resolve(true);
-      } catch (decodeError) {
+await audioContext.decodeAudioData(arrayBuffer);
+       audioContext.close();
+       resolve(true);
+     } catch (decodeError) {
+        // Always release the AudioContext before falling back
+        if (audioContext && typeof audioContext.close === 'function') {
+          audioContext.close();
+        }
         console.warn(
-          'AudioContext decode failed, falling back to Audio element:',
-          decodeError
-        );
+           'AudioContext decode failed, falling back to Audio element:',
+           decodeError
+         );
 
         // Fallback to Audio element if decoding fails
         const audio = new Audio();
@@ -264,11 +268,14 @@ function updateVoiceSelectionForModel(modelId) {
   // Find the selected API
   const selectedApi = VOICE_APIS.find((api) => api._id === modelId);
   console.log('Selected API:', selectedApi);
-  if (
-    !selectedApi ||
-    !selectedApi.supportedVoices ||
-    selectedApi.supportedVoices.length === 0
-  ) {
+
+  // Guard for missing supportedVoices
+  if (!selectedApi || typeof selectedApi.supportedVoices === 'undefined') {
+    voiceSelection.innerHTML = '<option value="">Voices will load after selecting a model</option>';
+    return;
+  }
+
+  if (!selectedApi.supportedVoices || selectedApi.supportedVoices.length === 0) {
     voiceSelection.innerHTML = '<option value="">No voices available</option>';
     return;
   }
@@ -705,294 +712,6 @@ async function validateInputs() {
 
   return true;
 }
-
-async function generateVoiceRequest() {
-  try {
-    // Disable generate button and show loading indicator
-    const generateBtn = document.getElementById('generate-voice-btn');
-    if (generateBtn) generateBtn.disabled = true;
-    if (loadingIndicator) loadingIndicator.style.display = 'flex';
-    if (audioResult) audioResult.style.display = 'none';
-    if (downloadSection) downloadSection.style.display = 'none';
-
-    // Prepare request data
-    const requestData = {
-      apiId: modelSelect.value,
-      voice: voiceSelection.value,
-      text: voiceText.value.trim(),
-      speed: voiceSpeed ? parseFloat(voiceSpeed.value) : 1.0,
-      pitch: voicePitch ? parseFloat(voicePitch.value) : 1.0,
-      preview,
-    };
-
-    console.log('Sending generate request:', requestData);
-
-    // Send request to server
-    const response = await fetch('/api/voice/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
-      },
-      body: JSON.stringify(requestData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
-      );
-    }
-
-    // Handle response
-    const audioArrayBuffer = await response.arrayBuffer();
-    const audioType = response.headers.get('Content-Type') || 'audio/mpeg';
-    const blob = new Blob([audioArrayBuffer], { type: audioType });
-
-    // Validate the audio blob before creating URL
-    try {
-      await validateAudioBlob(blob);
-    } catch (err) {
-      notify(`Audio validation failed: ${err.message}`, 'error');
-      throw err;
-    }
-
-    const audioSource = URL.createObjectURL(blob);
-
-    // Create a temporary audio element to get duration
-    const tempAudio = new Audio();
-    tempAudio.preload = 'metadata';
-    tempAudio.src = audioSource;
-    await new Promise((resolve) => {
-      tempAudio.addEventListener('loadedmetadata', () => {
-        resolve();
-      });
-    });
-
-    const duration = Math.round(tempAudio.duration);
-
-    // Create audio player with enhanced UI
-    if (audioPlayer) {
-      const selectedVoice =
-        voiceSelection.options[voiceSelection.selectedIndex].text;
-      audioPlayer.innerHTML = `
-                <audio controls autoplay>
-                    <source src="${audioSource}" type="${audioType}">
-                    Your browser does not support the audio element.
-                </audio>
-                <div class="audio-info">
-                    <div class="audio-title">${voiceText.value.substring(0, 30)}${voiceText.value.length > 30 ? '...' : ''}</div>
-                    <div class="audio-meta">
-                        <span><i class="fas fa-clock"></i> ${duration} sec</span>
-                        <span><i class="fas fa-microphone-alt"></i> ${selectedVoice}</span>
-                    </div>
-                </div>
-            `;
-    }
-
-    // Show audio result
-    if (loadingIndicator) loadingIndicator.style.display = 'none';
-    if (audioResult) audioResult.style.display = 'block';
-
-    // Update download buttons
-    const downloadSection = document.getElementById('download-section');
-    if (downloadSection) {
-      downloadSection.innerHTML = `
-                <button class="btn btn-download" onclick="downloadAudio('${audioSource}', 'mp3')">
-                    <i class="fas fa-download"></i> Download MP3
-                </button>
-            `;
-    }
-
-    // Add to history
-    if (responseData && typeof responseData === 'object') {
-      addToVoiceHistory({
-        id: responseData.id || `voice-${Date.now()}`,
-        text:
-          voiceText.value.substring(0, 30) +
-          (voiceText.value.length > 30 ? '...' : ''),
-        voiceName:
-          responseData.voiceName ||
-          voiceSelection.options[voiceSelection.selectedIndex].textContent,
-        audioUrl: responseData.audioUrl || audioSource,
-        wavUrl: responseData.wavUrl || null,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  } catch (err) {
-    console.error('Generate voice error:', err);
-    showNotification(err.message || 'Failed to generate voice file', 'error');
-
-    // Hide loading indicator and re-enable generate button
-    if (loadingIndicator) loadingIndicator.style.display = 'none';
-    const generateBtn = document.getElementById('generate-voice-btn');
-    if (generateBtn) generateBtn.disabled = false;
-    if (downloadSection) downloadSection.style.display = 'none';
-  }
-
-  // Function to download audio file
-  window.downloadAudio = function (url, format) {
-    if (!url) {
-      showNotification('Download URL not available', 'error');
-      return;
-    }
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `voice-${new Date().getTime()}.${format}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
-  // Function to add entry to voice history
-  function addToVoiceHistory(entry) {
-    const historyList = document.getElementById('voice-history');
-    if (!historyList) return;
-
-    // Get existing history from localStorage
-    let history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
-
-    // Add new entry to the beginning
-    history.unshift(entry);
-
-    // Keep only the last 10 entries
-    history = history.slice(0, 10);
-
-    // Save to localStorage
-    localStorage.setItem('voiceHistory', JSON.stringify(history));
-
-    // Update UI
-    updateVoiceHistory();
-  }
-
-  // Function to update voice history UI
-  function updateVoiceHistory() {
-    const historyList = document.getElementById('voice-history');
-    if (!historyList) return;
-
-    // Get history from localStorage
-    const history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
-
-    if (history.length === 0) {
-      historyList.innerHTML =
-        '<li class="empty-history">No recent conversions</li>';
-      return;
-    }
-
-    // Update UI
-    historyList.innerHTML = history
-      .map(
-        (entry) => `
-        <li class="history-item" data-id="${entry.id}">
-            <div class="history-text">${entry.text}</div>
-            <div class="history-meta">
-                <span class="history-voice">${entry.voiceName}</span>
-                <span class="history-time">${formatTimestamp(entry.timestamp)}</span>
-            </div>
-            <div class="history-actions">
-                <button class="btn btn-icon" onclick="playHistoryAudio('${entry.audioUrl}')">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button class="btn btn-icon" onclick="downloadAudio('${entry.audioUrl}', 'mp3')">
-                    <i class="fas fa-download"></i>
-                </button>
-            </div>
-        </li>
-    `
-      )
-      .join('');
-  }
-
-  // Function to play audio from history
-  function playHistoryAudio(url) {
-    if (!url) {
-      showNotification('Audio URL not available', 'error');
-      return;
-    }
-
-    const audioPlayer = document.getElementById('audio-player');
-    const audioResult = document.getElementById('audio-result');
-
-    if (audioPlayer) {
-      audioPlayer.innerHTML = `
-            <audio controls autoplay>
-                <source src="${url}" type="audio/mpeg">
-                Your browser does not support the audio element.
-            </audio>
-        `;
-    }
-
-    if (audioResult) audioResult.style.display = 'block';
-  }
-
-  // Helper function to format timestamp
-  function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-
-    // If today, show time only
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    }
-
-    // Otherwise show date
-    return date.toLocaleDateString();
-  }
-
-  // Export functions needed by admin.js
-  window.addVoiceEntry = addVoiceEntry;
-  window.removeVoiceEntry = removeVoiceEntry;
-  window.collectVoices = collectVoices;
-  window.testVoiceApi = testVoiceApi;
-
-  // Export functions for voice history
-  window.downloadAudio = downloadAudio;
-  window.playHistoryAudio = playHistoryAudio;
-
-  // Add notification function
-  function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-            <i class="fas fa-${
-              type === 'success'
-                ? 'check-circle'
-                : type === 'error'
-                  ? 'exclamation-circle'
-                  : 'info-circle'
-            }"></i>
-            <span>${message}</span>
-        `;
-
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      notification.classList.add('show');
-      setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-      }, 3000);
-    }, 100);
-  }
-}
-
-// Move downloadAudio function to the global scope
-window.downloadAudio = function (url, format) {
-  if (!url) {
-    showNotification('Download URL not available', 'error');
-    return;
-  }
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `voice-${new Date().getTime()}.${format}`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
 
 // Function to get audio duration using AudioContext (more accurate)
 function getAudioDurationWithContext(blob) {

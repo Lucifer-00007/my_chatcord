@@ -20,17 +20,29 @@ async function loadLogs(level = 'all') {
       `/api/admin/logs?level=${level}`
     );
 
-    logsContainer.innerHTML = logs
-      .map(
-        (log) => `
-            <div class="log-entry ${log.level}">
-                <div class="log-timestamp">${new Date(log.timestamp).toLocaleString()}</div>
-                <div class="log-level">${log.level}</div>
-                <div class="log-message">${log.message}</div>
-            </div>
-        `
-      )
-      .join('');
+    // Clear previous logs
+    logsContainer.innerHTML = '';
+    logs.forEach((log) => {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${log.level}`;
+
+      const timestampDiv = document.createElement('div');
+      timestampDiv.className = 'log-timestamp';
+      timestampDiv.textContent = new Date(log.timestamp).toLocaleString();
+
+      const levelDiv = document.createElement('div');
+      levelDiv.className = 'log-level';
+      levelDiv.textContent = log.level;
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'log-message';
+      messageDiv.textContent = log.message;
+
+      entry.appendChild(timestampDiv);
+      entry.appendChild(levelDiv);
+      entry.appendChild(messageDiv);
+      logsContainer.appendChild(entry);
+    });
   } catch (err) {
     showNotification(err.message, 'error');
   }

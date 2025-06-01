@@ -94,37 +94,73 @@ async function loadVoiceApiList() {
       return;
     }
 
-    voiceApiList.innerHTML = apis
-      .map(
-        (api) => `
-            <div class="api-item" data-id="${api._id}" data-name="${api.name}">
-                <div class="api-details">
-                    <div class="api-name">
-                        <span class="api-status ${api.isActive ? 'active' : 'inactive'}"></span>
-                        ${api.name}
-                    </div>
-                    <div class="api-paths">
-                        <small>Type: ${api.apiType}</small> | 
-                        <small>Voices: ${api.supportedVoices?.length || 0}</small>
-                    </div>
-                </div>
-                <div class="api-controls">
-                    <label class="toggle-switch">
-                        <input type="checkbox" class="api-toggle" data-id="${api._id}" 
-                               ${api.isActive ? 'checked' : ''} onclick="toggleVoiceApi('${api._id}', this.checked)">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <button class="btn btn-icon edit-api" data-id="${api._id}" onclick="editVoiceApi('${api._id}', '${api.name}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-icon btn-danger delete-api" data-id="${api._id}" onclick="deleteVoiceApi('${api._id}', '${api.name}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `
-      )
-      .join('');
+    voiceApiList.innerHTML = '';
+    apis.forEach(api => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'api-item';
+      wrapper.dataset.id = api._id;
+      wrapper.dataset.name = api.name;
+
+      // Build API details section
+      const details = document.createElement('div');
+      details.className = 'api-details';
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'api-name';
+      const statusSpan = document.createElement('span');
+      statusSpan.className = `api-status ${api.isActive ? 'active' : 'inactive'}`;
+      nameDiv.appendChild(statusSpan);
+      // Use textContent to prevent XSS
+      nameDiv.appendChild(document.createTextNode(api.name));
+      details.appendChild(nameDiv);
+
+      const pathsDiv = document.createElement('div');
+      pathsDiv.className = 'api-paths';
+      const typeSmall = document.createElement('small');
+      typeSmall.textContent = `Type: ${api.apiType}`;
+      const voicesSmall = document.createElement('small');
+      voicesSmall.textContent = `Voices: ${api.supportedVoices?.length || 0}`;
+      pathsDiv.appendChild(typeSmall);
+      pathsDiv.appendChild(document.createTextNode(' | '));
+      pathsDiv.appendChild(voicesSmall);
+      details.appendChild(pathsDiv);
+
+      // Build controls section (edit, delete, toggle)
+      const controls = document.createElement('div');
+      controls.className = 'api-controls';
+      // Toggle
+      const label = document.createElement('label');
+      label.className = 'toggle-switch';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'api-toggle';
+      input.dataset.id = api._id;
+      input.checked = !!api.isActive;
+      input.onclick = () => toggleVoiceApi(api._id, input.checked);
+      const slider = document.createElement('span');
+      slider.className = 'toggle-slider';
+      label.appendChild(input);
+      label.appendChild(slider);
+      controls.appendChild(label);
+      // Edit button
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-icon edit-api';
+      editBtn.dataset.id = api._id;
+      editBtn.onclick = () => editVoiceApi(api._id, api.name);
+      editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+      controls.appendChild(editBtn);
+      // Delete button
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-icon btn-danger delete-api';
+      delBtn.dataset.id = api._id;
+      delBtn.onclick = () => deleteVoiceApi(api._id, api.name);
+      delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+      controls.appendChild(delBtn);
+
+      wrapper.appendChild(details);
+      wrapper.appendChild(controls);
+      voiceApiList.appendChild(wrapper);
+    });
   } catch (err) {
     console.error('Error loading Voice APIs:', err);
     voiceApiList.innerHTML = `

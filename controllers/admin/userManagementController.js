@@ -19,7 +19,8 @@ exports.getAllUsersAdmin = async (req, res, next) => {
 exports.searchUsersAdmin = async (req, res, next) => {
   try {
     const searchQuery = req.query.q || '';
-    const searchRegex = new RegExp(searchQuery, 'i');
+    const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = new RegExp(escapeRegExp(searchQuery), 'i');
     const users = await User.find({
       $or: [{ username: searchRegex }, { email: searchRegex }],
     })

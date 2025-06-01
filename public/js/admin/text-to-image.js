@@ -43,8 +43,11 @@ async function initImageApiSection() {
   // Initial load
   await Promise.all([loadImageApiList(), loadGlobalSettings()]);
 
-  // Initialize event handlers
-  initToggleHandlers();
+  // Initialise event handlers only once
+  if (!window._imageApiTogglesBound) {
+    initToggleHandlers();
+    window._imageApiTogglesBound = true;
+  }
 
   // Form submission handling
   form.addEventListener('submit', handleImageFormSubmit);
@@ -160,8 +163,11 @@ async function handleImageFormSubmit(e) {
   const submitBtn = form.querySelector('button[type="submit"]');
 
   try {
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    }
 
     const formData = {
       name: document.getElementById('image-api-name').value.trim(),
@@ -430,28 +436,27 @@ async function saveGlobalSettings(type) {
     const values =
       type === 'sizes'
         ? Array.from(
-            document.querySelectorAll('#global-size-options .size-item')
-          ).map((el) => ({
-            id: el.dataset.id,
-            label: el.querySelector('label').textContent,
-            isActive: el.querySelector('input[type="checkbox"]').checked,
-          }))
+          document.querySelectorAll('#global-size-options .size-item')
+        ).map((el) => ({
+          id: el.dataset.id,
+          label: el.querySelector('label').textContent,
+          isActive: el.querySelector('input[type="checkbox"]').checked,
+        }))
         : Array.from(
-            document.querySelectorAll('#global-style-options .style-item')
-          ).map((el) => ({
-            id: el.dataset.id,
-            name: el.querySelector('label').textContent,
-            isActive: el.querySelector('input[type="checkbox"]').checked,
-          }));
+          document.querySelectorAll('#global-style-options .style-item')
+        ).map((el) => ({
+          id: el.dataset.id,
+          name: el.querySelector('label').textContent,
+          isActive: el.querySelector('input[type="checkbox"]').checked,
+        }));
 
-    const res = await fetch(`/api/admin/image-settings/${type}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
-      },
-      body: JSON.stringify({ values }),
-    });
+    const res = await window.adminUtils.makeApiRequest(
+      `/api/admin/image-settings/${type}`,
+      {
+        method: 'PUT',
+        body: { values },
+      }
+    );
 
     if (!res.ok) {
       throw new Error(`Failed to save ${type}`);

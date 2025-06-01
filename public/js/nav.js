@@ -1,3 +1,6 @@
+// Ensure CSRF token helper is imported from utils.js
+import { getCsrfToken } from './utils.js'; // adjust path as needed
+
 document.addEventListener('DOMContentLoaded', () => {
   const navbar = document.querySelector('.navbar');
 
@@ -11,9 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${AuthGuard.getAuthToken()}`,
+            'X-CSRF-Token': await getCsrfToken(),
           },
         });
-
         if (res.ok) {
           AuthGuard.logout(); // This will clear storage and redirect to login
         } else {
@@ -77,10 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
       navLinks.forEach((link) => {
         link.addEventListener('click', (e) => {
           // Check admin access for admin page
-          if (
-            link.href.includes('admin-settings') &&
-            !AuthGuard.getUser()?.isAdmin
-          ) {
+          const path = new URL(link.href).pathname;
+          if (path === '/admin-settings' && !AuthGuard.getUser()?.isAdmin) {
             e.preventDefault();
             alert('Admin access required');
             return;

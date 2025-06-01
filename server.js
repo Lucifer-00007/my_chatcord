@@ -131,9 +131,7 @@ app.use('/api', apiLimiter); // Standard rate limiting for other API routes
 
 // Apply more permissive rate limiting to static assets
 app.use(
-  express.static(path.join(__dirname, 'public'), {
-    maxAge: '1d', // Cache static assets for 1 day
-  })
+  express.static(path.join(__dirname, 'public'), { maxAge: '1d' })
 );
 
 // Apply default rate limiting to other routes
@@ -200,7 +198,6 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/ai', authMiddleware, require('./routes/ai'));
 app.use('/api/images', authMiddleware, require('./routes/images'));
-app.use('/api/voice', authMiddleware, require('./routes/voice'));
 
 // Public or authenticated GET endpoints for APIs (no admin required)
 const aiApisRouter = require('./routes/admin/ai-apis');

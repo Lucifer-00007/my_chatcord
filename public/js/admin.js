@@ -103,46 +103,6 @@ async function loadSection(sectionName) {
   }
 }
 
-function showSection(sectionName) {
-  // Hide all sections
-  document.querySelectorAll('.section-container').forEach((section) => {
-    section.style.display = 'none';
-  });
-
-  // Show selected section
-  const selectedSection = document.getElementById(sectionName);
-  if (selectedSection) {
-    selectedSection.style.display = 'block';
-  }
-
-  // Update menu active state
-  document.querySelectorAll('.admin-menu-item').forEach((item) => {
-    item.classList.remove('active');
-    if (item.dataset.section === sectionName) {
-      item.classList.add('active');
-    }
-  });
-}
-
-// Initialize admin panel
-async function initAdminPanel() {
-  const currentSection = localStorage.getItem('adminSection') || 'dashboard';
-
-  // Add menu click handlers
-  document.querySelectorAll('.admin-menu-item').forEach((item) => {
-    item.addEventListener('click', async () => {
-      const sectionName = item.dataset.section;
-      await loadSection(sectionName);
-      showSection(sectionName);
-      localStorage.setItem('adminSection', sectionName);
-    });
-  });
-
-  // Load and show initial section
-  await loadSection(currentSection);
-  showSection(currentSection);
-}
-
 async function loadDashboardStats() {
   try {
     const data = await window.adminUtils.makeApiRequest('/api/admin/stats');

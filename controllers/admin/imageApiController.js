@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const fetch = global.fetch;
 const ImageApi = require('../../models/ImageApi');
 const ImageSettings = require('../../models/ImageSettings');
 const { parseCurlCommand } = require('../../utils/apiHelpers');
@@ -150,7 +150,10 @@ exports.testImageApiEndpoint = async (req, res, next) => {
     const testResponse = await fetch(curlData.url, {
       method: curlData.method,
       headers: curlData.headers,
-      body: curlData.body ? JSON.stringify(curlData.body) : undefined,
+      body:
+        curlData.body && typeof curlData.body === 'object'
+          ? JSON.stringify(curlData.body)
+          : curlData.body,
     });
 
     if (!testResponse.ok) {

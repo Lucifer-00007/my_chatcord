@@ -102,7 +102,10 @@ router.get(
 );
 
 // Debug route (remains as is, no specific controller method for this utility route)
-router.get('/debug/settings', async (req, res, next) => {
+router.get(
+  '/debug/settings',
+  [authMiddleware, adminAuth],   // or behind NODE_ENV !== 'production'
+  async (req, res, next) => {
   const ImageApi = require('../../models/ImageApi'); // Local require for this utility
   const logger = require('../../logger'); // Local require for this utility
   const AppError = require('../../utils/AppError'); // Local require for this utility

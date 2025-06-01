@@ -33,12 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
         modelSelect.innerHTML = `
                     <option value="">Select Model</option>
                     ${apis
-                      .map(
-                        (api) => `
+            .map(
+              (api) => `
                         <option value="${api._id}">${api.name}</option>
                     `
-                      )
-                      .join('')}
+            )
+            .join('')}
                 `;
         generateBtn.disabled = !modelSelect.value;
       } else {
@@ -109,8 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       (typeof showNotification === 'function'
         ? showNotification
         : function (msg, type) {
-            alert(msg);
-          })('Failed to load image settings', 'error');
+          alert(msg);
+        })('Failed to load image settings', 'error');
     }
   }
 
@@ -185,7 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let imageUrl;
 
       if (contentType?.includes('image/')) {
-        // Handle binary image response (both direct binary and decoded base64)
+        if (!res.ok) {
+          throw new Error(`Failed to generate image (status ${res.status})`);
+        }
         const blob = await res.blob();
         imageUrl = URL.createObjectURL(blob);
       } else {

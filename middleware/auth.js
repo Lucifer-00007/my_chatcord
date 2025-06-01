@@ -31,7 +31,7 @@ module.exports = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     // logger.debug('Token decoded successfully', { userId: decoded.userId, path: req.path });
 
     req.user = await User.findById(decoded.userId).select('-password');

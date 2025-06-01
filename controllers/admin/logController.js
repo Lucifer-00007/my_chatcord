@@ -18,8 +18,31 @@ exports.getSystemLogs = async (req, res, next) => {
 
     const skip = (page - 1) * limit;
 
+    // Whitelist of allowed sortable fields
+    const allowedSortFields = ['timestamp', 'level', 'message', 'source'];
+    let sortOption = { timestamp: -1 }; // Default: newest first
+    if (typeof sort === 'string') {
+      // Support sort like 'timestamp' or '-timestamp'
+      let field = sort.replace(/^-/, '');
+      let direction = sort.startsWith('-') ? -1 : 1;
+      if (allowedSortFields.includes(field)) {
+        sortOption = { [field]: direction };
+      }
+    } else if (typeof sort === 'object' && sort !== null) {
+      // If sort is an object (rare, but possible), filter keys
+      sortOption = {};
+      for (const key of Object.keys(sort)) {
+        if (allowedSortFields.includes(key)) {
+          sortOption[key] = sort[key];
+        }
+      }
+      if (Object.keys(sortOption).length === 0) {
+        sortOption = { timestamp: -1 };
+      }
+    }
+
     const logs = await SystemLog.find(query)
-      .sort(sort)
+      .sort(sortOption)
       .skip(skip)
       .limit(limit)
       .lean();

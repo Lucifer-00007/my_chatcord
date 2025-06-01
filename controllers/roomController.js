@@ -27,7 +27,10 @@ exports.getAllRooms = async (req, res, next) => {
 exports.createRoom = async (req, res, next) => {
   try {
     const { name, topic, description } = req.body;
-    const existingRoom = await Room.findOne({ name }).lean();
+    const existingRoom = await Room
+      .findOne({ name })
+      .collation({ locale: 'en', strength: 2 }) // case-insensitive
+      .lean();
     if (existingRoom) {
       logger.warn(`Attempt to create room with duplicate name: ${name}`, { name, userId: req.user.id, source: 'roomController.createRoom', path: req.path });
       return next(new AppError('Room with this name already exists.', 400, 'DUPLICATE_ROOM_NAME'));
@@ -73,7 +76,10 @@ exports.getRoomMessages = async (req, res, next) => {
       user: req.user.id,
       room: roomId,
       isActive: true,
-      endDate: { $gt: new Date() },
+      $or: [
+        { endDate: { $gt: new Date() } },   // timed block
+        { endDate: null }                   // permanent block
+      ],
     }).lean();
 
     if (activeBlock) {

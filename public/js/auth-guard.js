@@ -23,23 +23,29 @@ const AuthGuard = {
     return !!this.getRoomToken();
   },
 
-  isTokenValid() {
+  // Remove client-side JWT validation. Use server-side endpoint for validation.
+  async isTokenValid() {
     const token = this.getAuthToken();
     if (!token) return false;
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
     try {
-      const payload = JSON.parse(atob(parts[1]));
-      if (!payload.exp) return false;
-      // Check expiration (exp is in seconds)
-      if (Date.now() >= payload.exp * 1000) return false;
-      return true;
+      const res = await fetch('/api/auth/validate-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      return !!data.valid;
     } catch (e) {
+      // Handle network or decoding errors gracefully
       return false;
     }
   },
 
-  checkAuth() {
+  async checkAuth() {
     const user = this.getUser();
     const publicPages = ['/login', '/register'];
     const adminPages = [

@@ -5,7 +5,8 @@ const AppError = require('../utils/AppError');
 const logger = require('../logger');
 
 exports.generateImage = async (req, res, next) => {
-  logger.info('Image generation request received', { userId: req.user.id, body: req.body, source: 'imageController.generateImage', path: req.path });
+  const currentUserId = req.user?.id;
+  logger.info('Image generation request received', { userId: currentUserId, body: req.body, source: 'imageController.generateImage', path: req.path });
   try {
     const { prompt, apiId, size, style, n, quality } = req.body;
 
@@ -50,11 +51,11 @@ exports.generateImage = async (req, res, next) => {
     }
 
     logger.debug('Sending image generation request to external API', { endpoint, method, userId: req.user.id, source: 'imageController.generateImage', path: req.path });
-    const response = await fetch(endpoint, {
-      method,
-      headers,
-      body: JSON.stringify(requestBody),
-    });
+    const fetchOptions = { method, headers };
+    if (!['GET', 'HEAD'].includes(method.toUpperCase())) {
+      fetchOptions.body = JSON.stringify(requestBody);
+    }
+    const response = await fetch(endpoint, fetchOptions);
 
     if (!api.responsePath || api.responseType === 'binary') {
       const buffer = await response.buffer();
@@ -67,7 +68,9 @@ exports.generateImage = async (req, res, next) => {
       return res.send(buffer);
     }
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
     if (!response.ok) {
       logger.warn('Image API responded with error', { status: response.status, responseData: data, apiId, userId: req.user.id, source: 'imageController.generateImage', path: req.path });
       return next(new AppError(data?.error?.message || `API responded with status ${response.status}`, response.status, 'IMAGE_API_ERROR'));

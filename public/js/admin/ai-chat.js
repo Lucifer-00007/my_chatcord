@@ -139,8 +139,13 @@ async function handleFormSubmit(e) {
       responsePath: document.getElementById('response-path').value,
     };
 
-    if (!formData.name || !formData.curlCommand || !formData.requestPath) {
-      throw new Error('Name, cURL command, and request path are required');
+    const missingFields = [];
+    if (!formData.name) missingFields.push('Name');
+    if (!formData.curlCommand) missingFields.push('cURL command');
+    if (!formData.requestPath) missingFields.push('Request path');
+
+    if (missingFields.length > 0) {
+      throw new Error(`Required fields missing: ${missingFields.join(', ')}`);
     }
 
     const res = await window.adminUtils.makeApiRequest('/api/admin/ai-apis', {
@@ -172,6 +177,10 @@ function handleApiAction(e) {
   const apiItem = btn.closest('.api-item');
   const { name } = apiItem.dataset;
 
+  if (!action || !id || !name) {
+    console.error('Invalid dataset values for API action');
+    return;
+  }
   if (action === 'edit') {
     editData(id, name);
   } else if (action === 'delete') {
