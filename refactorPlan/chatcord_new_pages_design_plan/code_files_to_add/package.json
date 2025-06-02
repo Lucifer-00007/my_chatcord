@@ -1,0 +1,46 @@
+{
+  "name": "mychatcord",
+  "version": "1.0.0",
+  "description": "Realtime chat app with rooms",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server",
+    "lint": "eslint . --ext .js",
+    "format": "prettier --write \"**/*.js\"",
+    "db:flush": "node scripts/flushDb.js",
+    "db:seed": "node scripts/seedData.js"
+  },
+  "author": "Brad Traversy",
+  "license": "MIT",
+  "dependencies": {
+    "@socket.io/redis-adapter": "^7.2.0",
+    "bcryptjs": "^2.4.3",
+    "chart.js": "^4.4.9",
+    "cookie-parser": "^1.4.6",
+    "csurf": "^1.11.0",
+    "dayjs": "^1.11.7",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^6.0.1",
+    "joi": "^17.9.2",
+    "jsonwebtoken": "^9.0.0",
+    "leaflet": "^1.9.4",
+    "mongoose": "^7.0.3",
+    "node-fetch": "^2.7.0",
+    "redis": "^4.6.7",
+    "socket.io": "^4.6.1",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.4.0",
+    "prettier": "^3.5.3"
+  }
+}
