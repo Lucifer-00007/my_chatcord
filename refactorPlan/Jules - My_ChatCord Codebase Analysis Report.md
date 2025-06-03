@@ -1,3 +1,5 @@
+# ChatCord Refactor Plan
+
 ## Implement eslint and prettier in the codebase
 	- Add a `.eslint` and `.prettier` files, install the respective modules and update the `package.json` file and add npm scripts to run ESLint and Prettier.
 	- Configure ESLint with a suitable ruleset (e.g., Airbnb or Standard) and integrate Prettier.
