@@ -1,4 +1,5 @@
-# ChatCord Refactor Plan
+# My_ChatCord Refactor Plan
+Date: June 5, 2025
 
 ## Implement eslint and prettier in the codebase
 	- Add a `.eslint` and `.prettier` files, install the respective modules and update the `package.json` file and add npm scripts to run ESLint and Prettier.
@@ -9,6 +10,7 @@
 	- Identify all routes that accept user input.
 	- Implement or improve input validation using `joi` or `express-validator` for all request bodies, query parameters, and path parameters.
 	- Ensure that validation errors are handled gracefully and return informative error messages.
+	- Add Input Validation Middleware: Implement `express-validator` or `joi` across all routes to prevent injection attacks and ensure data integrity.
 
 ## Strengthen Security Measures.
 	- Review Helmet Configuration: Ensure Helmet is configured optimally for security headers, including CSP.
@@ -19,6 +21,7 @@
 		- Modified Mongoose models (AiApi, ImageApi, VoiceApi) with toJSON transforms to prevent leakage of curlCommand (potentially containing API keys) in responses.
 	- Password Management: Ensure strong password policies are enforced during registration and password updates (e.g., complexity, length). Bcrypt is used for hashing, which is good.
 	- Admin password updates needs to be correctly hash passwords. Recommendations for user-initiated password changes and resets needs to be added as well.
+	- It is strongly recommended to systematically modernize the codebase. This includes replacing all var declarations with const or let to leverage block-scoping and immutability where appropriate.
 
 ## Improve Error Handling and Logging.
 	- Standardize Error Responses: Create a consistent error response format for all API endpoints.
@@ -31,12 +34,13 @@
 ## Optimize Database Performance.
 	- Review Mongoose Schemas and Queries:
 		- Identify potentially slow queries.
-		- Ensure appropriate indexes are defined on Mongoose schemas for fields used in queries (especially for `User`, `Room`, `RoomChat`).
+		- Ensure appropriate indexes are defined on Mongoose schemas for fields used in queries (especially for `Message`,`User`, `Room`, `RoomChat`, `Channel`).
 		- Use `lean()` for Read-Only Queries: For queries where Mongoose documents don't need to be modified, use `.lean()` to improve performance.
 		- Repeated database queries: 
 			- Each chat message handler does `Channel.findOne({ name: socket.room })` and possibly creates/saves a `Channel` and a `Message`.
 			- In high-traffic scenarios this can be costly. Consider caching the channel ID for each room or pre-initializing channels to reduce redundant lookups. Also ensure an index on `Channel.name` to speed queries.
-	- Unbounded message storage: The code saves every message to MongoDB without limits. Over time this can slow down writes and increase storage costs. Consider batching, time-to-live, or archiving old messages to maintain performance.		
+	- Unbounded message storage: The code saves every message to MongoDB without limits. Over time this can slow down writes and increase storage costs. Consider batching, time-to-live, or archiving old messages to maintain performance.
+	- The absence of pagination implementation for message retrieval poses significant scalability risks. Loading entire conversation histories without pagination will cause exponential performance degradation as chat volumes increase.		
 
 ## Implement Caching with Redis.
 	- Identify data that can be cached (e.g., user session information, frequently accessed room details, results from external API calls).
@@ -64,7 +68,8 @@
 
 ## Create a Controller Layer.
 	- Introduced a controller layer (`controllers/` and `controllers/admin/`).
-	- Refactored all user-facing and admin routes to use a controller-based architecture, separating business logic from route definitions
+	- Refactored all user-facing and admin routes to use a controller-based architecture, separating business logic from route definitions.
+
 
 
 ---------------------------------------------
@@ -113,11 +118,15 @@
 	- Identify critical components and business logic (e.g., authentication, chat functionality, API integrations).
     - Write unit tests for individual functions and modules using a testing framework like Jest or Mocha.
     - Write integration tests for API endpoints to ensure different parts of the application work together correctly.
+	- Implement Comprehensive Testing Framework: Create a testing infrastructure using Jest or Mocha with at least 80% code coverage. Start with unit tests for utility functions in `utils/` directory, then add integration tests for API endpoints.
+
 
 
 ---------------------------------------------
 ##  Remove client-side JWT validation and instead implement a server-side validation endpoint (Chatcord).
 	- In public/js/auth-guard.js between lines 26 and 40, the isTokenValid() method performs JWT validation on the client side, which is insecure and can be manipulated. Remove or minimize client-side JWT validation and instead implement a server-side validation endpoint that verifies the token's authenticity and expiration. Modify the client code to call this server-side endpoint asynchronously to check token validity, handling any errors properly. Also ensure any base64 decoding errors are caught and handled gracefully during this process.
+	
+	- The environment configuration mentions `JWT_SECRET` and `JWT_EXPIRE` variables, but without proper validation of token storage mechanisms (HTTP-only cookies vs. localStorage), the implementation may be vulnerable to XSS attacks.
 
 ## Large audio is fully buffered into memory – consider streaming.
 	- In controllers/voiceController.js around lines 66 to 71, the code uses response.buffer() to fully load large binary audio into memory, which risks high memory usage. To fix this, replace response.buffer() with streaming the response directly to the client for the 'binary' case, using a pipe or stream approach to send data incrementally without buffering it all at once. Keep the existing buffering logic for 'base64' and 'url' response types unchanged.
@@ -132,5 +141,5 @@
 	- The showNotification function directly injects the message parameter into innerHTML without sanitization, which could allow XSS attacks if the message contains malicious content.
 	
 	- Consider sanitizing the data or using safer DOM manipulation methods. 
-
+	
 

@@ -244,7 +244,8 @@ The `config` folder contains crucial application settings. Update the following 
 - [ ] Add the logged-in user details to the nav bar.
 - [ ] ⁠Remove the service layer and the all business logics from route layer to controller layer.
 - [ ] In `Image Generation Configuration` in `admin-settings` page fix the repetitive `Image Sizes` and `Image Styles` when switching back to the `Text To Image` tab from any other tabs in this page.
-- [ ] Create a postman collection of all the apis in categorized way.    
+- [ ] Create a postman collection of all the apis in categorized way.
+- [ ] Frontend Framework Adoption ie `Angular` which will simplify development.
 - [ ] Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure.
 
 ## License
