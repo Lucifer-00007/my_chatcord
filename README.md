@@ -242,11 +242,12 @@ The `config` folder contains crucial application settings. Update the following 
         - [ ] CMS for each page like: `Normal Chat`, `AI Chat`, `Text To Image` , `Text To Voice` , `Admin Settings` and `chat`. In the CMS need `Header Name`, `Theme Color`, `Static Texts` etc customization.
 - [ ] Create a `Landing Page` with navbar to navigate to all the `existing pages` along with to be created pages like: `About Us`, `Terms & Conditions` and `Privacy Policy`.
 - [ ] Add the logged-in user details to the nav bar.
-- [ ] ⁠Remove the service layer and the all business logics from route layer to controller layer.
 - [ ] In `Image Generation Configuration` in `admin-settings` page fix the repetitive `Image Sizes` and `Image Styles` when switching back to the `Text To Image` tab from any other tabs in this page.
+- [ ] Follow this `https://github.com/meprashantkumar/render-hosting/blob/master/index.js` while deployment to render to avoid `spin down` of the webapp due to inactivity.
+- [ ] ⁠Remove the service layer and the all business logics from route layer to controller layer.
+- [ ] Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure. Follow the `./refactorPlan/Jules - My_ChatCord Codebase Analysis Report.md` file.
 - [ ] Create a postman collection of all the apis in categorized way.
 - [ ] Frontend Framework Adoption ie `Angular` which will simplify development.
-- [ ] Refactor backend: remove hardcode, repeated code, deprecated code and improve the code structure. Follow the `./refactorPlan/Jules - My_ChatCord Codebase Analysis Report.md` file.
 
 ## License
 
