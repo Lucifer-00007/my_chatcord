@@ -13,6 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "@socket.io/redis-adapter": "^7.2.0",
+    "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.9",
     "cookie-parser": "^1.4.6",

@@ -24,6 +24,7 @@ const {
 } = require('./config/constants');
 const logger = require('./logger'); // Add logger import
 const { logUserMessageActivity } = require('./utils/users');
+const { startReloader } = require('./utils/reloader');
 
 // Import additional libraries and set up Redis for Socket.io adapter
 const { createAdapter } = require("@socket.io/redis-adapter");
@@ -374,4 +375,7 @@ io.on("connection", (socket) => {
 });
 
 // Start the server and listen on the specified port
-server.listen(env.PORT, process.env.HOST, () => logger.info(`Server running on port ${env.PORT}`));
+server.listen(env.PORT, process.env.HOST, () => {
+    logger.info(`Server running on port ${env.PORT}`);
+    startReloader();
+});
