@@ -60,6 +60,10 @@ if (!process.env.REDIS_URL || !process.env.PORT) {
 
 // Create an Express application
 const app = express();
+
+// ✅ Fix: Trust the proxy so express-rate-limit sees real client IP
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const io = socketio(server, {
   cors
